@@ -23,7 +23,7 @@ use rand::{Rng, distributions::Alphanumeric, rngs::OsRng};
 use structopt::StructOpt;
 
 use sc_keystore::LocalKeystore;
-use node_cli::chain_spec::{self, AccountId};
+use minix::chain_spec::{self, AccountId};
 use sp_core::{
 	sr25519,
 	crypto::{Public, Ss58Codec},
@@ -41,10 +41,6 @@ enum ChainSpecBuilder {
 		/// Authority key seed.
 		#[structopt(long, short, required = true)]
 		authority_seeds: Vec<String>,
-		/// Active nominators (SS58 format), each backing a random subset of the aforementioned
-		/// authorities.
-		#[structopt(long, short, default_value = "0")]
-		nominator_accounts: Vec<String>,
 		/// Endowed account address (SS58 format).
 		#[structopt(long, short)]
 		endowed_accounts: Vec<String>,
@@ -61,11 +57,6 @@ enum ChainSpecBuilder {
 		/// The number of authorities.
 		#[structopt(long, short)]
 		authorities: usize,
-		/// The number of nominators backing the aforementioned authorities.
-		///
-		/// Will nominate a random subset of `authorities`.
-		#[structopt(long, short, default_value = "0")]
-		nominators: usize,
 		/// The number of endowed accounts.
 		#[structopt(long, short, default_value = "0")]
 		endowed: usize,
@@ -96,7 +87,6 @@ impl ChainSpecBuilder {
 
 fn genesis_constructor(
 	authority_seeds: &[String],
-	nominator_accounts: &[AccountId],
 	endowed_accounts: &[AccountId],
 	sudo_account: &AccountId,
 ) -> chain_spec::GenesisConfig {
@@ -108,18 +98,16 @@ fn genesis_constructor(
 
 	let enable_println = true;
 
-	chain_spec::testnet_genesis(
+	chain_spec::minix_genesis(
 		authorities,
-		nominator_accounts.to_vec(),
 		sudo_account.clone(),
-		Some(endowed_accounts.to_vec()),
+		endowed_accounts.to_vec(),
 		enable_println,
 	)
 }
 
 fn generate_chain_spec(
 	authority_seeds: Vec<String>,
-	nominator_accounts: Vec<String>,
 	endowed_accounts: Vec<String>,
 	sudo_account: String,
 ) -> Result<String, String> {
@@ -127,9 +115,6 @@ fn generate_chain_spec(
 		AccountId::from_string(&address)
 			.map_err(|err| format!("Failed to parse account address: {:?}", err))
 	};
-
-	let nominator_accounts =
-		nominator_accounts.into_iter().map(parse_account).collect::<Result<Vec<_>, String>>()?;
 
 	let endowed_accounts =
 		endowed_accounts.into_iter().map(parse_account).collect::<Result<Vec<_>, String>>()?;
@@ -140,7 +125,7 @@ fn generate_chain_spec(
 		"Custom",
 		"custom",
 		sc_chain_spec::ChainType::Live,
-		move || genesis_constructor(&authority_seeds, &nominator_accounts, &endowed_accounts, &sudo_account),
+		move || genesis_constructor(&authority_seeds, &endowed_accounts, &sudo_account),
 		vec![],
 		None,
 		None,
@@ -161,36 +146,26 @@ fn generate_authority_keys_and_store(
 			None,
 		).map_err(|err| err.to_string())?);
 
-		let (_, _, grandpa, babe, im_online, authority_discovery) =
+		let (aura, grandpa) =
 			chain_spec::authority_keys_from_seed(seed);
 
-		let insert_key = |key_type, public| {
-			SyncCryptoStore::insert_unknown(
-				&*keystore,
-				key_type,
-				&format!("//{}", seed),
-				public,
-			).map_err(|_| format!("Failed to insert key: {}", grandpa))
-		};
+        let insert_key = |key_type, public| {
+            SyncCryptoStore::insert_unknown(
+                &*keystore,
+                key_type,
+                &format!("//{}", seed),
+                public,
+            ).map_err(|_| format!("Failed to insert key: {}", grandpa))
+        };
 
 		insert_key(
-			sp_core::crypto::key_types::BABE,
-			babe.as_slice(),
+			sp_core::crypto::key_types::AURA,
+			aura.as_slice(),
 		)?;
 
 		insert_key(
 			sp_core::crypto::key_types::GRANDPA,
 			grandpa.as_slice(),
-		)?;
-
-		insert_key(
-			sp_core::crypto::key_types::IM_ONLINE,
-			im_online.as_slice(),
-		)?;
-
-		insert_key(
-			sp_core::crypto::key_types::AUTHORITY_DISCOVERY,
-			authority_discovery.as_slice(),
 		)?;
 	}
 
@@ -199,7 +174,6 @@ fn generate_authority_keys_and_store(
 
 fn print_seeds(
 	authority_seeds: &[String],
-	nominator_seeds: &[String],
 	endowed_seeds: &[String],
 	sudo_seed: &str,
 ) {
@@ -216,10 +190,6 @@ fn print_seeds(
 	}
 
 	println!("{}", header.paint("Nominator seeds"));
-
-	for (n, seed) in nominator_seeds.iter().enumerate() {
-		println!("{} //{}", entry.paint(format!("nom-{}:", n)), seed);
-	}
 
 	println!();
 
@@ -250,17 +220,16 @@ fn main() -> Result<(), String> {
 	let builder = ChainSpecBuilder::from_args();
 	let chain_spec_path = builder.chain_spec_path().to_path_buf();
 
-	let (authority_seeds, nominator_accounts, endowed_accounts, sudo_account) = match builder {
-		ChainSpecBuilder::Generate { authorities, nominators, endowed, keystore_path, .. } => {
+	let (authority_seeds, endowed_accounts, sudo_account) = match builder {
+		ChainSpecBuilder::Generate { authorities, endowed, keystore_path, .. } => {
 			let authorities = authorities.max(1);
 			let rand_str = || -> String { OsRng.sample_iter(&Alphanumeric).take(32).collect() };
 
 			let authority_seeds = (0..authorities).map(|_| rand_str()).collect::<Vec<_>>();
-			let nominator_seeds = (0..nominators).map(|_| rand_str()).collect::<Vec<_>>();
 			let endowed_seeds = (0..endowed).map(|_| rand_str()).collect::<Vec<_>>();
 			let sudo_seed = rand_str();
 
-			print_seeds(&authority_seeds, &nominator_seeds, &endowed_seeds, &sudo_seed);
+			print_seeds(&authority_seeds, &endowed_seeds, &sudo_seed);
 
 			if let Some(keystore_path) = keystore_path {
 				generate_authority_keys_and_store(
@@ -268,13 +237,6 @@ fn main() -> Result<(), String> {
 					&keystore_path,
 				)?;
 			}
-
-			let nominator_accounts = nominator_seeds
-				.into_iter()
-				.map(|seed| {
-					chain_spec::get_account_id_from_seed::<sr25519::Public>(&seed).to_ss58check()
-				})
-				.collect();
 
 			let endowed_accounts = endowed_seeds
 				.into_iter()
@@ -286,20 +248,18 @@ fn main() -> Result<(), String> {
 			let sudo_account =
 				chain_spec::get_account_id_from_seed::<sr25519::Public>(&sudo_seed).to_ss58check();
 
-			(authority_seeds, nominator_accounts, endowed_accounts, sudo_account)
+			(authority_seeds, endowed_accounts, sudo_account)
 		}
 		ChainSpecBuilder::New {
 			authority_seeds,
-			nominator_accounts,
 			endowed_accounts,
 			sudo_account,
 			..
-		} => (authority_seeds, nominator_accounts, endowed_accounts, sudo_account),
+		} => (authority_seeds, endowed_accounts, sudo_account),
 	};
 
 	let json = generate_chain_spec(
 		authority_seeds,
-		nominator_accounts,
 		endowed_accounts,
 		sudo_account,
 	)?;

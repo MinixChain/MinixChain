@@ -57,9 +57,12 @@ enum ChainSpecBuilder {
 		/// The number of authorities.
 		#[structopt(long, short)]
 		authorities: usize,
-		/// The number of endowed accounts.
-		#[structopt(long, short, default_value = "0")]
-		endowed: usize,
+		/// Endowed account address (SS58 format).
+		#[structopt(long, short)]
+		endowed_accounts: Vec<String>,
+		/// Sudo account address (SS58 format).
+		#[structopt(long, short)]
+		sudo_account: String,
 		/// The path where the chain spec should be saved.
 		#[structopt(long, short, default_value = "./chain_spec.json")]
 		chain_spec_path: PathBuf,
@@ -174,8 +177,8 @@ fn generate_authority_keys_and_store(
 
 fn print_seeds(
 	authority_seeds: &[String],
-	endowed_seeds: &[String],
-	sudo_seed: &str,
+/*	endowed_seeds: &[String],
+	sudo_seed: &str,*/
 ) {
 	let header = Style::new().bold().underline();
 	let entry = Style::new().bold();
@@ -189,10 +192,8 @@ fn print_seeds(
 		);
 	}
 
-	println!("{}", header.paint("Nominator seeds"));
-
 	println!();
-
+/*
 	if !endowed_seeds.is_empty() {
 		println!("{}", header.paint("Endowed seeds"));
 		for (n, seed) in endowed_seeds.iter().enumerate() {
@@ -206,7 +207,7 @@ fn print_seeds(
 	}
 
 	println!("{}", header.paint("Sudo seed"));
-	println!("//{}", sudo_seed);
+	println!("//{}", sudo_seed);*/
 }
 
 fn main() -> Result<(), String> {
@@ -221,15 +222,15 @@ fn main() -> Result<(), String> {
 	let chain_spec_path = builder.chain_spec_path().to_path_buf();
 
 	let (authority_seeds, endowed_accounts, sudo_account) = match builder {
-		ChainSpecBuilder::Generate { authorities, endowed, keystore_path, .. } => {
+		ChainSpecBuilder::Generate { authorities, endowed_accounts, keystore_path, sudo_account, .. } => {
 			let authorities = authorities.max(1);
 			let rand_str = || -> String { OsRng.sample_iter(&Alphanumeric).take(32).collect() };
 
 			let authority_seeds = (0..authorities).map(|_| rand_str()).collect::<Vec<_>>();
-			let endowed_seeds = (0..endowed).map(|_| rand_str()).collect::<Vec<_>>();
-			let sudo_seed = rand_str();
+//			let endowed_seeds = (0..endowed).map(|_| rand_str()).collect::<Vec<_>>();
+//			let sudo_seed = rand_str();
 
-			print_seeds(&authority_seeds, &endowed_seeds, &sudo_seed);
+			print_seeds(&authority_seeds/*, &endowed_seeds, &sudo_seed*/);
 
 			if let Some(keystore_path) = keystore_path {
 				generate_authority_keys_and_store(
@@ -238,7 +239,7 @@ fn main() -> Result<(), String> {
 				)?;
 			}
 
-			let endowed_accounts = endowed_seeds
+/*			let endowed_accounts = endowed_seeds
 				.into_iter()
 				.map(|seed| {
 					chain_spec::get_account_id_from_seed::<sr25519::Public>(&seed).to_ss58check()
@@ -246,7 +247,7 @@ fn main() -> Result<(), String> {
 				.collect();
 
 			let sudo_account =
-				chain_spec::get_account_id_from_seed::<sr25519::Public>(&sudo_seed).to_ss58check();
+				chain_spec::get_account_id_from_seed::<sr25519::Public>(&sudo_seed).to_ss58check();*/
 
 			(authority_seeds, endowed_accounts, sudo_account)
 		}

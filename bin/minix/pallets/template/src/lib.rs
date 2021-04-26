@@ -5,20 +5,41 @@
 /// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
 
 pub use pallet::*;
+use codec::{Encode, Decode};
+use sp_runtime::{
+	RuntimeDebug,
+	traits::StaticLookup,
+};
 
-#[cfg(test)]
-mod mock;
+// #[cfg(test)]
+// mod mock;
+//
+// #[cfg(test)]
+// mod tests;
+//
+// #[cfg(feature = "runtime-benchmarks")]
+// mod benchmarking;
 
-#[cfg(test)]
-mod tests;
+pub type Did = u64;
+pub type BondType = u16;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode)]
+pub struct BondData {
+	pub bond_type: BondType,
+	pub data: Vec<u8>
+}
+
+#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode)]
+pub struct DidDetails<AccountId> {
+	pub owner: AccountId,
+	pub bonds: Vec<BondData>,
+}
 
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
+	use super::*;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -31,77 +52,191 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	// The pallet's runtime storage items.
-	// https://substrate.dev/docs/en/knowledgebase/runtime/storage
 	#[pallet::storage]
-	#[pallet::getter(fn something)]
-	// Learn more about declaring storage items:
-	// https://substrate.dev/docs/en/knowledgebase/runtime/storage#declaring-storage-items
-	pub type Something<T> = StorageValue<_, u32>;
+	#[pallet::getter(fn dids)]
+	pub type Dids<T: Config> = StorageMap<_, Blake2_128Concat, Did, DidDetails<T::AccountId>>;
 
-	// Pallets use events to inform users when important changes are made.
-	// https://substrate.dev/docs/en/knowledgebase/runtime/events
+	#[pallet::storage]
+	pub type NextCommonDid<T> = StorageValue<_, Did, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Event documentation should end with an array that provides descriptive names for event
-		/// parameters. [something, who]
-		SomethingStored(u32, T::AccountId),
+		// receipt, did
+		Register(T::AccountId, Did),
+		// user, did
+		Claim(T::AccountId, Did),
+		// owner, receipt, did
+		Transfer(T::AccountId, T::AccountId, Did),
+		// receipt, did
+		ForceTransfer(T::AccountId, Did),
+		// owner, did, bond_type
+		Bond(T::AccountId, Did, BondType),
+		// owner, did, bond_type
+		UnBond(T::AccountId, Did, BondType)
 	}
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
+		OnlyReservedAndCommunityDid,
+		OnlyCommunityAndCommonDid,
+		InvalidDid,
+		RequireOwner,
+		UnassigneDid,
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
-	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
-	// These functions materialize as "extrinsics", which are often compared to transactions.
-	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
 	#[pallet::call]
 	impl<T:Config> Pallet<T> {
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://substrate.dev/docs/en/knowledgebase/runtime/origin
+		#[pallet::weight(1000)]
+		pub fn register(origin: OriginFor<T>, did: Did, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
+			ensure_root(origin)?;
+			ensure!(
+				Self::is_reserved(did) || Self::is_community(did),
+				Error::<T>::OnlyReservedAndCommunityDid
+			);
+			let receipt = T::Lookup::lookup(receipt)?;
+
+			Dids::<T>::try_mutate_exists(did, |details|{
+				*details = Some(DidDetails{
+					owner: receipt.clone(),
+					bonds: vec![],
+				});
+
+				Self::deposit_event(Event::Register(receipt, did));
+				Ok(())
+			})
+
+		}
+
+		#[pallet::weight(1000)]
+		pub fn claim(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			let mut common_did = NextCommonDid::<T>::get();
 
-			// Update storage.
-			<Something<T>>::put(something);
+			Dids::<T>::try_mutate_exists(common_did, |details|{
+				*details = Some(DidDetails{
+					owner: who.clone(),
+					bonds: vec![],
+				});
 
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored(something, who));
-			// Return a successful DispatchResultWithPostInfo
-			Ok(())
+				common_did += 1;
+				NextCommonDid::<T>::put(&common_did);
+
+				Self::deposit_event(Event::Claim(who, common_did));
+				Ok(())
+			})
 		}
 
-		/// An example dispatchable that may throw a custom error.
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+		// 100000-1000000
+		#[pallet::weight(1000)]
+		pub fn transfer(origin: OriginFor<T>, did: Did, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
+			let is_admin = if Self::is_reserved(did) {
+				ensure_root(origin.clone())?;
+				true
+			} else {
+				ensure!(Self::is_community(did) || Self::is_common(did), Error::<T>::OnlyCommunityAndCommonDid);
+				false
+			};
+			let who = ensure_signed(origin).unwrap_or_default();
+			let receipt = T::Lookup::lookup(receipt)?;
 
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue)?,
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
-				},
-			}
+			Dids::<T>::try_mutate_exists(did, |details|{
+				let mut detail = details.as_mut().ok_or(Error::<T>::UnassigneDid)?;
+
+				ensure!(is_admin || detail.owner == who, Error::<T>::RequireOwner);
+
+				detail.owner = receipt.clone();
+				detail.bonds = vec![];
+
+				if is_admin {
+					Self::deposit_event(Event::ForceTransfer(receipt, did))
+				} else {
+					Self::deposit_event(Event::Transfer(who, receipt, did));
+				}
+
+				Ok(())
+			})
 		}
+
+		#[pallet::weight(1000)]
+		pub fn bond(origin: OriginFor<T>, did: Did, bond_data: BondData) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			ensure!(Self::is_valid(did), Error::<T>::InvalidDid);
+
+			Dids::<T>::try_mutate_exists(did, |details|{
+				let detail = details.as_mut().ok_or(Error::<T>::UnassigneDid)?;
+				ensure!(detail.owner == who, Error::<T>::RequireOwner);
+
+				let bond_type = bond_data.bond_type;
+
+				detail.bonds.push(bond_data);
+
+				Self::deposit_event(Event::Bond(who, did, bond_type));
+
+				Ok(())
+			})
+		}
+
+		#[pallet::weight(1000)]
+		pub fn unbond(origin: OriginFor<T>, did: Did, bond_type: BondType) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			ensure!(Self::is_valid(did), Error::<T>::InvalidDid);
+
+			Dids::<T>::try_mutate_exists(did, |details|{
+				let detail = details.as_mut().ok_or(Error::<T>::UnassigneDid)?;
+				ensure!(detail.owner == who, Error::<T>::RequireOwner);
+
+				detail.bonds.retain(|bond| bond.bond_type == bond_type);
+
+				Self::deposit_event(Event::UnBond(who, did, bond_type));
+
+				Ok(())
+			})
+		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	fn is_reserved(did: Did) -> bool {
+		if did >= 1 && did < 100_000 {
+			return true
+		}
+
+		false
+	}
+
+	fn is_community(did: Did) -> bool {
+		if did >= 100001 && did < 1_000_000 {
+			return true
+		}
+
+		false
+	}
+
+	fn is_common(did: Did) -> bool {
+		if did >= 1_000_001 && did <= 1_000_000_000_000 {
+			return true
+		}
+
+		false
+	}
+
+	fn is_valid(did: Did) -> bool {
+		if Self::is_reserved(did) ||
+			Self::is_community(did) ||
+			Self::is_common(did) {
+			return true
+		}
+
+		false
+	}
+
+	pub fn get_bond(did: Did) -> Option<DidDetails<T::AccountId>> {
+		Self::dids(did)
 	}
 }

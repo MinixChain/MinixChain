@@ -104,6 +104,7 @@ pub mod pallet {
 				});
 
 				Self::deposit_event(Event::Register(receipt, did));
+
 				Ok(())
 			})
 
@@ -112,7 +113,7 @@ pub mod pallet {
 		#[pallet::weight(1000)]
 		pub fn claim(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let mut common_did = Self::get_next_did();
+			let common_did = Self::get_next_did();
 
 			Dids::<T>::try_mutate_exists(common_did, |details|{
 				*details = Some(DidDetails{
@@ -120,10 +121,11 @@ pub mod pallet {
 					bonds: vec![],
 				});
 
-				common_did += 1;
-				NextCommonDid::<T>::put(&common_did);
+				let next_common_did = common_did + 1;
+				NextCommonDid::<T>::put(&next_common_did);
 
 				Self::deposit_event(Event::Claim(who, common_did));
+
 				Ok(())
 			})
 		}
@@ -206,7 +208,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn is_community(did: Did) -> bool {
-		if did >= 100001 && did < 1_000_000 {
+		if did >= 100_000 && did < 1_000_000 {
 			return true
 		}
 
@@ -214,7 +216,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn is_common(did: Did) -> bool {
-		if did >= 1_000_001 && did <= 1_000_000_000_000 {
+		if did >= 1_000_000 && did < 1_000_000_000_000 {
 			return true
 		}
 
@@ -222,9 +224,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn is_valid(did: Did) -> bool {
-		if Self::is_reserved(did) ||
-			Self::is_community(did) ||
-			Self::is_common(did) {
+		if Self::is_reserved(did) || Self::is_community(did) || Self::is_common(did) {
 			return true
 		}
 
@@ -232,13 +232,14 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_next_did() -> Did {
-		let mut common_did = NextCommonDid::<T>::get();
+		let common_did = NextCommonDid::<T>::get();
 
-		// Initialize from 1000000
+		// Initialize from 1_000_000
 		if common_did == 0 {
-			common_did = 1000000
+			1000000
+		} else {
+			common_did
 		}
-		common_did
 	}
 
 	pub fn get_bond(did: Did) -> Option<DidDetails<T::AccountId>> {

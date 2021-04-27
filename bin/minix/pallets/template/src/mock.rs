@@ -1,6 +1,9 @@
 use crate as pallet_template;
 use sp_core::H256;
-use frame_support::parameter_types;
+use frame_support::{
+	parameter_types,
+	traits::GenesisBuild
+};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup}, testing::Header,
 };
@@ -17,6 +20,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -55,8 +59,17 @@ impl system::Config for Test {
 impl pallet_template::Config for Test {
 	type Event = Event;
 }
+// Implement the sudo module's `Config` on the Test runtime.
+impl pallet_sudo::Config for Test {
+	type Event = Event;
+	type Call = Call;
+}
 
-// Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+// Build test environment by setting the root `key` for the Genesis.
+pub fn new_test_ext(root_key: u64) -> sp_io::TestExternalities {
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	pallet_sudo::GenesisConfig::<Test>{
+		key: root_key,
+	}.assimilate_storage(&mut t).unwrap();
+	t.into()
 }

@@ -1,9 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-/// Edit this file to define custom logic or remove it if it is not needed.
-/// Learn more about FRAME and the core library of Substrate FRAME pallets:
-/// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
-
 pub use pallet::*;
 use codec::{Encode, Decode};
 use sp_runtime::{
@@ -11,12 +7,12 @@ use sp_runtime::{
 	traits::StaticLookup,
 };
 
-// #[cfg(test)]
-// mod mock;
-//
-// #[cfg(test)]
-// mod tests;
-//
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
 
@@ -116,7 +112,7 @@ pub mod pallet {
 		#[pallet::weight(1000)]
 		pub fn claim(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let mut common_did = NextCommonDid::<T>::get();
+			let mut common_did = Self::get_next_did();
 
 			Dids::<T>::try_mutate_exists(common_did, |details|{
 				*details = Some(DidDetails{
@@ -132,7 +128,6 @@ pub mod pallet {
 			})
 		}
 
-		// 100000-1000000
 		#[pallet::weight(1000)]
 		pub fn transfer(origin: OriginFor<T>, did: Did, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
 			let is_admin = if Self::is_reserved(did) {
@@ -234,6 +229,16 @@ impl<T: Config> Pallet<T> {
 		}
 
 		false
+	}
+
+	fn get_next_did() -> Did {
+		let mut common_did = NextCommonDid::<T>::get();
+
+		// Initialize from 1000000
+		if common_did == 0 {
+			common_did = 1000000
+		}
+		common_did
 	}
 
 	pub fn get_bond(did: Did) -> Option<DidDetails<T::AccountId>> {

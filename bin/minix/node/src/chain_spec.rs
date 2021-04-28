@@ -1,5 +1,5 @@
 use sp_core::{Pair, Public, sr25519};
-pub use node_template_runtime::{
+pub use minix_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Signature
 };

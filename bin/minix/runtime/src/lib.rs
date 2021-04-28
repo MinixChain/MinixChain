@@ -39,9 +39,6 @@ pub use frame_support::{
 };
 use pallet_transaction_payment::CurrencyAdapter;
 
-/// Import the template pallet.
-pub use pallet_template;
-
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -269,9 +266,18 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
+parameter_types! {
+    pub const MaxCommodities: u128 = 5;
+    pub const MaxCommoditiesPerUser: u64 = 2;
+}
+
 /// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
+impl pallet_commodities::Config for Runtime {
 	type Event = Event;
+    type CommodityAdmin = frame_system::EnsureRoot<AccountId>;
+    type CommodityInfo = Vec<u8>;
+    type CommodityLimit = MaxCommodities;
+    type UserCommodityLimit = MaxCommoditiesPerUser;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -289,8 +295,7 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		// Include the custom logic from the pallet-template in the runtime.
-		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
+		NFT: pallet_commodities::{Pallet, Storage, Config, Event},
 	}
 );
 
@@ -486,7 +491,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_template, TemplateModule);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

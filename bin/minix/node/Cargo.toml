@@ -49,7 +49,7 @@ pallet-transaction-payment-rpc = { version = "3.0.0", path = "../../../frame/tra
 frame-benchmarking = { version = "3.1.0", path = "../../../frame/benchmarking" }
 frame-benchmarking-cli = { version = "3.0.0", path = "../../../utils/frame/benchmarking-cli" }
 
-node-template-runtime = { version = "3.0.0", path = "../runtime" }
+minix-runtime = { version = "3.0.0", path = "../runtime" }
 
 [build-dependencies]
 substrate-build-script-utils = { version = "3.0.0", path = "../../../utils/build-script-utils" }
@@ -57,5 +57,5 @@ substrate-build-script-utils = { version = "3.0.0", path = "../../../utils/build
 [features]
 default = []
 runtime-benchmarks = [
-	"node-template-runtime/runtime-benchmarks",
+	"minix-runtime/runtime-benchmarks",
 ]

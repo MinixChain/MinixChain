@@ -167,8 +167,8 @@ pub mod pallet {
     }
 
     #[pallet::event]
-    #[pallet::metadata(T::AccountId = "AccountId", CommodityId<T> = "CommodityId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
+    #[pallet::metadata(T::AccountId = "AccountId", CommodityId<T> = "CommodityId")]
     pub enum Event<T: Config> {
         /// The commodity has been burned.
         Burned(CommodityId<T>),
@@ -251,7 +251,7 @@ pub mod pallet {
         fn build(&self) {
             for (who, assets) in self.balances.iter() {
                 for asset in assets {
-                    match <Module<T> as UniqueAssets<T::AccountId>>::mint(who, asset.clone()) {
+                    match <Pallet<T> as UniqueAssets<T::AccountId>>::mint(who, asset.clone()) {
                         Ok(_) => {}
                         Err(err) => {
                             panic!("{:?}", err)
@@ -263,7 +263,7 @@ pub mod pallet {
     }
 }
 
-impl<T: Config> UniqueAssets<T::AccountId> for Module<T> {
+impl<T: Config> UniqueAssets<T::AccountId> for Pallet<T> {
     type AssetId = CommodityId<T>;
     type AssetInfo = T::CommodityInfo;
     type AssetLimit = T::CommodityLimit;

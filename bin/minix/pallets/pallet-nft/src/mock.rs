@@ -50,6 +50,7 @@ impl system::Config for Test {
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
 	type SS58Prefix = ();
+    type OnSetCode = ();
 }
 
 parameter_types! {
@@ -66,7 +67,7 @@ impl Config for Test {
 }
 
 // system under test
-pub type Commodities = Module<Test>;
+pub type Commodities = Pallet<Test>;
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {

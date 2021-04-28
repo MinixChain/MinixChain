@@ -295,7 +295,7 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		NFT: pallet_commodities::{Pallet, Storage, Config, Event},
+		NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
 	}
 );
 

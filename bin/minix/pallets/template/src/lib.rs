@@ -7,6 +7,8 @@ use sp_runtime::{
 	traits::StaticLookup,
 };
 
+// TODO: rename pallet-template to pallet-coming-id
+
 #[cfg(test)]
 mod mock;
 
@@ -16,7 +18,7 @@ mod tests;
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
 
-pub type Did = u64;
+pub type Cid = u64;
 pub type BondType = u16;
 
 #[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode)]
@@ -26,7 +28,7 @@ pub struct BondData {
 }
 
 #[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode)]
-pub struct DidDetails<AccountId> {
+pub struct CidDetails<AccountId> {
 	pub owner: AccountId,
 	pub bonds: Vec<BondData>,
 }
@@ -49,38 +51,38 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn dids)]
-	pub type Dids<T: Config> = StorageMap<_, Blake2_128Concat, Did, DidDetails<T::AccountId>>;
+	#[pallet::getter(fn cids)]
+	pub type Cids<T: Config> = StorageMap<_, Blake2_128Concat, Cid, CidDetails<T::AccountId>>;
 
 	#[pallet::storage]
-	pub type NextCommonDid<T> = StorageValue<_, Did, ValueQuery>;
+	pub type NextCommonCid<T> = StorageValue<_, Cid, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		// receipt, did
-		Register(T::AccountId, Did),
-		// user, did
-		Claim(T::AccountId, Did),
-		// owner, receipt, did
-		Transfer(T::AccountId, T::AccountId, Did),
-		// receipt, did
-		ForceTransfer(T::AccountId, Did),
-		// owner, did, bond_type
-		Bond(T::AccountId, Did, BondType),
-		// owner, did, bond_type
-		UnBond(T::AccountId, Did, BondType)
+		// receipt, cid
+		Register(T::AccountId, Cid),
+		// user, cid
+		Claim(T::AccountId, Cid),
+		// owner, receipt, cid
+		Transfer(T::AccountId, T::AccountId, Cid),
+		// receipt, cid
+		ForceTransfer(T::AccountId, Cid),
+		// owner, cid, bond_type
+		Bond(T::AccountId, Cid, BondType),
+		// owner, cid, bond_type
+		UnBond(T::AccountId, Cid, BondType)
 	}
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		OnlyReservedAndCommunityDid,
-		OnlyCommunityAndCommonDid,
-		InvalidDid,
+		OnlyReservedAndCommunityCid,
+		OnlyCommunityAndCommonCid,
+		InvalidCid,
 		RequireOwner,
-		UnassigneDid,
+		UndistributedCid,
 	}
 
 	#[pallet::hooks]
@@ -89,21 +91,21 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T:Config> Pallet<T> {
 		#[pallet::weight(1000)]
-		pub fn register(origin: OriginFor<T>, did: Did, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
+		pub fn register(origin: OriginFor<T>, cid: Cid, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(
-				Self::is_reserved(did) || Self::is_community(did),
-				Error::<T>::OnlyReservedAndCommunityDid
+				Self::is_reserved(cid) || Self::is_community(cid),
+				Error::<T>::OnlyReservedAndCommunityCid
 			);
 			let receipt = T::Lookup::lookup(receipt)?;
 
-			Dids::<T>::try_mutate_exists(did, |details|{
-				*details = Some(DidDetails{
+			Cids::<T>::try_mutate_exists(cid, |details|{
+				*details = Some(CidDetails{
 					owner: receipt.clone(),
 					bonds: vec![],
 				});
 
-				Self::deposit_event(Event::Register(receipt, did));
+				Self::deposit_event(Event::Register(receipt, cid));
 
 				Ok(())
 			})
@@ -113,37 +115,37 @@ pub mod pallet {
 		#[pallet::weight(1000)]
 		pub fn claim(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let common_did = Self::get_next_did();
+			let common_cid = Self::get_next_cid();
 
-			Dids::<T>::try_mutate_exists(common_did, |details|{
-				*details = Some(DidDetails{
+			Cids::<T>::try_mutate_exists(common_cid, |details|{
+				*details = Some(CidDetails{
 					owner: who.clone(),
 					bonds: vec![],
 				});
 
-				let next_common_did = common_did + 1;
-				NextCommonDid::<T>::put(&next_common_did);
+				let next_common_cid = common_cid + 1;
+				NextCommonCid::<T>::put(&next_common_cid);
 
-				Self::deposit_event(Event::Claim(who, common_did));
+				Self::deposit_event(Event::Claim(who, common_cid));
 
 				Ok(())
 			})
 		}
 
 		#[pallet::weight(1000)]
-		pub fn transfer(origin: OriginFor<T>, did: Did, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
-			let is_admin = if Self::is_reserved(did) {
+		pub fn transfer(origin: OriginFor<T>, cid: Cid, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
+			let is_admin = if Self::is_reserved(cid) {
 				ensure_root(origin.clone())?;
 				true
 			} else {
-				ensure!(Self::is_community(did) || Self::is_common(did), Error::<T>::OnlyCommunityAndCommonDid);
+				ensure!(Self::is_community(cid) || Self::is_common(cid), Error::<T>::OnlyCommunityAndCommonCid);
 				false
 			};
 			let who = ensure_signed(origin).unwrap_or_default();
 			let receipt = T::Lookup::lookup(receipt)?;
 
-			Dids::<T>::try_mutate_exists(did, |details|{
-				let mut detail = details.as_mut().ok_or(Error::<T>::UnassigneDid)?;
+			Cids::<T>::try_mutate_exists(cid, |details|{
+				let mut detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 
 				ensure!(is_admin || detail.owner == who, Error::<T>::RequireOwner);
 
@@ -151,9 +153,9 @@ pub mod pallet {
 				detail.bonds = vec![];
 
 				if is_admin {
-					Self::deposit_event(Event::ForceTransfer(receipt, did))
+					Self::deposit_event(Event::ForceTransfer(receipt, cid))
 				} else {
-					Self::deposit_event(Event::Transfer(who, receipt, did));
+					Self::deposit_event(Event::Transfer(who, receipt, cid));
 				}
 
 				Ok(())
@@ -161,36 +163,36 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(1000)]
-		pub fn bond(origin: OriginFor<T>, did: Did, bond_data: BondData) -> DispatchResult {
+		pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(Self::is_valid(did), Error::<T>::InvalidDid);
+			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
 
-			Dids::<T>::try_mutate_exists(did, |details|{
-				let detail = details.as_mut().ok_or(Error::<T>::UnassigneDid)?;
+			Cids::<T>::try_mutate_exists(cid, |details|{
+				let detail = details.as_mut().ok_or(Error::<T>::UnassigneCid)?;
 				ensure!(detail.owner == who, Error::<T>::RequireOwner);
 
 				let bond_type = bond_data.bond_type;
 
 				detail.bonds.push(bond_data);
 
-				Self::deposit_event(Event::Bond(who, did, bond_type));
+				Self::deposit_event(Event::Bond(who, cid, bond_type));
 
 				Ok(())
 			})
 		}
 
 		#[pallet::weight(1000)]
-		pub fn unbond(origin: OriginFor<T>, did: Did, bond_type: BondType) -> DispatchResult {
+		pub fn unbond(origin: OriginFor<T>, cid: Cid, bond_type: BondType) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(Self::is_valid(did), Error::<T>::InvalidDid);
+			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
 
-			Dids::<T>::try_mutate_exists(did, |details|{
-				let detail = details.as_mut().ok_or(Error::<T>::UnassigneDid)?;
+			Cids::<T>::try_mutate_exists(cid, |details|{
+				let detail = details.as_mut().ok_or(Error::<T>::UnassigneCid)?;
 				ensure!(detail.owner == who, Error::<T>::RequireOwner);
 
 				detail.bonds.retain(|bond| bond.bond_type == bond_type);
 
-				Self::deposit_event(Event::UnBond(who, did, bond_type));
+				Self::deposit_event(Event::UnBond(who, cid, bond_type));
 
 				Ok(())
 			})
@@ -199,50 +201,50 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	fn is_reserved(did: Did) -> bool {
-		if did >= 1 && did < 100_000 {
+	fn is_reserved(cid: Cid) -> bool {
+		if cid >= 1 && cid < 100_000 {
 			return true
 		}
 
 		false
 	}
 
-	fn is_community(did: Did) -> bool {
-		if did >= 100_000 && did < 1_000_000 {
+	fn is_community(cid: Cid) -> bool {
+		if cid >= 100_000 && cid < 1_000_000 {
 			return true
 		}
 
 		false
 	}
 
-	fn is_common(did: Did) -> bool {
-		if did >= 1_000_000 && did < 1_000_000_000_000 {
+	fn is_common(cid: Cid) -> bool {
+		if cid >= 1_000_000 && cid < 1_000_000_000_000 {
 			return true
 		}
 
 		false
 	}
 
-	fn is_valid(did: Did) -> bool {
-		if Self::is_reserved(did) || Self::is_community(did) || Self::is_common(did) {
+	fn is_valid(cid: Cid) -> bool {
+		if Self::is_reserved(cid) || Self::is_community(cid) || Self::is_common(cid) {
 			return true
 		}
 
 		false
 	}
 
-	fn get_next_did() -> Did {
-		let common_did = NextCommonDid::<T>::get();
+	fn get_next_cid() -> Cid {
+		let cid = NextCommonCid::<T>::get();
 
 		// Initialize from 1_000_000
-		if common_did == 0 {
-			1000000
+		if cid == 0 {
+			1_000_000
 		} else {
-			common_did
+			cid
 		}
 	}
 
-	pub fn get_bond(did: Did) -> Option<DidDetails<T::AccountId>> {
-		Self::dids(did)
+	pub fn get_bond(cid: Cid) -> Option<CidDetails<T::AccountId>> {
+		Self::cids(cid)
 	}
 }

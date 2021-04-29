@@ -25,7 +25,6 @@ use structopt::StructOpt;
 use sc_keystore::LocalKeystore;
 use minix::chain_spec::{self, AccountId};
 use sp_core::{
-	sr25519,
 	crypto::{Public, Ss58Codec},
 };
 use sp_keystore::{SyncCryptoStorePtr, SyncCryptoStore};
@@ -125,8 +124,8 @@ fn generate_chain_spec(
 	let sudo_account = parse_account(sudo_account)?;
 
 	let chain_spec = chain_spec::ChainSpec::from_genesis(
-		"Custom",
-		"custom",
+		"MiniX",
+		"MiniX",
 		sc_chain_spec::ChainType::Live,
 		move || genesis_constructor(&authority_seeds, &endowed_accounts, &sudo_account),
 		vec![],
@@ -177,8 +176,6 @@ fn generate_authority_keys_and_store(
 
 fn print_seeds(
 	authority_seeds: &[String],
-/*	endowed_seeds: &[String],
-	sudo_seed: &str,*/
 ) {
 	let header = Style::new().bold().underline();
 	let entry = Style::new().bold();
@@ -193,21 +190,6 @@ fn print_seeds(
 	}
 
 	println!();
-/*
-	if !endowed_seeds.is_empty() {
-		println!("{}", header.paint("Endowed seeds"));
-		for (n, seed) in endowed_seeds.iter().enumerate() {
-			println!("{} //{}",
-				entry.paint(format!("endowed-{}:", n)),
-				seed,
-			);
-		}
-
-		println!();
-	}
-
-	println!("{}", header.paint("Sudo seed"));
-	println!("//{}", sudo_seed);*/
 }
 
 fn main() -> Result<(), String> {
@@ -227,8 +209,6 @@ fn main() -> Result<(), String> {
 			let rand_str = || -> String { OsRng.sample_iter(&Alphanumeric).take(32).collect() };
 
 			let authority_seeds = (0..authorities).map(|_| rand_str()).collect::<Vec<_>>();
-//			let endowed_seeds = (0..endowed).map(|_| rand_str()).collect::<Vec<_>>();
-//			let sudo_seed = rand_str();
 
 			print_seeds(&authority_seeds/*, &endowed_seeds, &sudo_seed*/);
 
@@ -239,15 +219,6 @@ fn main() -> Result<(), String> {
 				)?;
 			}
 
-/*			let endowed_accounts = endowed_seeds
-				.into_iter()
-				.map(|seed| {
-					chain_spec::get_account_id_from_seed::<sr25519::Public>(&seed).to_ss58check()
-				})
-				.collect();
-
-			let sudo_account =
-				chain_spec::get_account_id_from_seed::<sr25519::Public>(&sudo_seed).to_ss58check();*/
 
 			(authority_seeds, endowed_accounts, sudo_account)
 		}

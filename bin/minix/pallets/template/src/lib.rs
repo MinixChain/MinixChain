@@ -8,8 +8,16 @@ use sp_runtime::{
 		StaticLookup, Saturating,
 	},
 };
+use frame_support::sp_std::{
+	collections::{
+		btree_map::BTreeMap,
+		vec_deque::VecDeque
+	},
+	ops::Bound::{Included,Excluded},
+};
 
 // TODO: rename pallet-template to pallet-coming-id
+// TODO: add admin account
 
 #[cfg(test)]
 mod mock;
@@ -57,17 +65,17 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn cids)]
-	pub type Cids<T: Config> = StorageMap<_, Blake2_128Concat, Cid, CidDetails<T::AccountId>>;
+	#[pallet::getter(fn distributed)]
+	pub type Distributed<T: Config> = StorageMap<_, Blake2_128Concat, Cid, CidDetails<T::AccountId>>;
+
+	#[pallet::storage]
+	pub type Distributing<T: Config> = StorageValue<_, BTreeMap<Cid, (T::AccountId, T::BlockNumber)>, ValueQuery>;
+
+	#[pallet::storage]
+	pub type WaitDistributing<T> = StorageValue<_, VecDeque<Cid>, ValueQuery>;
 
 	#[pallet::storage]
 	pub type NextCommonCid<T> = StorageValue<_, Cid, ValueQuery>;
-
-	#[pallet::storage]
-	pub type ClaimQueue<T: Config> = StorageValue<_, Vec<(Cid, T::AccountId, T::BlockNumber)>, ValueQuery>;
-
-	#[pallet::storage]
-	pub type WaitQueue<T> = StorageValue<_, Vec<Cid>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId")]
@@ -104,7 +112,12 @@ pub mod pallet {
 	}
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
+			Self::do_initialize(now);
+			0
+		}
+	}
 
 	#[pallet::call]
 	impl<T:Config> Pallet<T> {
@@ -119,7 +132,7 @@ pub mod pallet {
 			);
 			let receipt = T::Lookup::lookup(receipt)?;
 
-			Cids::<T>::try_mutate_exists(cid, |details|{
+			Distributed::<T>::try_mutate_exists(cid, |details|{
 				*details = Some(CidDetails{
 					owner: receipt.clone(),
 					bonds: vec![],
@@ -139,13 +152,15 @@ pub mod pallet {
 			let (common_cid, need_update) = Self::get_common_cid();
 			let expired = frame_system::Pallet::<T>::block_number().saturating_add(T::ClaimValidatePeriod::get());
 
-			ClaimQueue::<T>::try_mutate::<_, (Cid, T::AccountId, T::BlockNumber), _>(|reqs| {
-				reqs.push((common_cid, who.clone(), expired));
+			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs| {
+				reqs.insert(common_cid, (who.clone(), expired));
 
 				Ok(())
-			});
+			})?;
 
-			// Cids::<T>::try_mutate_exists(common_cid, |details|{
+			// let mut distributing = Distributing::get();
+
+			// Distributed::<T>::try_mutate_exists(common_cid, |details|{
 			// 	*details = Some(CidDetails{
 			// 		owner: who.clone(),
 			// 		bonds: vec![],
@@ -168,17 +183,65 @@ pub mod pallet {
 
 		// [cid_start,cid_end)
 		#[pallet::weight(1000)]
+		#[transactional]
 		pub fn approve(origin: OriginFor<T>, cid_start: Cid, cid_end: Cid) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(cid_end >= cid_start, Error::<T>::InvalidCidEnd);
 			ensure!(cid_end - cid_start <= (T::CidsLimit::get()) as u64, Error::<T>::OutOfCidsLimit);
 
+			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
+				// 1. Get from Distributing
+				let approved = Self::take_distributing_reqs(reqs, cid_start, cid_end);
+				for (common_cid, who, _) in approved {
+					// 2. Put into Distributed
+					Distributed::<T>::try_mutate_exists::<_, _, Error<T>, _>(common_cid, |details|{
+						*details = Some(CidDetails{
+							owner: who,
+							bonds: vec![],
+						});
+
+						Ok(())
+					})?;
+
+					// 3. Delete from Distributing
+					reqs.remove(&common_cid);
+				}
+
+				Ok(())
+			})?;
+
+			Self::deposit_event(Event::Approved(cid_start, cid_end));
 
 			Ok(())
 		}
 
 		#[pallet::weight(1000)]
 		pub fn disapprove(origin: OriginFor<T>, cid_start: Cid, cid_end: Cid) -> DispatchResult {
+			ensure_root(origin)?;
+			ensure!(cid_end >= cid_start, Error::<T>::InvalidCidEnd);
+			ensure!(cid_end - cid_start <= (T::CidsLimit::get()) as u64, Error::<T>::OutOfCidsLimit);
+
+			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
+				// 1. Get from Distributing
+				let disapproved = Self::take_distributing_reqs(reqs, cid_start, cid_end).into_iter().map(|(cid, _, _)|cid).collect::<Vec<_>>();
+
+				// 2. Put into WaitDistributing
+				WaitDistributing::<T>::try_mutate::<_, Error<T>, _>(|deque|{
+					deque.extend(disapproved.iter());
+
+					Ok(())
+				})?;
+
+				// 3. elete from Distributing
+				for common_cid in disapproved {
+					reqs.remove(&common_cid);
+				}
+
+				Ok(())
+			})?;
+
+			Self::deposit_event(Event::DisApproved(cid_start, cid_end));
+
 			Ok(())
 		}
 
@@ -195,7 +258,7 @@ pub mod pallet {
 			let who = ensure_signed(origin).unwrap_or_default();
 			let receipt = T::Lookup::lookup(receipt)?;
 
-			Cids::<T>::try_mutate_exists(cid, |details|{
+			Distributed::<T>::try_mutate_exists(cid, |details|{
 				let mut detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 
 				ensure!(is_admin || detail.owner == who, Error::<T>::RequireOwner);
@@ -218,7 +281,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
 
-			Cids::<T>::try_mutate_exists(cid, |details|{
+			Distributed::<T>::try_mutate_exists(cid, |details|{
 				let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 				ensure!(detail.owner == who, Error::<T>::RequireOwner);
 
@@ -237,7 +300,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
 
-			Cids::<T>::try_mutate_exists(cid, |details|{
+			Distributed::<T>::try_mutate_exists(cid, |details|{
 				let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 				ensure!(detail.owner == who, Error::<T>::RequireOwner);
 
@@ -252,6 +315,17 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	fn do_initialize(now: T::BlockNumber) {
+		// 1. Delete from Distributing
+		Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
+			for cid in Self::take_expired_reqs(reqs, now) {
+				reqs.remove(&cid);
+			}
+
+			Ok(())
+		}).unwrap_or_default()
+	}
+
 	fn is_reserved(cid: Cid) -> bool {
 		if cid >= 1 && cid < 100_000 {
 			return true
@@ -285,6 +359,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_common_cid() -> (Cid, bool) {
+		// 1. if take from waitqueue is some(cid), return (cid,false)
+
+		if let Some(cid) = WaitDistributing::<T>::try_mutate::<_, Error<T>, _>(|deque|{
+			Ok(deque.pop_front()) }).unwrap_or_default() {
+			return (cid, false)
+		}
+
+		// 2. if none, get from NextCommonCid
+
 		let cid = NextCommonCid::<T>::get();
 
 		// Initialize from 1_000_000
@@ -295,7 +378,26 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	fn take_distributing_reqs(reqs: &BTreeMap<Cid, (T::AccountId, T::BlockNumber)> ,cid_start: Cid, cid_end: Cid) -> Vec<(Cid, T::AccountId, T::BlockNumber)> {
+		reqs.range(
+			(Included(cid_start), Excluded(cid_end)))
+			.map(|(req,(who, expired))|{
+				(req.clone(), who.clone(), expired.clone())
+			}).collect()
+	}
+
+	fn take_expired_reqs(reqs: &BTreeMap<Cid, (T::AccountId, T::BlockNumber)>, now: T::BlockNumber) -> Vec<Cid> {
+		reqs.iter()
+			.filter_map(|(cid, (_, expired))|{
+				if now > *expired {
+					Some(*cid)
+				} else {
+					None
+				}
+			}).collect()
+	}
+
 	pub fn get_bond(cid: Cid) -> Option<CidDetails<T::AccountId>> {
-		Self::cids(cid)
+		Self::distributed(cid)
 	}
 }

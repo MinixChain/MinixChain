@@ -5,7 +5,7 @@ use frame_support::{assert_ok, assert_noop};
 fn it_works_for_default_value() {
 	new_test_ext(1).execute_with(|| {
 		// Dispatch a signed extrinsic.
-		assert_ok!(TemplateModule::claim(Origin::signed(1)));
+		assert_ok!(TemplateModule::claim(Origin::signed(1), 1));
 
 		let did = TemplateModule::get_bond(1000000);
 		println!("{:?}", did)

@@ -77,6 +77,33 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type NextCommonCid<T> = StorageValue<_, Cid, ValueQuery>;
 
+	/// The `AccountId` of the sudo key.
+	#[pallet::storage]
+	#[pallet::getter(fn admin_key)]
+	pub(super) type Key<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		/// The `AccountId` of the admin key.
+		pub admin_key: T::AccountId,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				admin_key: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			<Key<T>>::put(&self.admin_key);
+		}
+	}
+
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -85,6 +112,8 @@ pub mod pallet {
 		Registered(T::AccountId, Cid),
 		// user, cid, expired
 		Claiming(T::AccountId, Cid, T::BlockNumber),
+		// receipt, cid
+		ForceClaimed(T::AccountId, Cid),
 		// cid_start, cid_end
 		Approved(Cid, Cid),
 		// cid_start, cid_end
@@ -99,13 +128,14 @@ pub mod pallet {
 		UnBonded(T::AccountId, Cid, BondType)
 	}
 
-	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
 		OnlyReservedAndCommunityCid,
 		OnlyCommunityAndCommonCid,
 		InvalidCid,
+		RequireAdmin,
 		RequireOwner,
+		DistributedCid,
 		UndistributedCid,
 		InvalidCidEnd,
 		OutOfCidsLimit,
@@ -123,13 +153,19 @@ pub mod pallet {
 	impl<T:Config> Pallet<T> {
 		// first register(1, alice): alice is the owner of cid 1 and then bond some data,
 		// then register(1, bob): alice unbond all data and bob is the new owner of cid 1.
-		#[pallet::weight(1000)]
+		#[pallet::weight(100_000)]
 		pub fn register(origin: OriginFor<T>, cid: Cid, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
-			ensure_root(origin)?;
+			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
 			ensure!(
 				Self::is_reserved(cid) || Self::is_community(cid),
 				Error::<T>::OnlyReservedAndCommunityCid
 			);
+			if Self::is_community(cid) {
+				ensure!(
+					Self::is_distributed(cid),
+					Error::<T>::DistributedCid
+				);
+			}
 			let receipt = T::Lookup::lookup(receipt)?;
 
 			Distributed::<T>::try_mutate_exists(cid, |details|{
@@ -138,54 +174,58 @@ pub mod pallet {
 					bonds: vec![],
 				});
 
-				Self::deposit_event(Event::Registered(receipt, cid));
+				if Self::is_distributed(cid) {
+					Self::deposit_event(Event::ForceTransfered(receipt, cid))
+				} else {
+					Self::deposit_event(Event::Registered(receipt, cid));
+				}
 
 				Ok(())
 			})
 
 		}
 
-		#[pallet::weight(1000)]
+		#[pallet::weight(100_000)]
 		#[transactional]
-		pub fn claim(origin: OriginFor<T>) -> DispatchResult {
+		pub fn claim(origin: OriginFor<T>, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			let current_height = frame_system::Pallet::<T>::block_number();
 			let (common_cid, need_update) = Self::get_common_cid();
-			let expired = frame_system::Pallet::<T>::block_number().saturating_add(T::ClaimValidatePeriod::get());
 
-			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs| {
-				reqs.insert(common_cid, (who.clone(), expired));
+			if who == Self::admin_key() {
+				let receipt = T::Lookup::lookup(receipt)?;
+				Distributed::<T>::try_mutate_exists::<_, _, Error<T>, _>(common_cid, |details|{
+					*details = Some(CidDetails{
+						owner: receipt.clone(),
+						bonds: vec![],
+					});
 
-				Ok(())
-			})?;
+					Self::deposit_event(Event::ForceClaimed(receipt, common_cid));
+					Ok(())
+				})?;
+			} else {
+				let expired = current_height.saturating_add(T::ClaimValidatePeriod::get());
+				Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs| {
+					reqs.insert(common_cid, (who.clone(), expired));
 
-			// let mut distributing = Distributing::get();
-
-			// Distributed::<T>::try_mutate_exists(common_cid, |details|{
-			// 	*details = Some(CidDetails{
-			// 		owner: who.clone(),
-			// 		bonds: vec![],
-			// 	});
-			//
-			//
-			// 	Ok(())
-			// });
-
+					Self::deposit_event(Event::Claiming(who, common_cid, expired));
+					Ok(())
+				})?;
+			}
 
 			if need_update {
 				let next_common_cid = common_cid + 1;
 				NextCommonCid::<T>::put(&next_common_cid);
 			}
 
-			Self::deposit_event(Event::Claiming(who, common_cid, expired));
-
 			Ok(())
 		}
 
 		// [cid_start,cid_end)
-		#[pallet::weight(1000)]
+		#[pallet::weight(100_000)]
 		#[transactional]
 		pub fn approve(origin: OriginFor<T>, cid_start: Cid, cid_end: Cid) -> DispatchResult {
-			ensure_root(origin)?;
+			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
 			ensure!(cid_end >= cid_start, Error::<T>::InvalidCidEnd);
 			ensure!(cid_end - cid_start <= (T::CidsLimit::get()) as u64, Error::<T>::OutOfCidsLimit);
 
@@ -215,9 +255,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(1000)]
+		#[pallet::weight(100_000)]
+		#[transactional]
 		pub fn disapprove(origin: OriginFor<T>, cid_start: Cid, cid_end: Cid) -> DispatchResult {
-			ensure_root(origin)?;
+			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
 			ensure!(cid_end >= cid_start, Error::<T>::InvalidCidEnd);
 			ensure!(cid_end - cid_start <= (T::CidsLimit::get()) as u64, Error::<T>::OutOfCidsLimit);
 
@@ -246,37 +287,27 @@ pub mod pallet {
 		}
 
 		// transfer to self equal unbond all
-		#[pallet::weight(1000)]
+		#[pallet::weight(100_000)]
 		pub fn transfer(origin: OriginFor<T>, cid: Cid, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
-			let is_admin = if Self::is_reserved(cid) {
-				ensure_root(origin.clone())?;
-				true
-			} else {
-				ensure!(Self::is_community(cid) || Self::is_common(cid), Error::<T>::OnlyCommunityAndCommonCid);
-				false
-			};
-			let who = ensure_signed(origin).unwrap_or_default();
+			ensure!(Self::is_community(cid) || Self::is_common(cid), Error::<T>::OnlyCommunityAndCommonCid);
+			let who = ensure_signed(origin)?;
 			let receipt = T::Lookup::lookup(receipt)?;
 
 			Distributed::<T>::try_mutate_exists(cid, |details|{
 				let mut detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 
-				ensure!(is_admin || detail.owner == who, Error::<T>::RequireOwner);
+				ensure!(detail.owner == who, Error::<T>::RequireOwner);
 
 				detail.owner = receipt.clone();
 				detail.bonds = vec![];
 
-				if is_admin {
-					Self::deposit_event(Event::ForceTransfered(receipt, cid))
-				} else {
-					Self::deposit_event(Event::Transfered(who, receipt, cid));
-				}
+				Self::deposit_event(Event::Transfered(who, receipt, cid));
 
 				Ok(())
 			})
 		}
 
-		#[pallet::weight(1000)]
+		#[pallet::weight(100_000)]
 		pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
@@ -295,7 +326,7 @@ pub mod pallet {
 			})
 		}
 
-		#[pallet::weight(1000)]
+		#[pallet::weight(100_000)]
 		pub fn unbond(origin: OriginFor<T>, cid: Cid, bond_type: BondType) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
@@ -358,18 +389,22 @@ impl<T: Config> Pallet<T> {
 		false
 	}
 
+	fn is_distributed(cid: Cid) -> bool {
+		Distributed::<T>::contains_key(cid)
+	}
+
 	fn get_common_cid() -> (Cid, bool) {
 		// 1. if take from waitqueue is some(cid), return (cid,false)
 
-		if let Some(cid) = WaitDistributing::<T>::try_mutate::<_, Error<T>, _>(|deque|{
-			Ok(deque.pop_front()) }).unwrap_or_default() {
+		if let Some(cid) = WaitDistributing::<T>::try_mutate::<_, Error<T>, _>(
+				|deque|{ Ok(deque.pop_front()) }
+			).unwrap_or_default() {
 			return (cid, false)
 		}
 
 		// 2. if none, get from NextCommonCid
 
 		let cid = NextCommonCid::<T>::get();
-
 		// Initialize from 1_000_000
 		if cid == 0 {
 			(1_000_000, true)
@@ -378,7 +413,11 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn take_distributing_reqs(reqs: &BTreeMap<Cid, (T::AccountId, T::BlockNumber)> ,cid_start: Cid, cid_end: Cid) -> Vec<(Cid, T::AccountId, T::BlockNumber)> {
+	fn take_distributing_reqs(
+		reqs: &BTreeMap<Cid, (T::AccountId, T::BlockNumber)>,
+		cid_start: Cid,
+		cid_end: Cid
+	) -> Vec<(Cid, T::AccountId, T::BlockNumber)> {
 		reqs.range(
 			(Included(cid_start), Excluded(cid_end)))
 			.map(|(req,(who, expired))|{
@@ -386,7 +425,10 @@ impl<T: Config> Pallet<T> {
 			}).collect()
 	}
 
-	fn take_expired_reqs(reqs: &BTreeMap<Cid, (T::AccountId, T::BlockNumber)>, now: T::BlockNumber) -> Vec<Cid> {
+	fn take_expired_reqs(
+		reqs: &BTreeMap<Cid, (T::AccountId, T::BlockNumber)>,
+		now: T::BlockNumber
+	) -> Vec<Cid> {
 		reqs.iter()
 			.filter_map(|(cid, (_, expired))|{
 				if now > *expired {

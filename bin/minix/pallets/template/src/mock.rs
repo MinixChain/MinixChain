@@ -20,8 +20,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
+		TemplateModule: pallet_template::{Pallet, Call, Config<T>, Storage, Event<T>},
 	}
 );
 
@@ -63,17 +62,12 @@ impl pallet_template::Config for Test {
 	type ClaimValidatePeriod = ClaimValidatePeriod;
 	type CidsLimit = CidsLimit;
 }
-// Implement the sudo module's `Config` on the Test runtime.
-impl pallet_sudo::Config for Test {
-	type Event = Event;
-	type Call = Call;
-}
 
-// Build test environment by setting the root `key` for the Genesis.
-pub fn new_test_ext(root_key: u64) -> sp_io::TestExternalities {
+// Build test environment by setting the admin `key` for the Genesis.
+pub fn new_test_ext(admin_key: u64) -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	pallet_sudo::GenesisConfig::<Test>{
-		key: root_key,
+	pallet_template::GenesisConfig::<Test>{
+		admin_key: admin_key,
 	}.assimilate_storage(&mut t).unwrap();
 	t.into()
 }

@@ -1,4 +1,4 @@
-use crate as pallet_template;
+use crate as pallet_coming_id;
 use sp_core::H256;
 use frame_support::{
 	parameter_types,
@@ -20,7 +20,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		TemplateModule: pallet_template::{Pallet, Call, Config<T>, Storage, Event<T>},
+		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
 	}
 );
 
@@ -57,7 +57,7 @@ impl system::Config for Test {
 	type OnSetCode = ();
 }
 
-impl pallet_template::Config for Test {
+impl pallet_coming_id::Config for Test {
 	type Event = Event;
 	type ClaimValidatePeriod = ClaimValidatePeriod;
 	type CidsLimit = CidsLimit;
@@ -66,7 +66,7 @@ impl pallet_template::Config for Test {
 // Build test environment by setting the admin `key` for the Genesis.
 pub fn new_test_ext(admin_key: u64) -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	pallet_template::GenesisConfig::<Test>{
+	pallet_coming_id::GenesisConfig::<Test>{
 		admin_key: admin_key,
 	}.assimilate_storage(&mut t).unwrap();
 	t.into()

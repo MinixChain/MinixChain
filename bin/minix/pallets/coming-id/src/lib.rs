@@ -16,9 +16,6 @@ use frame_support::sp_std::{
 	ops::Bound::{Included,Excluded},
 };
 
-// TODO: rename pallet-template to pallet-coming-id
-// TODO: add admin account
-
 #[cfg(test)]
 mod mock;
 
@@ -264,7 +261,10 @@ pub mod pallet {
 
 			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
 				// 1. Get from Distributing
-				let disapproved = Self::take_distributing_reqs(reqs, cid_start, cid_end).into_iter().map(|(cid, _, _)|cid).collect::<Vec<_>>();
+				let disapproved = Self::take_distributing_reqs(reqs, cid_start, cid_end)
+					.into_iter()
+					.map(|(cid, _, _)|cid)
+					.collect::<Vec<_>>();
 
 				// 2. Put into WaitDistributing
 				WaitDistributing::<T>::try_mutate::<_, Error<T>, _>(|deque|{
@@ -394,7 +394,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_common_cid() -> (Cid, bool) {
-		// 1. if take from waitqueue is some(cid), return (cid,false)
+		// 1. if take from WaitDistributing is some(cid), return (cid,false)
 
 		if let Some(cid) = WaitDistributing::<T>::try_mutate::<_, Error<T>, _>(
 				|deque|{ Ok(deque.pop_front()) }
@@ -441,5 +441,11 @@ impl<T: Config> Pallet<T> {
 
 	pub fn get_bond(cid: Cid) -> Option<CidDetails<T::AccountId>> {
 		Self::distributed(cid)
+	}
+
+	pub fn get_bonds(who: T::AccountId) -> Vec<(Cid,CidDetails<T::AccountId>)> {
+		Distributed::<T>::iter()
+			.filter(|(_, v)| v.owner == who)
+			.collect()
 	}
 }

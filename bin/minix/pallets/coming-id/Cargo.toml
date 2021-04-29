@@ -1,8 +1,8 @@
 [package]
 authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
 edition = '2018'
-name = 'pallet-template'
-version = "3.0.0"
+name = 'pallet-coming-id'
+version = "1.0.0"
 license = "Unlicense"
 homepage = "https://substrate.dev"
 repository = "https://github.com/substrate-developer-hub/substrate-node-template/"

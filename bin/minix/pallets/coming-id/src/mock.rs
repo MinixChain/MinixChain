@@ -1,4 +1,3 @@
-use super::*;
 use crate as pallet_coming_id;
 use sp_core::H256;
 use frame_support::{
@@ -30,7 +29,7 @@ frame_support::construct_runtime!(
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
-	pub const ClaimValidatePeriod: u32 = 600;
+	pub const ClaimValidatePeriod: u32 = 10;
 	pub const CidsLimit: u32 = 5;
 }
 

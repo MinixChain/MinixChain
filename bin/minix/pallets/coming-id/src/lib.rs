@@ -327,7 +327,16 @@ pub mod pallet {
 
 				let bond_type = bond_data.bond_type;
 
-				detail.bonds.push(bond_data);
+				let mut need_push = true;
+				for bond in detail.bonds.iter_mut() {
+					if bond.bond_type == bond_type {
+						(*bond).data = bond_data.data.clone();
+						need_push = false;
+					}
+				}
+				if need_push {
+					detail.bonds.push(bond_data);
+				}
 
 				Self::deposit_event(Event::Bonded(who, cid, bond_type));
 

@@ -3,7 +3,6 @@
 pub use pallet::*;
 use codec::{Encode, Decode};
 use sp_runtime::{
-	RuntimeDebug,
 	traits::{
 		StaticLookup, Saturating,
 	},
@@ -15,6 +14,8 @@ use frame_support::sp_std::{
 	},
 	ops::Bound::{Included,Excluded},
 };
+#[cfg(feature = "std")]
+use serde::{Serialize, Deserialize};
 
 #[cfg(test)]
 mod mock;
@@ -25,16 +26,25 @@ mod tests;
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
 
+// TODO: unit tests
+// TODO: rpc tests
+// TODO: benchmark
+// TODO: docs
+
 pub type Cid = u64;
 pub type BondType = u16;
 
-#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode)]
+#[derive(Clone, Eq, PartialEq, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct BondData {
 	pub bond_type: BondType,
 	pub data: Vec<u8>
 }
 
-#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode)]
+#[derive(Clone, Eq, PartialEq, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct CidDetails<AccountId> {
 	pub owner: AccountId,
 	pub bonds: Vec<BondData>,

@@ -233,7 +233,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn approve(origin: OriginFor<T>, cid_start: Cid, cid_end: Cid) -> DispatchResult {
 			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
-			ensure!(cid_end >= cid_start, Error::<T>::InvalidCidEnd);
+			ensure!(cid_end > cid_start, Error::<T>::InvalidCidEnd);
 			ensure!(cid_end - cid_start <= (T::CidsLimit::get()) as u64, Error::<T>::OutOfCidsLimit);
 
 			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{

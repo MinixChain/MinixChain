@@ -2,7 +2,9 @@ use crate as pallet_coming_id;
 use sp_core::H256;
 use frame_support::{
 	parameter_types,
-	traits::GenesisBuild
+	traits::{
+		GenesisBuild, OnInitialize, OnFinalize
+	}
 };
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup}, testing::Header,
@@ -28,7 +30,7 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
 	pub const ClaimValidatePeriod: u32 = 600;
-	pub const CidsLimit: u32 = 500;
+	pub const CidsLimit: u32 = 5;
 }
 
 impl system::Config for Test {
@@ -70,4 +72,15 @@ pub fn new_test_ext(admin_key: u64) -> sp_io::TestExternalities {
 		admin_key: admin_key,
 	}.assimilate_storage(&mut t).unwrap();
 	t.into()
+}
+
+/// Run until a particular block.
+pub fn run_to_block(n: u64) {
+	while System::block_number() < n {
+		if System::block_number() > 1 {
+			System::on_finalize(System::block_number());
+		}
+		System::set_block_number(System::block_number() + 1);
+		System::on_initialize(System::block_number());
+	}
 }

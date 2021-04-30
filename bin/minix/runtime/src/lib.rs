@@ -271,6 +271,7 @@ parameter_types! {
     pub const MaxCommoditiesPerUser: u64 = 2;
 }
 
+/*
 /// Configure the pallet-template in pallets/template.
 impl pallet_commodities::Config for Runtime {
 	type Event = Event;
@@ -278,7 +279,7 @@ impl pallet_commodities::Config for Runtime {
     type CommodityInfo = Vec<u8>;
     type CommodityLimit = MaxCommodities;
     type UserCommodityLimit = MaxCommoditiesPerUser;
-}
+}*/
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -295,7 +296,7 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
+		//NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
 	}
 );
 

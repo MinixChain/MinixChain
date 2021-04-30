@@ -126,9 +126,9 @@ pub mod pallet {
 		// cid_start, cid_end
 		DisApproved(Cid, Cid),
 		// owner, receipt, cid
-		Transfered(T::AccountId, T::AccountId, Cid),
+		Transferred(T::AccountId, T::AccountId, Cid),
 		// receipt, cid
-		ForceTransfered(T::AccountId, Cid),
+		ForceTransferred(T::AccountId, Cid),
 		// owner, cid, bond_type
 		Bonded(T::AccountId, Cid, BondType),
 		// owner, cid, bond_type
@@ -158,8 +158,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T:Config> Pallet<T> {
-		// first register(1, alice): alice is the owner of cid 1 and then bond some data,
-		// then register(1, bob): alice unbond all data and bob is the new owner of cid 1.
+
 		#[pallet::weight(100_000)]
 		pub fn register(origin: OriginFor<T>, cid: Cid, receipt: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
 			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
@@ -169,7 +168,7 @@ pub mod pallet {
 			);
 			if Self::is_community(cid) {
 				ensure!(
-					Self::is_distributed(cid),
+					!Self::is_distributed(cid),
 					Error::<T>::DistributedCid
 				);
 			}
@@ -182,7 +181,7 @@ pub mod pallet {
 				});
 
 				if Self::is_distributed(cid) {
-					Self::deposit_event(Event::ForceTransfered(receipt, cid))
+					Self::deposit_event(Event::ForceTransferred(receipt, cid))
 				} else {
 					Self::deposit_event(Event::Registered(receipt, cid));
 				}
@@ -311,7 +310,7 @@ pub mod pallet {
 				detail.owner = receipt.clone();
 				detail.bonds = vec![];
 
-				Self::deposit_event(Event::Transfered(who, receipt, cid));
+				Self::deposit_event(Event::Transferred(who, receipt, cid));
 
 				Ok(())
 			})

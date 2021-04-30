@@ -1,3 +1,4 @@
+use super::*;
 use crate as pallet_coming_id;
 use sp_core::H256;
 use frame_support::{
@@ -71,7 +72,9 @@ pub fn new_test_ext(admin_key: u64) -> sp_io::TestExternalities {
 	pallet_coming_id::GenesisConfig::<Test>{
 		admin_key: admin_key,
 	}.assimilate_storage(&mut t).unwrap();
-	t.into()
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }
 
 /// Run until a particular block.
@@ -83,4 +86,20 @@ pub fn run_to_block(n: u64) {
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
 	}
+}
+
+pub(crate) fn last_event() -> Event {
+	system::Pallet::<Test>::events().pop().expect("Event expected").event
+}
+
+pub(crate) fn expect_event<E: Into<Event>>(e: E) {
+	assert_eq!(last_event(), e.into());
+}
+
+pub(crate) fn last_events(n: usize) -> Vec<Event> {
+	system::Pallet::<Test>::events().into_iter().rev().take(n).rev().map(|e| e.event).collect()
+}
+
+pub(crate) fn expect_events(e: Vec<Event>) {
+	assert_eq!(last_events(e.len()), e);
 }

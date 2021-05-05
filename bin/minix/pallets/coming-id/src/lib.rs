@@ -383,29 +383,25 @@ impl<T: Config> Pallet<T> {
 	fn do_initialize(now: T::BlockNumber) -> Weight {
 		// 1. Delete from Distributing
 		let mut expired: Vec<Cid> = Vec::new();
-		debug_assert!(
-			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
-				let mut count = 0;
-				for cid in Self::take_expired_reqs(reqs, now) {
-					if count > <T as pallet::Config>::CidsLimit::get() {
-						break;
-					}
-					reqs.remove(&cid);
-					expired.push(cid);
-					count += 1;
+		Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
+			let mut count = 0;
+			for cid in Self::take_expired_reqs(reqs, now) {
+				if count > <T as pallet::Config>::CidsLimit::get() {
+					break;
 				}
+				reqs.remove(&cid);
+				expired.push(cid);
+				count += 1;
+			}
 
-				Ok(())
-			}).is_ok()
-		);
+			Ok(())
+		}).unwrap_or_default();
 		// 2. Put into WaitDistributing
-		debug_assert!(
-			WaitDistributing::<T>::try_mutate::<_, Error<T>, _>(|deque|{
-				deque.extend(expired.iter());
+		WaitDistributing::<T>::try_mutate::<_, Error<T>, _>(|deque|{
+			deque.extend(expired.iter());
 
-				Ok(())
-			}).is_ok()
-		);
+			Ok(())
+		}).unwrap_or_default();
 
 		if expired.is_empty() {
 			T::DbWeight::get().reads(2)

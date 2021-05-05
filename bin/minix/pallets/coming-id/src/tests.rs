@@ -72,21 +72,151 @@ fn register_should_work() {
 #[test]
 fn claim_should_work() {
 	new_test_ext(ADMIN).execute_with(||{
+		assert_ok!(ComingId::claim(Origin::signed(COMMON_CHARLIE), COMMON_CHARLIE));
+		expect_event(ComingIdEvent::Claiming(COMMON_CHARLIE, 1000000, 11));
+		run_to_block(11);
+		assert!(ComingId::distributing().contains_key(&1000000));
 
+		run_to_block(12);
+		assert!(ComingId::distributing().is_empty());
+
+		assert_ok!(ComingId::claim(Origin::signed(ADMIN), COMMON_CHARLIE));
+		expect_event(ComingIdEvent::ForceClaimed(COMMON_CHARLIE, 1000000));
 	})
 }
 
 #[test]
 fn approve_should_work() {
 	new_test_ext(ADMIN).execute_with(||{
+		assert_ok!(ComingId::claim(Origin::signed(COMMON_CHARLIE), COMMON_CHARLIE));
+		expect_event(ComingIdEvent::Claiming(COMMON_CHARLIE, 1000000, 11));
+		run_to_block(11);
+		assert!(ComingId::distributing().contains_key(&1000000));
 
+		// 1. Error::RequireAdmin
+		assert_noop!(
+			ComingId::approve(Origin::signed(COMMON_CHARLIE), 1000000, 1000000),
+			Error::<Test>::RequireAdmin
+		);
+		// 2. Error::InvalidCidEnd
+		assert_noop!(
+			ComingId::approve(Origin::signed(ADMIN), 1000000, 1000000),
+			Error::<Test>::InvalidCidEnd
+		);
+		// 3. Error::OutOfCidsLimit
+		assert_noop!(
+			ComingId::approve(Origin::signed(ADMIN), 1000000, 1000006),
+			Error::<Test>::OutOfCidsLimit
+		);
+
+		run_to_block(11);
+		assert_ok!(ComingId::approve(Origin::signed(ADMIN), 1000000, 1000005));
+		expect_event(ComingIdEvent::Approved(1000000, 1000005));
+
+		run_to_block(12);
+		assert!(ComingId::distributing().is_empty());
+		assert!(ComingId::waiting().is_empty());
+		assert_eq!(
+			Some(CidDetails{ owner: COMMON_CHARLIE, bonds: vec![]}),
+			ComingId::get_bond(1000000)
+		);
 	})
 }
 
 #[test]
 fn disapprove_should_work() {
 	new_test_ext(ADMIN).execute_with(||{
+		assert_ok!(ComingId::claim(Origin::signed(COMMON_CHARLIE), COMMON_CHARLIE));
+		expect_event(ComingIdEvent::Claiming(COMMON_CHARLIE, 1000000, 11));
+		run_to_block(11);
+		assert!(ComingId::distributing().contains_key(&1000000));
 
+		// 1. Error::RequireAdmin
+		assert_noop!(
+			ComingId::disapprove(Origin::signed(COMMON_CHARLIE), 1000000, 1000000),
+			Error::<Test>::RequireAdmin
+		);
+		// 2. Error::InvalidCidEnd
+		assert_noop!(
+			ComingId::disapprove(Origin::signed(ADMIN), 1000000, 1000000),
+			Error::<Test>::InvalidCidEnd
+		);
+		// 3. Error::OutOfCidsLimit
+		assert_noop!(
+			ComingId::disapprove(Origin::signed(ADMIN), 1000000, 1000006),
+			Error::<Test>::OutOfCidsLimit
+		);
+
+		run_to_block(11);
+		assert_ok!(ComingId::disapprove(Origin::signed(ADMIN), 1000000, 1000005));
+		expect_event(ComingIdEvent::DisApproved(1000000, 1000005));
+
+		assert!(ComingId::distributing().is_empty());
+		assert!(ComingId::waiting().contains(&1000000));
+	})
+}
+
+#[test]
+fn claim_approve_disapprove_should_work() {
+	new_test_ext(ADMIN).execute_with(||{
+		assert_ok!(ComingId::claim(Origin::signed(COMMON_CHARLIE), COMMON_CHARLIE));
+		expect_event(ComingIdEvent::Claiming(COMMON_CHARLIE, 1000000, 1+10));
+		assert_ok!(ComingId::claim(Origin::signed(COMMON_DAVE), COMMON_DAVE));
+		expect_event(ComingIdEvent::Claiming(COMMON_DAVE, 1000001, 1+10));
+
+		run_to_block(3);
+
+		assert_ok!(ComingId::claim(Origin::signed(COMMUNITY_ALICE), COMMUNITY_ALICE));
+		expect_event(ComingIdEvent::Claiming(COMMUNITY_ALICE, 1000002, 3+10));
+		assert_ok!(ComingId::claim(Origin::signed(COMMUNITY_BOB), COMMUNITY_BOB));
+		expect_event(ComingIdEvent::Claiming(COMMUNITY_BOB, 1000003, 3+10));
+		assert_ok!(ComingId::claim(Origin::signed(ADMIN), RESERVE3));
+		expect_event(ComingIdEvent::ForceClaimed(RESERVE3, 1000004));
+
+		// disapprove [1000002, 1000003) = 1000002
+		assert_ok!(ComingId::disapprove(Origin::signed(ADMIN), 1000002, 1000003));
+		expect_event(ComingIdEvent::DisApproved(1000002, 1000003));
+		// approve [1000001, 1000003) = 1000001
+		assert_ok!(ComingId::approve(Origin::signed(ADMIN), 1000001, 1000003));
+		expect_event(ComingIdEvent::Approved(1000001, 1000003));
+
+		run_to_block(11);
+
+		assert!(ComingId::distributing().contains_key(&1000000));
+		assert!(ComingId::distributing().contains_key(&1000003));
+		assert!(ComingId::waiting().contains(&1000002));
+
+		run_to_block(12);
+		assert!(ComingId::distributing().contains_key(&1000003));
+		assert!(ComingId::waiting().contains(&1000002));
+		assert!(ComingId::waiting().contains(&1000000));
+
+		run_to_block(14);
+		assert!(ComingId::distributing().is_empty());
+		assert!(ComingId::waiting().contains(&1000002));
+		assert!(ComingId::waiting().contains(&1000000));
+		assert!(ComingId::waiting().contains(&1000003));
+
+		assert_ok!(ComingId::claim(Origin::signed(RESERVE2), RESERVE2));
+		expect_event(ComingIdEvent::Claiming(RESERVE2, 1000002, 14+10));
+		assert_ok!(ComingId::claim(Origin::signed(RESERVE2), RESERVE2));
+		expect_event(ComingIdEvent::Claiming(RESERVE2, 1000000, 14+10));
+		assert_ok!(ComingId::claim(Origin::signed(RESERVE2), RESERVE2));
+		expect_event(ComingIdEvent::Claiming(RESERVE2, 1000003, 14+10));
+
+		assert!(ComingId::distributing().contains_key(&1000000));
+		assert!(ComingId::distributing().contains_key(&1000002));
+		assert!(ComingId::distributing().contains_key(&1000003));
+		assert!(ComingId::waiting().is_empty());
+
+		run_to_block(25);
+		assert!(ComingId::distributing().is_empty());
+		assert!(ComingId::waiting().contains(&1000000));
+		assert!(ComingId::waiting().contains(&1000002));
+		assert!(ComingId::waiting().contains(&1000003));
+
+		assert_ok!(ComingId::claim(Origin::signed(RESERVE2), RESERVE2));
+		expect_event(ComingIdEvent::Claiming(RESERVE2, 1000000, 25+10));
 	})
 }
 

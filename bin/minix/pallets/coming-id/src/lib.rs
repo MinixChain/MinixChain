@@ -14,6 +14,8 @@ use frame_support::sp_std::{
 	},
 	ops::Bound::{Included,Excluded},
 };
+use frame_support::traits::Get;
+
 #[cfg(feature = "std")]
 use serde::{Serialize, Deserialize};
 
@@ -76,9 +78,11 @@ pub mod pallet {
 	pub type Distributed<T: Config> = StorageMap<_, Blake2_128Concat, Cid, CidDetails<T::AccountId>>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn distributing)]
 	pub type Distributing<T: Config> = StorageValue<_, BTreeMap<Cid, (T::AccountId, T::BlockNumber)>, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn waiting)]
 	pub type WaitDistributing<T> = StorageValue<_, VecDeque<Cid>, ValueQuery>;
 
 	#[pallet::storage]
@@ -269,7 +273,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn disapprove(origin: OriginFor<T>, cid_start: Cid, cid_end: Cid) -> DispatchResult {
 			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
-			ensure!(cid_end >= cid_start, Error::<T>::InvalidCidEnd);
+			ensure!(cid_end > cid_start, Error::<T>::InvalidCidEnd);
 			ensure!(cid_end - cid_start <= (T::CidsLimit::get()) as u64, Error::<T>::OutOfCidsLimit);
 
 			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
@@ -378,13 +382,30 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	fn do_initialize(now: T::BlockNumber) {
 		// 1. Delete from Distributing
-		Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
-			for cid in Self::take_expired_reqs(reqs, now) {
-				reqs.remove(&cid);
-			}
+		let mut expired: Vec<Cid> = vec![];
+		debug_assert!(
+			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
+				let mut count = 0;
+				for cid in Self::take_expired_reqs(reqs, now) {
+					if count > <T as pallet::Config>::CidsLimit::get() {
+						break;
+					}
+					reqs.remove(&cid);
+					expired.push(cid);
+					count += 1;
+				}
 
-			Ok(())
-		}).unwrap_or_default()
+				Ok(())
+			}).is_ok()
+		);
+		// 2. Put into WaitDistributing
+		debug_assert!(
+			WaitDistributing::<T>::try_mutate::<_, Error<T>, _>(|deque|{
+				deque.extend(expired.iter());
+
+				Ok(())
+			}).is_ok()
+		)
 	}
 
 	fn is_reserved(cid: Cid) -> bool {

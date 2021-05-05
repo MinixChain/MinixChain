@@ -66,7 +66,7 @@ impl pallet_coming_id::Config for Test {
 }
 
 // Build test environment by setting the admin `key` for the Genesis.
-pub fn new_test_ext(admin_key: u64) -> sp_io::TestExternalities {
+pub fn new_test_ext(admin_key: <Test as frame_system::Config>::AccountId) -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_coming_id::GenesisConfig::<Test>{
 		admin_key: admin_key,

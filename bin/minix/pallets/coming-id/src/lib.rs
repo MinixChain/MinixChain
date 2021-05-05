@@ -132,7 +132,11 @@ pub mod pallet {
 		// owner, cid, bond_type
 		Bonded(T::AccountId, Cid, BondType),
 		// owner, cid, bond_type
-		UnBonded(T::AccountId, Cid, BondType)
+		BondUpdated(T::AccountId, Cid, BondType),
+		// owner, cid, bond_type
+		UnBonded(T::AccountId, Cid, BondType),
+		// owner, cid, bond_type
+		NotFoundBondType(T::AccountId, Cid, BondType),
 	}
 
 	#[pallet::error]
@@ -327,18 +331,20 @@ pub mod pallet {
 
 				let bond_type = bond_data.bond_type;
 
-				let mut need_push = true;
+				let mut push_back = true;
 				for bond in detail.bonds.iter_mut() {
 					if bond.bond_type == bond_type {
 						(*bond).data = bond_data.data.clone();
-						need_push = false;
+						push_back = false;
 					}
 				}
-				if need_push {
-					detail.bonds.push(bond_data);
-				}
 
-				Self::deposit_event(Event::Bonded(who, cid, bond_type));
+				if push_back {
+					detail.bonds.push(bond_data);
+					Self::deposit_event(Event::Bonded(who, cid, bond_type));
+				} else {
+					Self::deposit_event(Event::BondUpdated(who, cid, bond_type));
+				}
 
 				Ok(())
 			})
@@ -353,9 +359,15 @@ pub mod pallet {
 				let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 				ensure!(detail.owner == who, Error::<T>::RequireOwner);
 
-				detail.bonds.retain(|bond| bond.bond_type == bond_type);
+				let bonds_before = detail.bonds.len();
+				detail.bonds.retain(|bond| bond.bond_type != bond_type);
+				let bonds_after = detail.bonds.len();
 
-				Self::deposit_event(Event::UnBonded(who, cid, bond_type));
+				if bonds_before != bonds_after {
+					Self::deposit_event(Event::UnBonded(who, cid, bond_type));
+				} else {
+					Self::deposit_event(Event::NotFoundBondType(who, cid, bond_type));
+				}
 
 				Ok(())
 			})

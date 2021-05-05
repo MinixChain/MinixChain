@@ -123,13 +123,20 @@ fn transfer_should_work() {
 			bond_type:1u16,
 			data:b"test".to_vec(),
 		};
-		assert_ok!(ComingId::bond(Origin::signed(COMMON_CHARLIE), 1000000, bond));
+		assert_ok!(ComingId::bond(Origin::signed(COMMON_CHARLIE), 1000000, bond.clone()));
 
 		assert_ok!(ComingId::transfer(Origin::signed(COMMON_CHARLIE), 1000000, COMMON_DAVE));
 		expect_event(ComingIdEvent::Transferred(COMMON_CHARLIE, COMMON_DAVE, 1000000));
 
 		let cid_details = ComingId::get_bond(1000000);
 		assert_eq!(Some(CidDetails{owner: COMMON_DAVE, bonds: vec![]}), cid_details);
+
+		// transfer to self
+		assert_ok!(ComingId::bond(Origin::signed(COMMON_DAVE), 1000000, bond.clone()));
+		assert_eq!(Some(CidDetails{owner: COMMON_DAVE, bonds: vec![bond]}), ComingId::get_bond(1000000));
+		assert_ok!(ComingId::transfer(Origin::signed(COMMON_DAVE), 1000000, COMMON_DAVE));
+		assert_eq!(Some(CidDetails{owner: COMMON_DAVE, bonds: vec![]}), ComingId::get_bond(1000000));
+
 	});
 }
 
@@ -145,6 +152,23 @@ fn bond_should_work() {
 			data:b"test".to_vec(),
 		};
 
+		// 1. Error::InvalidCid
+		assert_noop!(
+			ComingId::bond(Origin::signed(RESERVE2), 0, bond.clone()),
+			Error::<Test>::InvalidCid,
+		);
+		assert_noop!(
+			ComingId::bond(Origin::signed(RESERVE2), 1000000000000, bond.clone()),
+			Error::<Test>::InvalidCid,
+		);
+
+		// 2. Error::RequireOwner
+		assert_noop!(
+			ComingId::bond(Origin::signed(ADMIN), 1, bond.clone()),
+			Error::<Test>::RequireOwner,
+		);
+
+
 		assert_ok!(ComingId::bond(Origin::signed(RESERVE2), 1, bond.clone()));
 		assert_ok!(ComingId::bond(Origin::signed(COMMUNITY_ALICE), 100000, bond.clone()));
 		assert_ok!(ComingId::bond(Origin::signed(COMMON_CHARLIE), 1000000, bond.clone()));
@@ -154,6 +178,7 @@ fn bond_should_work() {
 			data:b"new-test".to_vec(),
 		};
 		assert_ok!(ComingId::bond(Origin::signed(RESERVE2), 1, new_bond1.clone()));
+		expect_event(ComingIdEvent::BondUpdated(RESERVE2, 1, 1u16));
 		assert_eq!(
 			Some(CidDetails{ owner: RESERVE2, bonds: vec![new_bond1]}),
 			ComingId::get_bond(1)
@@ -174,6 +199,7 @@ fn bond_should_work() {
 			data:b"new-test".to_vec(),
 		};
 		assert_ok!(ComingId::bond(Origin::signed(COMMON_CHARLIE), 1000000, new_bond3.clone()));
+		expect_event(ComingIdEvent::Bonded(COMMON_CHARLIE, 1000000, 3u16));
 		assert_eq!(
 			Some(CidDetails{owner: COMMON_CHARLIE, bonds: vec![bond, new_bond3]}),
 			ComingId::get_bond(1000000)
@@ -184,6 +210,57 @@ fn bond_should_work() {
 #[test]
 fn unbond_should_work() {
 	new_test_ext(ADMIN).execute_with(||{
+		assert_ok!(ComingId::register(Origin::signed(ADMIN), 1, RESERVE2));
+		assert_ok!(ComingId::register(Origin::signed(ADMIN), 100000, COMMUNITY_ALICE));
+		assert_ok!(ComingId::claim(Origin::signed(ADMIN), COMMON_CHARLIE));
+		expect_event(ComingIdEvent::ForceClaimed(COMMON_CHARLIE, 1000000));
+		let bond = BondData{
+			bond_type:1u16,
+			data:b"test".to_vec(),
+		};
 
+		assert_ok!(ComingId::bond(Origin::signed(RESERVE2), 1, bond.clone()));
+		assert_ok!(ComingId::bond(Origin::signed(COMMUNITY_ALICE), 100000, bond.clone()));
+		assert_ok!(ComingId::bond(Origin::signed(COMMON_CHARLIE), 1000000, bond.clone()));
+
+		// 1. Error::InvalidCid
+		assert_noop!(
+			ComingId::unbond(Origin::signed(RESERVE2), 0, 1u16),
+			Error::<Test>::InvalidCid,
+		);
+		assert_noop!(
+			ComingId::unbond(Origin::signed(RESERVE2), 1000000000000, 1u16),
+			Error::<Test>::InvalidCid,
+		);
+
+		// 2. Error::RequireOwner
+		assert_noop!(
+			ComingId::unbond(Origin::signed(ADMIN), 1, 1u16),
+			Error::<Test>::RequireOwner,
+		);
+
+		assert_ok!(ComingId::unbond(Origin::signed(RESERVE2), 1, 1u16));
+		expect_event(ComingIdEvent::UnBonded(RESERVE2, 1, 1u16));
+
+		let new_bond2 = BondData{
+			bond_type:2u16,
+			data:b"new-test".to_vec(),
+		};
+		assert_ok!(ComingId::bond(Origin::signed(COMMUNITY_ALICE), 100000, new_bond2.clone()));
+		assert_eq!(
+			Some(CidDetails{owner: COMMUNITY_ALICE, bonds: vec![bond.clone(), new_bond2.clone()]}),
+			ComingId::get_bond(100000)
+		);
+		assert_ok!(ComingId::unbond(Origin::signed(COMMUNITY_ALICE), 100000, 1u16));
+		assert_eq!(
+			Some(CidDetails{owner: COMMUNITY_ALICE, bonds: vec![new_bond2]}),
+			ComingId::get_bond(100000)
+		);
+
+		// unbond twice
+		assert_ok!(ComingId::unbond(Origin::signed(COMMON_CHARLIE), 1000000, 1u16));
+		expect_event(ComingIdEvent::UnBonded(COMMON_CHARLIE, 1000000, 1u16));
+		assert_ok!(ComingId::unbond(Origin::signed(COMMON_CHARLIE), 1000000, 1u16));
+		expect_event(ComingIdEvent::NotFoundBondType(COMMON_CHARLIE, 1000000, 1u16));
 	})
 }

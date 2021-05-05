@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
+use frame_support::inherent::Vec;
 use codec::{Encode, Decode};
 use sp_runtime::{
 	traits::{
@@ -14,7 +15,7 @@ use frame_support::sp_std::{
 	},
 	ops::Bound::{Included,Excluded},
 };
-use frame_support::traits::Get;
+use frame_support::pallet_prelude::*;
 
 #[cfg(feature = "std")]
 use serde::{Serialize, Deserialize};
@@ -54,7 +55,7 @@ pub struct CidDetails<AccountId> {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{transactional, dispatch::DispatchResult, pallet_prelude::*};
+	use frame_support::{transactional, dispatch::DispatchResult};
 	use frame_system::pallet_prelude::*;
 	use super::*;
 
@@ -159,8 +160,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
-			Self::do_initialize(now);
-			0
+			Self::do_initialize(now)
 		}
 	}
 
@@ -185,7 +185,7 @@ pub mod pallet {
 			Distributed::<T>::try_mutate_exists(cid, |details|{
 				*details = Some(CidDetails{
 					owner: receipt.clone(),
-					bonds: vec![],
+					bonds: Vec::new(),
 				});
 
 				if Self::is_distributed(cid) {
@@ -211,7 +211,7 @@ pub mod pallet {
 				Distributed::<T>::try_mutate_exists::<_, _, Error<T>, _>(common_cid, |details|{
 					*details = Some(CidDetails{
 						owner: receipt.clone(),
-						bonds: vec![],
+						bonds: Vec::new(),
 					});
 
 					Self::deposit_event(Event::ForceClaimed(receipt, common_cid));
@@ -251,7 +251,7 @@ pub mod pallet {
 					Distributed::<T>::try_mutate_exists::<_, _, Error<T>, _>(common_cid, |details|{
 						*details = Some(CidDetails{
 							owner: who,
-							bonds: vec![],
+							bonds: Vec::new(),
 						});
 
 						Ok(())
@@ -316,7 +316,7 @@ pub mod pallet {
 				ensure!(detail.owner == who, Error::<T>::RequireOwner);
 
 				detail.owner = receipt.clone();
-				detail.bonds = vec![];
+				detail.bonds = Vec::new();
 
 				Self::deposit_event(Event::Transferred(who, receipt, cid));
 
@@ -337,7 +337,7 @@ pub mod pallet {
 
 				let mut push_back = true;
 				for bond in detail.bonds.iter_mut() {
-					if bond.bond_type == bond_type {
+					if bond.bond_type == bond_data.bond_type {
 						(*bond).data = bond_data.data.clone();
 						push_back = false;
 					}
@@ -380,9 +380,9 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	fn do_initialize(now: T::BlockNumber) {
+	fn do_initialize(now: T::BlockNumber) -> Weight {
 		// 1. Delete from Distributing
-		let mut expired: Vec<Cid> = vec![];
+		let mut expired: Vec<Cid> = Vec::new();
 		debug_assert!(
 			Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs|{
 				let mut count = 0;
@@ -405,7 +405,13 @@ impl<T: Config> Pallet<T> {
 
 				Ok(())
 			}).is_ok()
-		)
+		);
+
+		if expired.is_empty() {
+			T::DbWeight::get().reads(2)
+		} else {
+			T::DbWeight::get().reads_writes(2,2)
+		}
 	}
 
 	fn is_reserved(cid: Cid) -> bool {

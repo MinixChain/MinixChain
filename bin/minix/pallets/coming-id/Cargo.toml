@@ -19,7 +19,6 @@ frame-support = { default-features = false, version = "3.0.0", path = "../../../
 frame-system = { default-features = false,  version = "3.0.0",  path = "../../../../frame/system" }
 frame-benchmarking = { default-features = false,  version = "3.1.0",  path = "../../../../frame/benchmarking", optional = true }
 sp-runtime = { default-features = false, version = "3.0.0", path = "../../../../primitives/runtime" }
-pallet-sudo = { default-features = false, version = "3.0.0", path = "../../../../frame/sudo"}
 
 [dev-dependencies]
 serde = { version = "1.0.119" }
@@ -36,7 +35,6 @@ std = [
 	'frame-system/std',
 	'frame-benchmarking/std',
 	'sp-runtime/std',
-	'pallet-sudo/std'
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]

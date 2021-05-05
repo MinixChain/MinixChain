@@ -39,7 +39,8 @@ pub use frame_support::{
 };
 use pallet_transaction_payment::CurrencyAdapter;
 
-/// Import the template pallet.
+
+/// Import the coming-id pallet.
 pub use pallet_coming_id;
 
 /// An index to a block.
@@ -145,7 +146,7 @@ parameter_types! {
 		::with_sensible_defaults(2 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
 	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
 		::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 44;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -281,6 +282,21 @@ impl pallet_coming_id::Config for Runtime {
 	type CidsLimit = CidsLimit;
 }
 
+/*
+parameter_types! {
+    pub const MaxCommodities: u128 = 5;
+    pub const MaxCommoditiesPerUser: u64 = 2;
+}
+
+/// Configure the pallet-template in pallets/template.
+impl pallet_commodities::Config for Runtime {
+	type Event = Event;
+    type CommodityAdmin = frame_system::EnsureRoot<AccountId>;
+    type CommodityInfo = Vec<u8>;
+    type CommodityLimit = MaxCommodities;
+    type UserCommodityLimit = MaxCommoditiesPerUser;
+}*/
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -297,6 +313,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
+		//NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
 	}
 );
 
@@ -493,6 +510,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			add_benchmark!(params, batches, pallet_coming_id, ComingId);
+
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

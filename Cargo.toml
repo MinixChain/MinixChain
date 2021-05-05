@@ -6,6 +6,7 @@ members = [
 	"bin/minix/pallets/coming-id",
 	"bin/minix/pallets/coming-id/rpc",
 	"bin/minix/pallets/coming-id/rpc/runtime-api",
+	"bin/minix/pallets/pallet-nft",
 	"bin/minix/runtime",
 	"bin/utils/chain-spec-builder",
 	"bin/utils/subkey",

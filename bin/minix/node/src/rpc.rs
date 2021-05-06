@@ -35,10 +35,12 @@ pub fn create_full<C, P>(
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BlockBuilder<Block>,
+	C::Api: pallet_coming_id_rpc::ComingIdRuntimeApi<Block, AccountId>,
 	P: TransactionPool + 'static,
 {
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
+	use pallet_coming_id_rpc::{ComingId, ComingIdApi};
 
 	let mut io = jsonrpc_core::IoHandler::default();
 	let FullDeps {
@@ -53,6 +55,10 @@ pub fn create_full<C, P>(
 
 	io.extend_with(
 		TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone()))
+	);
+
+	io.extend_with(
+		ComingIdApi::to_delegate(ComingId::new(client.clone()))
 	);
 
 	// Extend this RPC with a custom API by using the following syntax.

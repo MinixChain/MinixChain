@@ -20,6 +20,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::Codec;
+use sp_std::prelude::Vec;
 pub use pallet_coming_id::{
     Cid, CidDetails, BondData, BondType, //RpcBondData, RpcCidDetails
 };

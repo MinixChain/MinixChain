@@ -3806,6 +3806,7 @@ dependencies = [
  "jsonrpc-core",
  "minix-runtime",
  "pallet-coming-id",
+ "pallet-coming-id-rpc",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
@@ -3849,6 +3850,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-coming-id",
+ "pallet-coming-id-rpc-runtime-api",
  "pallet-commodities",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
@@ -4418,6 +4420,32 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-coming-id-rpc"
+version = "1.0.0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-coming-id-rpc-runtime-api",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-coming-id-rpc-runtime-api"
+version = "1.0.0"
+dependencies = [
+ "pallet-coming-id",
+ "parity-scale-codec",
+ "sp-api",
  "sp-std",
 ]
 

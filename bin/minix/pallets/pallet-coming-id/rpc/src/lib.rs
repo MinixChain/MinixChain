@@ -106,7 +106,7 @@ where
 		&self,
 		account: AccountId,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> Result<Vec<CidDetails<AccountId>>> {
+	) -> Result<Vec<(Cid, CidDetails<AccountId>)>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.

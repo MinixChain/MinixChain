@@ -38,6 +38,7 @@ pub use frame_support::{
 	},
 };
 use pallet_transaction_payment::CurrencyAdapter;
+use pallet_coming_id::{Cid, CidDetails};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -473,6 +474,16 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+	}
+
+	impl pallet_coming_id_rpc_runtime_api::ComingIdApi<Block, AccountId> for Runtime {
+		fn get_bond(cid: Cid) -> Option<CidDetails<AccountId>> {
+			ComingId::get_bond(cid)
+		}
+
+		fn get_bonds(account: AccountId) -> Vec<(Cid, CidDetails<AccountId>)> {
+			ComingId::get_bonds(account)
 		}
 	}
 

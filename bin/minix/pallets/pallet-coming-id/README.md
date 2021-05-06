@@ -50,13 +50,13 @@
      
       当claiming请求在一定时限`ClaimValidatePeriod`内, admin没有approve/disapprove,则cid被系统回收
   
-    - transfer(cid, recipient)
+  - transfer(cid, recipient)
      
       user权限(owner), 只允许6-12位cid自由transfer.
   
       transfer to self = unbond all
   
-    - bond(cid, bond_data)
+  - bond(cid, bond_data)
   
       user权限(owner),  对指定cid, bond数据(类型字段和数据字段):
   
@@ -67,6 +67,133 @@
       }
       ```
   
-    - unbond(cid, bond_type)
+  - unbond(cid, bond_type)
    
       user权限(owner), unbond 指定cid, bond类型字段
+
+## rpc
+- get_bond:
+ 获取指定cid的bond数据
+
+```
+#[rpc(name = "get_bond")]
+fn get_bond(
+   &self,
+   cid: Cid,
+   at: Option<BlockHash>
+) -> Result<Option<CidDetails<AccountId>>>;
+```
+输入：
+```json
+{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"get_bond",
+  "params": [1000000]
+}
+```
+输出：
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "bonds": [],
+    "owner": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
+  },
+  "id": 1
+}
+```
+- get_bonds:
+ 获取指定account的bond数据
+```
+#[rpc(name = "get_bonds")]
+fn get_bonds(
+   &self,
+   account: AccountId,
+   at: Option<BlockHash>
+) -> Result<Vec<(Cid,CidDetails<AccountId>)>>;
+```
+输入：
+```
+{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"get_bonds",
+  "params": ["5QHhurjL9ox44rK8PA7qVBLc9eqKUD2NAX2J5p5FgUdHanb5"]
+}
+```
+输出：
+```json
+{
+  "jsonrpc": "2.0",
+  "result": [
+    [
+      1000001,
+      {
+        "bonds": [],
+        "owner": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
+      }
+    ],
+    [
+      1000000,
+      {
+        "bonds": [],
+        "owner": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
+      }
+    ]
+  ],
+  "id": 1
+}
+```
+## custom types
+```json
+{
+  "Cid": "u64",
+  "BondType": "u16",
+  "BondData": {
+    "bond_type": "BondType",
+    "data": "Vec<u8>"
+  },
+  "CidDetails": {
+    "owner": "AccountId",
+    "bonds": "Vec<BondData>"
+  }
+}
+```
+## rpc custom 
+```json
+    
+{
+  "comingId": {
+    "getBond": {
+      "description": "comingId getBond",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Option<CidDetails>"
+    },
+    "getBonds": {
+      "description": "comingId getBonds",
+      "params": [
+        {
+          "name": "account",
+          "type": "AccountID"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Vec<(Cid, CidDetails)>"
+    }
+}
+```

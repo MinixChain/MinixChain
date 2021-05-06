@@ -19,6 +19,8 @@ frame-support = { default-features = false, version = "3.0.0", path = "../../../
 frame-system = { default-features = false,  version = "3.0.0",  path = "../../../../frame/system" }
 frame-benchmarking = { default-features = false,  version = "3.1.0",  path = "../../../../frame/benchmarking", optional = true }
 sp-runtime = { default-features = false, version = "3.0.0", path = "../../../../primitives/runtime" }
+sp-std = { default-features = false, version = "3.0.0", path = "../../../../primitives/std" }
+hex-literal = { version = "0.3.1", optional = true }
 
 [dev-dependencies]
 serde = { version = "1.0.119" }
@@ -35,7 +37,12 @@ std = [
 	'frame-system/std',
 	'frame-benchmarking/std',
 	'sp-runtime/std',
+	'sp-std/std'
 ]
 
-runtime-benchmarks = ["frame-benchmarking"]
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"hex-literal"
+]
+
 try-runtime = ["frame-support/try-runtime"]

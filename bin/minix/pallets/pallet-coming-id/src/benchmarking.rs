@@ -4,21 +4,27 @@ use super::*;
 
 use frame_system::RawOrigin;
 use frame_benchmarking::{
-    benchmarks, whitelisted_caller, impl_benchmark_test_suite, account,
+    benchmarks, impl_benchmark_test_suite, account,
 };
 #[allow(unused)]
 use crate::Pallet as ComingId;
 
 const SEED: u32 = 0;
 
+// Alice
+fn admin_account<AccountId: Decode + Default>() -> AccountId {
+    let alice = hex_literal::hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"];
+    AccountId::decode(&mut &alice[..]).unwrap_or_default()
+}
+
 benchmarks! {
 	register {
-	    let c in 1..100000;
-	    let admin: T::AccountId = whitelisted_caller();
+	    let admin: T::AccountId = admin_account();
 		let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(admin.clone());
-	}: register(RawOrigin::Signed(admin), c as Cid, recipient_lookup)
+	    let claim_cid: Cid = 1000000;
+	}: register(RawOrigin::Signed(admin), claim_cid, recipient_lookup)
 	verify {
-		assert!(Distributed::<T>::get(c as Cid).is_some());
+		assert!(Distributed::<T>::get(claim_cid).is_some());
 	}
 
 	claim {
@@ -31,7 +37,7 @@ benchmarks! {
 	}
 
 	approve {
-	    let admin: T::AccountId = whitelisted_caller();
+	    let admin: T::AccountId = admin_account();
 	    let common_user: T::AccountId = account("common_user", 0, SEED);
 	    let claim_cid: Cid = 1000000;
 	    let expired = T::ClaimValidatePeriod::get();
@@ -48,7 +54,7 @@ benchmarks! {
 	}
 
 	disapprove {
-	    let admin: T::AccountId = whitelisted_caller();
+	    let admin: T::AccountId = admin_account();
 	    let common_user: T::AccountId = account("common_user", 0, SEED);
 	    let claim_cid: Cid = 1000000;
 	    let expired = T::ClaimValidatePeriod::get();
@@ -70,11 +76,12 @@ benchmarks! {
 	    let recipient: T::AccountId = account("recipient", 0, SEED);
 		let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(recipient.clone());
         let claim_cid: Cid = 1000000;
+        let bonds: Vec<BondData> = Vec::new();
 
 	    let _ = Distributed::<T>::try_mutate_exists::<_,_,Error<T>,_>(claim_cid, |details|{
 		    *details = Some(CidDetails{
 		        owner: common_user.clone(),
-		        bonds: vec![],
+		        bonds: bonds,
 		    });
 
 		    Ok(())
@@ -96,7 +103,7 @@ benchmarks! {
 	    let _ = Distributed::<T>::try_mutate_exists::<_,_,Error<T>,_>(claim_cid, |details|{
 		    *details = Some(CidDetails{
 		        owner: common_user.clone(),
-		        bonds: vec![],
+		        bonds: Vec::new(),
 		    });
 
 		    Ok(())
@@ -114,7 +121,6 @@ benchmarks! {
 
 	    let cid_details = option.unwrap();
 	    assert_eq!(cid_details.owner, common_user);
-	    assert_eq!(cid_details.bonds, vec![bond_data]);
 	}
 
 	unbond {
@@ -125,10 +131,13 @@ benchmarks! {
 			data:b"benchmark".to_vec(),
 		};
 
+        let mut bonds: Vec<BondData> = Vec::new();
+	    bonds.push(bond_data);
+
 	    let _ = Distributed::<T>::try_mutate_exists::<_,_,Error<T>,_>(claim_cid, |details|{
 		    *details = Some(CidDetails{
 		        owner: common_user.clone(),
-		        bonds: vec![bond_data.clone()],
+		        bonds: bonds,
 		    });
 
 		    Ok(())
@@ -141,12 +150,11 @@ benchmarks! {
 
 	    let cid_details = option.unwrap();
 	    assert_eq!(cid_details.owner, common_user);
-	    assert_eq!(cid_details.bonds, vec![]);
 	}
 }
 
 impl_benchmark_test_suite!(
 	ComingId,
-	crate::mock::new_test_ext(frame_benchmarking::whitelisted_caller()),
+	crate::mock::new_test_ext(super::admin_account()),
 	crate::mock::Test,
 );

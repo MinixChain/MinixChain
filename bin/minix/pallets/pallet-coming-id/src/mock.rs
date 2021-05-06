@@ -63,6 +63,7 @@ impl pallet_coming_id::Config for Test {
 	type Event = Event;
 	type ClaimValidatePeriod = ClaimValidatePeriod;
 	type CidsLimit = CidsLimit;
+	type WeightInfo = ();
 }
 
 // Build test environment by setting the admin `key` for the Genesis.

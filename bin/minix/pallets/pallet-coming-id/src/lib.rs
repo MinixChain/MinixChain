@@ -1,6 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
+pub use weights::WeightInfo;
+
 use frame_support::inherent::Vec;
 use codec::{Encode, Decode};
 use sp_runtime::{
@@ -28,6 +30,8 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+
+pub mod weights;
 
 pub type Cid = u64;
 pub type BondType = u16;
@@ -63,6 +67,8 @@ pub mod pallet {
 		type ClaimValidatePeriod: Get<Self::BlockNumber>;
 		/// Max number of cids to approve/disapprove per extrinsic call.
 		type CidsLimit: Get<u32>;
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -141,7 +147,6 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		OnlyReservedAndCommunityCid,
 		OnlyCommunityAndCommonCid,
 		InvalidCid,
 		RequireAdmin,
@@ -162,14 +167,11 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T:Config> Pallet<T> {
 
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::register())]
 		pub fn register(origin: OriginFor<T>, cid: Cid, recipient: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
 			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
-			ensure!(
-				Self::is_reserved(cid) || Self::is_community(cid),
-				Error::<T>::OnlyReservedAndCommunityCid
-			);
-			if Self::is_community(cid) {
+			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
+			if Self::is_community(cid) || Self::is_common(cid) {
 				ensure!(
 					!Self::is_distributed(cid),
 					Error::<T>::DistributedCid
@@ -194,7 +196,7 @@ pub mod pallet {
 
 		}
 
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::claim())]
 		#[transactional]
 		pub fn claim(origin: OriginFor<T>, recipient: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
 			let who = ensure_signed(origin)?;
@@ -231,7 +233,7 @@ pub mod pallet {
 		}
 
 		// [cid_start,cid_end)
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::approve())]
 		#[transactional]
 		pub fn approve(origin: OriginFor<T>, cid_start: Cid, cid_end: Cid) -> DispatchResult {
 			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
@@ -264,7 +266,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::disapprove())]
 		#[transactional]
 		pub fn disapprove(origin: OriginFor<T>, cid_start: Cid, cid_end: Cid) -> DispatchResult {
 			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
@@ -285,7 +287,7 @@ pub mod pallet {
 					Ok(())
 				})?;
 
-				// 3. elete from Distributing
+				// 3. Delete from Distributing
 				for common_cid in disapproved {
 					reqs.remove(&common_cid);
 				}
@@ -299,7 +301,7 @@ pub mod pallet {
 		}
 
 		// transfer to self equal unbond all
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::transfer())]
 		pub fn transfer(origin: OriginFor<T>, cid: Cid, recipient: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
 			ensure!(Self::is_community(cid) || Self::is_common(cid), Error::<T>::OnlyCommunityAndCommonCid);
 			let who = ensure_signed(origin)?;
@@ -319,7 +321,7 @@ pub mod pallet {
 			})
 		}
 
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::bond())]
 		pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
@@ -349,7 +351,7 @@ pub mod pallet {
 			})
 		}
 
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::unbond())]
 		pub fn unbond(origin: OriginFor<T>, cid: Cid, bond_type: BondType) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
@@ -452,7 +454,13 @@ impl<T: Config> Pallet<T> {
 
 		// 2. if none, get from NextCommonCid
 
-		let cid = NextCommonCid::<T>::get();
+		let mut cid = NextCommonCid::<T>::get();
+
+		// skip the distributed cids by admin
+		while Self::is_distributed(cid) {
+			cid = cid + 1;
+		}
+
 		// Initialize from 1_000_000
 		if cid == 0 {
 			(1_000_000, true)

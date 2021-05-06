@@ -290,6 +290,7 @@ impl pallet_coming_id::Config for Runtime {
 	type Event = Event;
 	type ClaimValidatePeriod = ClaimValidatePeriod;
 	type CidsLimit = CidsLimit;
+	type WeightInfo = pallet_coming_id::weights::SubstrateWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

@@ -265,13 +265,12 @@ impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
-
+/*
 parameter_types! {
     pub const MaxCommodities: u128 = 5;
     pub const MaxCommoditiesPerUser: u64 = 2;
 }
 
-/*
 /// Configure the pallet-template in pallets/template.
 impl pallet_commodities::Config for Runtime {
 	type Event = Event;
@@ -280,6 +279,18 @@ impl pallet_commodities::Config for Runtime {
     type CommodityLimit = MaxCommodities;
     type UserCommodityLimit = MaxCommoditiesPerUser;
 }*/
+
+parameter_types! {
+	pub const ClaimValidatePeriod: BlockNumber = 600;
+	pub const CidsLimit: u32 = 500;
+}
+
+/// Configure the pallet-coming-id in pallets/coming-id.
+impl pallet_coming_id::Config for Runtime {
+	type Event = Event;
+	type ClaimValidatePeriod = ClaimValidatePeriod;
+	type CidsLimit = CidsLimit;
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -297,6 +308,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		//NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
+		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
 	}
 );
 
@@ -492,6 +504,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			add_benchmark!(params, batches, pallet_coming_id, ComingId);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

@@ -3,7 +3,7 @@ use sp_core::H256;
 use frame_support::{
 	parameter_types,
 	traits::{
-		GenesisBuild, OnInitialize, OnFinalize
+		GenesisBuild
 	}
 };
 use sp_runtime::{
@@ -29,8 +29,6 @@ frame_support::construct_runtime!(
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
-	pub const ClaimValidatePeriod: u32 = 10;
-	pub const CidsLimit: u32 = 5;
 }
 
 impl system::Config for Test {
@@ -61,8 +59,6 @@ impl system::Config for Test {
 
 impl pallet_coming_id::Config for Test {
 	type Event = Event;
-	type ClaimValidatePeriod = ClaimValidatePeriod;
-	type CidsLimit = CidsLimit;
 	type WeightInfo = ();
 }
 
@@ -75,19 +71,6 @@ pub fn new_test_ext(admin_key: <Test as frame_system::Config>::AccountId) -> sp_
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| System::set_block_number(1));
 	ext
-}
-
-/// Run until a particular block.
-pub fn run_to_block(n: u64) {
-	while System::block_number() < n {
-		if System::block_number() > 1 {
-			ComingId::on_finalize(System::block_number());
-			System::on_finalize(System::block_number());
-		}
-		System::set_block_number(System::block_number() + 1);
-		System::on_initialize(System::block_number());
-		ComingId::on_initialize(System::block_number());
-	}
 }
 
 pub(crate) fn last_event() -> Event {

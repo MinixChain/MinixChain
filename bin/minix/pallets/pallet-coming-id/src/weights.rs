@@ -45,9 +45,6 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_coming_id.
 pub trait WeightInfo {
 	fn register() -> Weight;
-	fn claim() -> Weight;
-	fn approve() -> Weight;
-	fn disapprove() -> Weight;
 	fn transfer() -> Weight;
 	fn bond() -> Weight;
 	fn unbond() -> Weight;
@@ -60,21 +57,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(34_724_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn claim() -> Weight {
-		(47_488_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
-	}
-	fn approve() -> Weight {
-		(38_383_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
-	fn disapprove() -> Weight {
-		(38_022_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	fn transfer() -> Weight {
 		(26_415_000 as Weight)
@@ -99,21 +81,6 @@ impl WeightInfo for () {
 		(34_724_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn claim() -> Weight {
-		(47_488_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
-	}
-	fn approve() -> Weight {
-		(38_383_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
-	}
-	fn disapprove() -> Weight {
-		(38_022_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
 	fn transfer() -> Weight {
 		(26_415_000 as Weight)

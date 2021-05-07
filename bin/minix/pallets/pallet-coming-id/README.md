@@ -20,8 +20,7 @@
   - 分配权: 
   
     `Coming`有所有cid的分配权;
-  
-    对于[1000000,100000000000)可由所有用户申领,`Coming`批准后拥有.
+    
   - 转移权: 
   
     `Coming`只拥有[1,100000)的转移权;
@@ -56,15 +55,81 @@
       user权限(owner), unbond 指定cid, bond类型字段
 
 ## rpc
-- get_pubkey:
- 获取指定cid的bond数据
+- get_account_id:
+ 获取指定cid的account id
 
 ```
-#[rpc(name = "get_bond")]
-fn get_pubkey(
+#[rpc(name = "get_account_id")]
+fn get_account_id(
    &self,
    cid: Cid,
    at: Option<BlockHash>
+) -> Result<Option<AccountId>>;
+```
+输入：
+```json
+{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"get_account_id",
+  "params": [1000000]
+}
+```
+输出1：
+```json
+{
+  "jsonrpc": "2.0",
+  "result": null,
+  "id": 1
+}
+```
+输出2：
+```json
+{
+  "jsonrpc": "2.0",
+  "result": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL",
+  "id": 1
+}
+```
+- get_cids:
+ 获取指定account id的cids
+```
+#[rpc(name = "get_cids")]
+fn get_cids(
+   &self,
+   account: AccountId,
+   at: Option<BlockHash>
+) -> Result<Vec<Cid>>;
+```
+输入：
+```json
+{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"get_cids",
+  "params": ["5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"]
+}
+```
+输出：
+```json
+{
+  "jsonrpc": "2.0",
+  "result": [
+    99,
+    999
+  ],
+  "id": 1
+}
+```
+- get_bond_data:
+ 获取指定cid的bond data
+
+```
+#[rpc(name = "get_bond_data")]
+fn get_bond_data(
+    &self,
+    cid: Cid,
+    at: Option<BlockHash>
 ) -> Result<Option<CidDetails<AccountId>>>;
 ```
 输入：
@@ -72,8 +137,8 @@ fn get_pubkey(
 {
   "jsonrpc":"2.0",
   "id":1,
-  "method":"get_pubkey",
-  "params": [1000000]
+  "method":"get_bond_data",
+  "params": [99]
 }
 ```
 输出：
@@ -87,48 +152,7 @@ fn get_pubkey(
   "id": 1
 }
 ```
-- get_cids:
- 获取指定account的bond数据
-```
-#[rpc(name = "get_cids")]
-fn get_bonds(
-   &self,
-   account: AccountId,
-   at: Option<BlockHash>
-) -> Result<Vec<(Cid,CidDetails<AccountId>)>>;
-```
-输入：
-```json
-{
-  "jsonrpc":"2.0",
-  "id":1,
-  "method":"get_cids",
-  "params": ["5QHhurjL9ox44rK8PA7qVBLc9eqKUD2NAX2J5p5FgUdHanb5"]
-}
-```
-输出：
-```json
-{
-  "jsonrpc": "2.0",
-  "result": [
-    [
-      1000001,
-      {
-        "bonds": [],
-        "owner": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
-      }
-    ],
-    [
-      1000000,
-      {
-        "bonds": [],
-        "owner": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
-      }
-    ]
-  ],
-  "id": 1
-}
-```
+
 ## custom types
 ```json
 {
@@ -149,8 +173,38 @@ fn get_bonds(
     
 {
   "comingId": {
-    "getBond": {
-      "description": "comingId getBond",
+    "getAccountId": {
+      "description": "comingId getAccountId",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Option<AccountId>"
+    },
+    "getCids": {
+      "description": "comingId getCids",
+      "params": [
+        {
+          "name": "account",
+          "type": "AccountID"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Vec<Cid>"
+    },
+    "getBondData": {
+      "description": "comingId getBondData",
       "params": [
         {
           "name": "cid",
@@ -163,21 +217,7 @@ fn get_bonds(
         }
       ],
       "type": "Option<CidDetails>"
-    },
-    "getBonds": {
-      "description": "comingId getBonds",
-      "params": [
-        {
-          "name": "account",
-          "type": "AccountID"
-        },
-        {
-          "name": "at",
-          "type": "Hash",
-          "isOptional": true
-        }
-      ],
-      "type": "Vec<(Cid, CidDetails)>"
     }
+  }
 }
 ```

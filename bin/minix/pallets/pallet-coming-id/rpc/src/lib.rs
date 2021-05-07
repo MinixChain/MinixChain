@@ -31,18 +31,26 @@ pub use pallet_coming_id_rpc_runtime_api::ComingIdApi as ComingIdRuntimeApi;
 
 #[rpc]
 pub trait ComingIdApi<BlockHash, AccountId> {
-	#[rpc(name = "get_bond")]
-	fn get_bond(
+	#[rpc(name = "get_account_id")]
+	fn get_account_id(
+		&self,
+		cid: Cid,
+		at: Option<BlockHash>
+	) -> Result<Option<AccountId>>;
+
+	#[rpc(name = "get_cids")]
+	fn get_cids(
+		&self,
+		account: AccountId,
+		at: Option<BlockHash>
+	) -> Result<Vec<Cid>>;
+
+	#[rpc(name = "get_bond_data")]
+	fn get_bond_data(
 		&self,
 		cid: Cid,
 		at: Option<BlockHash>
 	) -> Result<Option<CidDetails<AccountId>>>;
-	#[rpc(name = "get_bonds")]
-	fn get_bonds(
-		&self,
-		account: AccountId,
-		at: Option<BlockHash>
-	) -> Result<Vec<(Cid,CidDetails<AccountId>)>>;
 }
 
 /// A struct that implements the [`ComingIdApi`].
@@ -83,7 +91,44 @@ where
 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: ComingIdRuntimeApi<Block, AccountId>,
 {
-	fn get_bond(
+	fn get_account_id(
+		&self,
+		cid: Cid,
+		at: Option<<Block as BlockT>::Hash>
+	) -> Result<Option<AccountId>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash
+		));
+
+
+		api.get_account_id(&at, cid).map_err(|e| RpcError {
+			code: ErrorCode::ServerError(Error::RuntimeError.into()),
+			message: "Unable to get bond.".into(),
+			data: Some(format!("{:?}", e).into()),
+		})
+	}
+
+	fn get_cids(
+		&self,
+		account: AccountId,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<Vec<Cid>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash
+		));
+
+		api.get_cids(&at, account).map_err(|e| RpcError {
+			code: ErrorCode::ServerError(Error::RuntimeError.into()),
+			message: "Unable to get bonds.".into(),
+			data: Some(format!("{:?}", e).into()),
+		})
+	}
+
+	fn get_bond_data(
 		&self,
 		cid: Cid,
 		at: Option<<Block as BlockT>::Hash>
@@ -95,27 +140,9 @@ where
 		));
 
 
-		api.get_bond(&at, cid).map_err(|e| RpcError {
+		api.get_bond_data(&at, cid).map_err(|e| RpcError {
 			code: ErrorCode::ServerError(Error::RuntimeError.into()),
 			message: "Unable to get bond.".into(),
-			data: Some(format!("{:?}", e).into()),
-		})
-	}
-
-	fn get_bonds(
-		&self,
-		account: AccountId,
-		at: Option<<Block as BlockT>::Hash>,
-	) -> Result<Vec<(Cid, CidDetails<AccountId>)>> {
-		let api = self.client.runtime_api();
-		let at = BlockId::hash(at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash
-		));
-
-		api.get_bonds(&at, account).map_err(|e| RpcError {
-			code: ErrorCode::ServerError(Error::RuntimeError.into()),
-			message: "Unable to get bonds.".into(),
 			data: Some(format!("{:?}", e).into()),
 		})
 	}

@@ -151,6 +151,7 @@ pub fn minix_genesis(
 			// Assign network admin rights.
 			admin_key: root_key,
 		},
+
         /*pallet_commodities: NFTConfig {
             balances: Vec::new(),
         },*/

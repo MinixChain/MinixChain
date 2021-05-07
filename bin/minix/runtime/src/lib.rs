@@ -272,6 +272,7 @@ parameter_types! {
     pub const MaxCommoditiesPerUser: u64 = 2;
 }
 
+/*
 /// Configure the pallet-template in pallets/template.
 impl pallet_commodities::Config for Runtime {
 	type Event = Event;
@@ -280,7 +281,6 @@ impl pallet_commodities::Config for Runtime {
     type CommodityLimit = MaxCommodities;
     type UserCommodityLimit = MaxCommoditiesPerUser;
 }*/
-
 parameter_types! {
 	pub const ClaimValidatePeriod: BlockNumber = 600;
 	pub const CidsLimit: u32 = 500;

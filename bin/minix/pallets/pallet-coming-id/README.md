@@ -10,21 +10,21 @@
 ## Intro
 - `pallet-coming-id`(简称`cid`)由1-12位数字组成
 
-   [1,100000)为ChainX内部预留, 
+   [1,100000)为`Coming`内部预留, 
    
-   [100000,1000000) 为ChainX 社区预留, 
+   [100000,1000000) 为`Coming`社区预留, 
    
    [1000000,100000000000)所有用户均可申领.
 
 - `cid`的分配权和转移权:  
   - 分配权: 
   
-    ChainX拥有所有cid的分配权;
+    `Coming`有所有cid的分配权;
   
-    对于[1000000,100000000000)可由所有用户申领,ChainX批准后拥有.
+    对于[1000000,100000000000)可由所有用户申领,`Coming`批准后拥有.
   - 转移权: 
   
-    ChainX只拥有[1,100000)的转移权;
+    `Coming`只拥有[1,100000)的转移权;
     
     其余cid的转移权归其属主拥有.
     
@@ -58,7 +58,7 @@
   
   - bond(cid, bond_data)
   
-      user权限(owner),  对指定cid, bond数据(类型字段和数据字段):
+      user权限(owner), 对指定cid, bond数据(类型字段和数据字段):
   
       ```rust
       pub struct BondData {
@@ -114,7 +114,7 @@ fn get_bonds(
 ) -> Result<Vec<(Cid,CidDetails<AccountId>)>>;
 ```
 输入：
-```
+```json
 {
   "jsonrpc":"2.0",
   "id":1,

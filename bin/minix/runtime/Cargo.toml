@@ -19,6 +19,7 @@ frame-support = { version = "3.0.0", default-features = false, path = "../../../
 pallet-grandpa = { version = "3.0.0", default-features = false, path = "../../../frame/grandpa" }
 pallet-randomness-collective-flip = { version = "3.0.0", default-features = false, path = "../../../frame/randomness-collective-flip" }
 pallet-sudo = { version = "3.0.0", default-features = false, path = "../../../frame/sudo" }
+pallet-utility = { version = "3.0.0", default-features = false, path = "../../../frame/utility" }
 frame-system = { version = "3.0.0", default-features = false, path = "../../../frame/system" }
 pallet-timestamp = { version = "3.0.0", default-features = false, path = "../../../frame/timestamp" }
 pallet-transaction-payment = { version = "3.0.0", default-features = false, path = "../../../frame/transaction-payment" }
@@ -44,6 +45,8 @@ frame-benchmarking = { version = "3.1.0", default-features = false, path = "../.
 frame-system-benchmarking = { version = "3.0.0", default-features = false, path = "../../../frame/system/benchmarking", optional = true }
 hex-literal = { version = "0.3.1", optional = true }
 
+pallet-coming-id = { version = "1.0.0", default-features = false, path = "../pallets/pallet-coming-id" }
+pallet-coming-id-rpc-runtime-api = { version = "1.0.0", default-features = false, path = "../pallets/pallet-coming-id/rpc/runtime-api" }
 pallet-commodities = { version = "1.0.0", default-features = false, path = "../pallets/pallet-nft" }
 
 [build-dependencies]
@@ -62,6 +65,9 @@ std = [
 	"pallet-grandpa/std",
 	"pallet-randomness-collective-flip/std",
 	"pallet-sudo/std",
+	"pallet-utility/std",
+	"pallet-coming-id/std",
+	"pallet-coming-id-rpc-runtime-api/std",
 	"pallet-commodities/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
@@ -87,4 +93,5 @@ runtime-benchmarks = [
 	"pallet-balances/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+	"pallet-coming-id/runtime-benchmarks"
 ]

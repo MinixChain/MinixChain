@@ -3,6 +3,7 @@ resolver = "2"
 
 members = [
 	"bin/minix/node",
+	"bin/minix/pallets/pallet-coming-id",
 	"bin/minix/pallets/pallet-nft",
 	"bin/minix/runtime",
 	"bin/utils/chain-spec-builder",

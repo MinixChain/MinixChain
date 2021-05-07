@@ -38,6 +38,7 @@ pub use frame_support::{
 	},
 };
 use pallet_transaction_payment::CurrencyAdapter;
+use pallet_coming_id::{Cid, CidDetails};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -265,7 +266,7 @@ impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
-
+/*
 parameter_types! {
     pub const MaxCommodities: u128 = 5;
     pub const MaxCommoditiesPerUser: u64 = 2;
@@ -280,6 +281,22 @@ impl pallet_commodities::Config for Runtime {
     type CommodityLimit = MaxCommodities;
     type UserCommodityLimit = MaxCommoditiesPerUser;
 }*/
+parameter_types! {
+	pub const ClaimValidatePeriod: BlockNumber = 600;
+	pub const CidsLimit: u32 = 500;
+}
+
+/// Configure the pallet-coming-id in pallets/coming-id.
+impl pallet_coming_id::Config for Runtime {
+	type Event = Event;
+	type WeightInfo = pallet_coming_id::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type WeightInfo = ();
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -297,6 +314,8 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		//NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
+		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
+		Utility: pallet_utility::{Pallet, Call, Event},
 	}
 );
 
@@ -463,6 +482,20 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl pallet_coming_id_rpc_runtime_api::ComingIdApi<Block, AccountId> for Runtime {
+		fn get_account_id(cid: Cid) -> Option<AccountId> {
+			ComingId::get_account_id(cid)
+		}
+
+		fn get_cids(account: AccountId) -> Vec<Cid> {
+			ComingId::get_cids(account)
+		}
+
+		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>> {
+			ComingId::get_bond_data(cid)
+		}
+	}
+
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn dispatch_benchmark(
@@ -492,6 +525,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			add_benchmark!(params, batches, pallet_coming_id, ComingId);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

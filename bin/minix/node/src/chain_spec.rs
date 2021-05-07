@@ -1,7 +1,7 @@
 use sp_core::{Pair, Public, sr25519};
 pub use minix_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
-	SudoConfig, SystemConfig, /*NFTConfig,*/ WASM_BINARY, Signature
+	SudoConfig, SystemConfig, /*NFTConfig,*/ ComingIdConfig, WASM_BINARY, Signature
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
@@ -145,8 +145,13 @@ pub fn minix_genesis(
 		},
 		pallet_sudo: SudoConfig {
 			// Assign network admin rights.
-			key: root_key,
+			key: root_key.clone(),
 		},
+		pallet_coming_id: ComingIdConfig {
+			// Assign network admin rights.
+			admin_key: root_key,
+		},
+
         /*pallet_commodities: NFTConfig {
             balances: Vec::new(),
         },*/

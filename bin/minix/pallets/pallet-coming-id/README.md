@@ -33,23 +33,7 @@
   - register(cid, recipient): 
   
     admin权限, 分配 1-12位 cid.
-  
-  - approve(cid_start, cid_end): 
-    
-    admin权限, 批量批准cid申领请求.
-  
-  - disapprove(cid_start, cid_end): 
-    
-    admin权限, 批量拒绝cid申领请求.
-
-  - claim(recipient):
-     
-      admin权限, 系统按递增顺序分配7-12位cid, ForceClaim, 不需要admin approve.
-      
-      user权限, 系统按递增顺序分配7-12位cid, Claiming, 需要admin approve.
-     
-      当claiming请求在一定时限`ClaimValidatePeriod`内, admin没有approve/disapprove,则cid被系统回收
-  
+   
   - transfer(cid, recipient)
      
       user权限(owner), 只允许6-12位cid自由transfer.
@@ -72,12 +56,12 @@
       user权限(owner), unbond 指定cid, bond类型字段
 
 ## rpc
-- get_bond:
+- get_pubkey:
  获取指定cid的bond数据
 
 ```
 #[rpc(name = "get_bond")]
-fn get_bond(
+fn get_pubkey(
    &self,
    cid: Cid,
    at: Option<BlockHash>
@@ -88,7 +72,7 @@ fn get_bond(
 {
   "jsonrpc":"2.0",
   "id":1,
-  "method":"get_bond",
+  "method":"get_pubkey",
   "params": [1000000]
 }
 ```
@@ -103,10 +87,10 @@ fn get_bond(
   "id": 1
 }
 ```
-- get_bonds:
+- get_cids:
  获取指定account的bond数据
 ```
-#[rpc(name = "get_bonds")]
+#[rpc(name = "get_cids")]
 fn get_bonds(
    &self,
    account: AccountId,
@@ -118,7 +102,7 @@ fn get_bonds(
 {
   "jsonrpc":"2.0",
   "id":1,
-  "method":"get_bonds",
+  "method":"get_cids",
   "params": ["5QHhurjL9ox44rK8PA7qVBLc9eqKUD2NAX2J5p5FgUdHanb5"]
 }
 ```

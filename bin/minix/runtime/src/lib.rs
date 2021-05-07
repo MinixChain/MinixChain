@@ -289,8 +289,6 @@ parameter_types! {
 /// Configure the pallet-coming-id in pallets/coming-id.
 impl pallet_coming_id::Config for Runtime {
 	type Event = Event;
-	type ClaimValidatePeriod = ClaimValidatePeriod;
-	type CidsLimit = CidsLimit;
 	type WeightInfo = pallet_coming_id::weights::SubstrateWeight<Runtime>;
 }
 
@@ -485,12 +483,16 @@ impl_runtime_apis! {
 	}
 
 	impl pallet_coming_id_rpc_runtime_api::ComingIdApi<Block, AccountId> for Runtime {
-		fn get_bond(cid: Cid) -> Option<CidDetails<AccountId>> {
-			ComingId::get_bond(cid)
+		fn get_account_id(cid: Cid) -> Option<AccountId> {
+			ComingId::get_account_id(cid)
 		}
 
-		fn get_bonds(account: AccountId) -> Vec<(Cid, CidDetails<AccountId>)> {
-			ComingId::get_bonds(account)
+		fn get_cids(account: AccountId) -> Vec<Cid> {
+			ComingId::get_cids(account)
+		}
+
+		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>> {
+			ComingId::get_bond_data(cid)
 		}
 	}
 

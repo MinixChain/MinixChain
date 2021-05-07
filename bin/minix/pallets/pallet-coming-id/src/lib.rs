@@ -69,6 +69,11 @@ pub mod pallet {
 	#[pallet::getter(fn distributed)]
 	pub type Distributed<T: Config> = StorageMap<_, Blake2_128Concat, Cid, CidDetails<T::AccountId>>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn account_cids)]
+	pub type AccountIdCids<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, Vec<Cid>, ValueQuery>;
+
+
 	/// The `AccountId` of the sudo key.
 	#[pallet::storage]
 	#[pallet::getter(fn admin_key)]
@@ -104,8 +109,6 @@ pub mod pallet {
 		Registered(T::AccountId, Cid),
 		// owner, recipient, cid
 		Transferred(T::AccountId, T::AccountId, Cid),
-		// recipient, cid
-		ForceTransferred(T::AccountId, Cid),
 		// owner, cid, bond_type
 		Bonded(T::AccountId, Cid, BondType),
 		// owner, cid, bond_type
@@ -125,7 +128,6 @@ pub mod pallet {
 		DistributedCid,
 		UndistributedCid,
 		InvalidCidEnd,
-		OutOfCidsLimit,
 	}
 
     #[pallet::hooks]
@@ -139,12 +141,7 @@ pub mod pallet {
 		pub fn register(origin: OriginFor<T>, cid: Cid, recipient: <T::Lookup as StaticLookup>::Source) -> DispatchResult {
 			ensure!(ensure_signed(origin)? == Self::admin_key(), Error::<T>::RequireAdmin);
 			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
-			if Self::is_community(cid) || Self::is_common(cid) {
-				ensure!(
-					!Self::is_distributed(cid),
-					Error::<T>::DistributedCid
-				);
-			}
+			ensure!(!Self::is_distributed(cid), Error::<T>::DistributedCid);
 			let recipient = T::Lookup::lookup(recipient)?;
 
 			Distributed::<T>::try_mutate_exists(cid, |details|{
@@ -153,11 +150,9 @@ pub mod pallet {
 					bonds: Vec::new(),
 				});
 
-				if Self::is_distributed(cid) {
-					Self::deposit_event(Event::ForceTransferred(recipient, cid))
-				} else {
-					Self::deposit_event(Event::Registered(recipient, cid));
-				}
+				Self::account_cids_add(recipient.clone(), cid);
+				Self::deposit_event(Event::Registered(recipient, cid));
+
 
 				Ok(())
 			})
@@ -178,6 +173,9 @@ pub mod pallet {
 				detail.owner = recipient.clone();
 				detail.bonds = Vec::new();
 
+				Self::account_cids_remove(who.clone(), cid);
+				Self::account_cids_add(recipient.clone(), cid);
+
 				Self::deposit_event(Event::Transferred(who, recipient, cid));
 
 				Ok(())
@@ -188,6 +186,7 @@ pub mod pallet {
 		pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
+
 
 			Distributed::<T>::try_mutate_exists(cid, |details|{
 				let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
@@ -276,13 +275,44 @@ impl<T: Config> Pallet<T> {
 		Distributed::<T>::contains_key(cid)
 	}
 
-	pub fn get_pubkey(cid: Cid) -> Option<CidDetails<T::AccountId>> {
-		Self::distributed(cid)
+	fn account_cids_add(account: T::AccountId, cid: Cid) {
+		AccountIdCids::<T>::try_mutate_exists::<_,_,Error<T>,_>(account, |cids| {
+			if let Some(cids) = cids {
+				cids.push(cid)
+			} else {
+				let mut new_cids: Vec<Cid> = Vec::new();
+				new_cids.push(cid);
+				*cids = Some(new_cids);
+			}
+
+			Ok(())
+		}).unwrap_or_default();
+
 	}
 
-	pub fn get_cids(who: T::AccountId) -> Vec<(Cid,CidDetails<T::AccountId>)> {
-		Distributed::<T>::iter()
-			.filter(|(_, v)| v.owner == who)
-			.collect()
+	fn account_cids_remove(account: T::AccountId, cid: Cid) {
+		AccountIdCids::<T>::try_mutate_exists::<_,_,Error<T>,_>(account, |cids| {
+			if let Some(cids) = cids {
+				cids.retain(|&in_cid| in_cid != cid)
+			}
+
+			Ok(())
+		}).unwrap_or_default();
+	}
+
+	pub fn get_account_id(cid: Cid) -> Option<T::AccountId> {
+		if let Some(cid_details) = Self::distributed(cid) {
+			Some(cid_details.owner)
+		} else {
+			None
+		}
+	}
+
+	pub fn get_cids(who: T::AccountId) -> Vec<Cid> {
+		Self::account_cids(who)
+	}
+
+	pub fn get_bond_data(cid: Cid) -> Option<CidDetails<T::AccountId>> {
+		Self::distributed(cid)
 	}
 }

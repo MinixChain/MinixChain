@@ -29,7 +29,8 @@ sp_api::decl_runtime_apis! {
 	pub trait ComingIdApi<AccountId> where
 	    AccountId: Codec
 	{
-		fn get_bond(cid: Cid) -> Option<CidDetails<AccountId>>;
-		fn get_bonds(account: AccountId) -> Vec<(Cid, CidDetails<AccountId>)>;
+		fn get_account_id(cid: Cid) -> Option<AccountId>;
+		fn get_cids(account: AccountId) -> Vec<Cid>;
+		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>>;
 	}
 }

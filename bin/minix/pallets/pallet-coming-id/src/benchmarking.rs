@@ -27,50 +27,6 @@ benchmarks! {
 		assert!(Distributed::<T>::get(claim_cid).is_some());
 	}
 
-	claim {
-	    let common_user: T::AccountId = account("common_user", 0, SEED);
-		let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(common_user.clone());
-	    let claim_cid: Cid = 1000000;
-	}: claim(RawOrigin::Signed(common_user), recipient_lookup)
-	verify {
-		assert!(Distributing::<T>::get().contains_key(&claim_cid));
-	}
-
-	approve {
-	    let admin: T::AccountId = admin_account();
-	    let common_user: T::AccountId = account("common_user", 0, SEED);
-	    let claim_cid: Cid = 1000000;
-	    let expired = T::ClaimValidatePeriod::get();
-
-	    let _ = Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs| {
-            reqs.insert(claim_cid, (common_user.clone(), expired));
-            Ok(())
-	    })?;
-
-	}: approve(RawOrigin::Signed(admin), claim_cid, claim_cid + T::CidsLimit::get() as u64)
-	verify {
-	    assert!(Distributing::<T>::get().is_empty());
-	    assert!(Distributed::<T>::get(claim_cid).is_some());
-	}
-
-	disapprove {
-	    let admin: T::AccountId = admin_account();
-	    let common_user: T::AccountId = account("common_user", 0, SEED);
-	    let claim_cid: Cid = 1000000;
-	    let expired = T::ClaimValidatePeriod::get();
-
-	    let _ = Distributing::<T>::try_mutate::<_, Error<T>, _>(|reqs| {
-            reqs.insert(claim_cid, (common_user.clone(), expired));
-            Ok(())
-	    })?;
-
-	}: disapprove(RawOrigin::Signed(admin), claim_cid, claim_cid + T::CidsLimit::get() as u64)
-	verify {
-	    assert!(Distributing::<T>::get().is_empty());
-	    assert!(Distributed::<T>::get(claim_cid).is_none());
-	    assert!(WaitDistributing::<T>::get().contains(&claim_cid));
-	}
-
 	transfer {
 	    let common_user: T::AccountId = account("common_user", 0, SEED);
 	    let recipient: T::AccountId = account("recipient", 0, SEED);

@@ -294,6 +294,12 @@ impl pallet_coming_id::Config for Runtime {
 	type WeightInfo = pallet_coming_id::weights::SubstrateWeight<Runtime>;
 }
 
+impl pallet_utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type WeightInfo = ();
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -311,6 +317,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		//NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
 		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
+		Utility: pallet_utility::{Pallet, Call, Event},
 	}
 );
 

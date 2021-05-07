@@ -19,6 +19,7 @@ frame-support = { version = "3.0.0", default-features = false, path = "../../../
 pallet-grandpa = { version = "3.0.0", default-features = false, path = "../../../frame/grandpa" }
 pallet-randomness-collective-flip = { version = "3.0.0", default-features = false, path = "../../../frame/randomness-collective-flip" }
 pallet-sudo = { version = "3.0.0", default-features = false, path = "../../../frame/sudo" }
+pallet-utility = { version = "3.0.0", default-features = false, path = "../../../frame/utility" }
 frame-system = { version = "3.0.0", default-features = false, path = "../../../frame/system" }
 pallet-timestamp = { version = "3.0.0", default-features = false, path = "../../../frame/timestamp" }
 pallet-transaction-payment = { version = "3.0.0", default-features = false, path = "../../../frame/transaction-payment" }
@@ -64,6 +65,7 @@ std = [
 	"pallet-grandpa/std",
 	"pallet-randomness-collective-flip/std",
 	"pallet-sudo/std",
+	"pallet-utility/std",
 	"pallet-coming-id/std",
 	"pallet-coming-id-rpc-runtime-api/std",
 	"pallet-commodities/std",

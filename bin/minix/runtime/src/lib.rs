@@ -270,7 +270,7 @@ impl pallet_sudo::Config for Runtime {
 parameter_types! {
     pub const MaxCommodities: u128 = 5;
     pub const MaxCommoditiesPerUser: u64 = 2;
-}
+}*/
 
 /*
 /// Configure the pallet-template in pallets/template.

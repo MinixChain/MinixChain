@@ -28,6 +28,7 @@ use sp_core::{
 	crypto::{Public, Ss58Codec},
 };
 use sp_keystore::{SyncCryptoStorePtr, SyncCryptoStore};
+use sc_service::{Properties};
 
 /// A utility to easily create a testnet chain spec definition with a given set
 /// of authorities and endowed accounts and/or generate random accounts.
@@ -123,6 +124,10 @@ fn generate_chain_spec(
 
 	let sudo_account = parse_account(sudo_account)?;
 
+	let mut properties = Properties::new();
+	properties.insert("tokenSymbol".into(), "mini".into());
+	properties.insert("tokenDecimals".into(), 8.into());
+
 	let chain_spec = chain_spec::ChainSpec::from_genesis(
 		"MiniX",
 		"MiniX",
@@ -131,7 +136,7 @@ fn generate_chain_spec(
 		vec![],
 		None,
 		None,
-		None,
+		Some(properties),
 		Default::default(),
 	);
 

@@ -781,6 +781,7 @@ dependencies = [
  "rand 0.7.3",
  "sc-chain-spec",
  "sc-keystore",
+ "sc-service",
  "sp-core",
  "sp-keystore",
  "structopt",

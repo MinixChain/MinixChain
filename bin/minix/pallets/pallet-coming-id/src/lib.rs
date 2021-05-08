@@ -115,8 +115,6 @@ pub mod pallet {
 		BondUpdated(T::AccountId, Cid, BondType),
 		// owner, cid, bond_type
 		UnBonded(T::AccountId, Cid, BondType),
-		// owner, cid, bond_type
-		NotFoundBondType(T::AccountId, Cid, BondType),
 	}
 
 	#[pallet::error]
@@ -128,6 +126,7 @@ pub mod pallet {
 		DistributedCid,
 		UndistributedCid,
 		InvalidCidEnd,
+		NotFoundBondType
 	}
 
     #[pallet::hooks]
@@ -226,11 +225,9 @@ pub mod pallet {
 				detail.bonds.retain(|bond| bond.bond_type != bond_type);
 				let bonds_after = detail.bonds.len();
 
-				if bonds_before != bonds_after {
-					Self::deposit_event(Event::UnBonded(who, cid, bond_type));
-				} else {
-					Self::deposit_event(Event::NotFoundBondType(who, cid, bond_type));
-				}
+				ensure!(bonds_before != bonds_after, Error::<T>::NotFoundBondType);
+
+				Self::deposit_event(Event::UnBonded(who, cid, bond_type));
 
 				Ok(())
 			})

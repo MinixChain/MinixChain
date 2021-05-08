@@ -235,9 +235,12 @@ fn unbond_should_work() {
 		);
 
 		// unbond twice
+		// 3. Error::NotFoundBondType
 		assert_ok!(ComingId::unbond(Origin::signed(COMMON_CHARLIE), 1000000, 1u16));
 		expect_event(ComingIdEvent::UnBonded(COMMON_CHARLIE, 1000000, 1u16));
-		assert_ok!(ComingId::unbond(Origin::signed(COMMON_CHARLIE), 1000000, 1u16));
-		expect_event(ComingIdEvent::NotFoundBondType(COMMON_CHARLIE, 1000000, 1u16));
+		assert_noop!(
+			ComingId::unbond(Origin::signed(COMMON_CHARLIE), 1000000, 1u16),
+			Error::<Test>::NotFoundBondType,
+		);
 	})
 }

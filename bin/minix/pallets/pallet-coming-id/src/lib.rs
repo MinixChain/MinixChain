@@ -198,8 +198,9 @@ pub mod pallet {
             recipient: <T::Lookup as StaticLookup>::Source,
         ) -> DispatchResult {
             match cid {
-                1_00_000..1_000_000 => {}
-                _ => ensure!(false, Error::<T>::BanTransfer),
+                0..100_000 => ensure!(false, Error::<T>::BanTransfer),
+                100_000..1_000_000_000_000 => {},
+                _ => ensure!(false, Error::<T>::InvalidCid),
             }
             let who = ensure_signed(origin)?;
             let recipient = T::Lookup::lookup(recipient)?;

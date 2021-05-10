@@ -60,12 +60,12 @@ fn register_should_work() {
         // (1) Error::RequireAdmin
         assert_noop!(
             ComingId::register(Origin::signed(COMMUNITY_ALICE), 1, RESERVE2),
-            Error::<Test>::RequireAdmin
+            Error::<Test>::RequireHighAuthority
         );
 
         // (2) Error::InvalidCid
         assert_noop!(
-            ComingId::register(Origin::signed(ADMIN), 0, RESERVE2),
+            ComingId::register(Origin::signed(ADMIN), 1_000_000_000_000, RESERVE2),
             Error::<Test>::InvalidCid
         );
         assert_noop!(
@@ -113,10 +113,10 @@ fn transfer_should_work() {
         ));
         expect_event(ComingIdEvent::Registered(COMMON_CHARLIE, 1000000));
 
-        // 1. Error::OnlyCommunityAndCommonCid
+        // 1. Error::BanTransfer
         assert_noop!(
             ComingId::transfer(Origin::signed(RESERVE2), 1, RESERVE3),
-            Error::<Test>::OnlyCommunityAndCommonCid,
+            Error::<Test>::BanTransfer,
         );
 
         // 2. Error::UndistributedCid
@@ -220,15 +220,16 @@ fn bond_should_work() {
             data: b"test".to_vec(),
         };
 
-        // 1. Error::InvalidCid
-        assert_noop!(
-            ComingId::bond(Origin::signed(RESERVE2), 0, bond.clone()),
-            Error::<Test>::InvalidCid,
-        );
         assert_noop!(
             ComingId::bond(Origin::signed(RESERVE2), 1000000000000, bond.clone()),
             Error::<Test>::InvalidCid,
         );
+         // 1. Error::InvalidCid
+        assert_noop!(
+            ComingId::bond(Origin::signed(RESERVE2), 1_000_000_000_000, bond.clone()),
+            Error::<Test>::InvalidCid,
+        );
+
 
         // 2. Error::RequireOwner
         assert_noop!(
@@ -337,7 +338,7 @@ fn unbond_should_work() {
 
         // 1. Error::InvalidCid
         assert_noop!(
-            ComingId::unbond(Origin::signed(RESERVE2), 0, 1u16),
+            ComingId::unbond(Origin::signed(RESERVE2), 1_000_000_000_000, 1u16),
             Error::<Test>::InvalidCid,
         );
         assert_noop!(

@@ -30,8 +30,12 @@
 - 关键函数
 
   - register(cid, recipient): 
-  
-    admin权限, 分配 1-12位 cid.
+
+    highAdmin 权限, 分配 1-12位 cid.
+
+    mediaAdmin 权限, 分配 6-12位 cid.
+
+    lowAdmin 权限, 分配 7-12位 cid.
    
   - transfer(cid, recipient)
      

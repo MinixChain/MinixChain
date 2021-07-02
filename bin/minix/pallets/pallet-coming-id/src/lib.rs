@@ -3,6 +3,7 @@
 
 pub use pallet::*;
 pub use weights::WeightInfo;
+pub use coming_nft::ComingNFT;
 
 use codec::{Decode, Encode};
 use frame_support::inherent::Vec;
@@ -23,6 +24,7 @@ mod tests;
 mod benchmarking;
 
 pub mod weights;
+pub mod coming_nft;
 
 pub type Cid = u64;
 pub type BondType = u16;
@@ -41,6 +43,7 @@ pub struct BondData {
 pub struct CidDetails<AccountId> {
     pub owner: AccountId,
     pub bonds: Vec<BondData>,
+    pub card: Vec<u8>,
 }
 
 #[frame_support::pallet]
@@ -129,6 +132,8 @@ pub mod pallet {
         BondUpdated(T::AccountId, Cid, BondType),
         // owner, cid, bond_type
         UnBonded(T::AccountId, Cid, BondType),
+        // cid, card
+        MintCard(Cid, Vec<u8>),
     }
 
     #[pallet::error]
@@ -157,11 +162,11 @@ pub mod pallet {
             recipient: <T::Lookup as StaticLookup>::Source,
         ) -> DispatchResult {
             match cid {
-                0..1_00_000 => ensure!(
+                0..100_000 => ensure!(
                     ensure_signed(origin)? == Self::high_admin_key(),
                     Error::<T>::RequireHighAuthority
                 ),
-                1_00_000..1_000_000 => ensure!(
+                100_000..1_000_000 => ensure!(
                     ensure_signed(origin.clone())? == Self::high_admin_key()
                         || ensure_signed(origin)? == Self::medium_admin_key(),
                     Error::<T>::RequireMediumAuthority
@@ -181,6 +186,7 @@ pub mod pallet {
                 *details = Some(CidDetails {
                     owner: recipient.clone(),
                     bonds: Vec::new(),
+                    card: Vec::new(),
                 });
 
                 Self::account_cids_add(recipient.clone(), cid);
@@ -190,46 +196,35 @@ pub mod pallet {
             })
         }
 
-        // transfer to self equal unbond all
-        #[pallet::weight(T::WeightInfo::transfer())]
-        pub fn transfer(
+        #[pallet::weight(T::WeightInfo::bond())]
+        pub fn bond(
             origin: OriginFor<T>,
             cid: Cid,
-            recipient: <T::Lookup as StaticLookup>::Source,
+            bond_data: BondData
         ) -> DispatchResult {
-            match cid {
-                0..100_000 => ensure!(false, Error::<T>::BanTransfer),
-                100_000..1_000_000_000_000 => {},
-                _ => ensure!(false, Error::<T>::InvalidCid),
-            }
-            let who = ensure_signed(origin)?;
-            let recipient = T::Lookup::lookup(recipient)?;
-
-            Distributed::<T>::try_mutate_exists(cid, |details| {
-                let mut detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
-
-                ensure!(detail.owner == who, Error::<T>::RequireOwner);
-
-                detail.owner = recipient.clone();
-                detail.bonds = Vec::new();
-
-                Self::account_cids_remove(who.clone(), cid);
-                Self::account_cids_add(recipient.clone(), cid);
-
-                Self::deposit_event(Event::Transferred(who, recipient, cid));
-
-                Ok(())
-            })
-        }
-
-        #[pallet::weight(T::WeightInfo::bond())]
-        pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
 
+            let is_admin = match cid {
+                0..100_000 => {
+                    Self::high_admin_key() == who
+                },
+                100_000..1_000_000 => {
+                    Self::high_admin_key() == who
+                        || Self::medium_admin_key() == who
+                },
+                1000_000..1_000_000_000_000 => {
+                    Self::high_admin_key() == who
+                        || Self::medium_admin_key() == who
+                        || Self::low_admin_key() == who
+                },
+                _ => false,
+            };
+
             Distributed::<T>::try_mutate_exists(cid, |details| {
                 let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
-                ensure!(detail.owner == who, Error::<T>::RequireOwner);
+
+                ensure!(is_admin || detail.owner == who, Error::<T>::RequireOwner);
 
                 let bond_type = bond_data.bond_type;
 
@@ -253,7 +248,11 @@ pub mod pallet {
         }
 
         #[pallet::weight(T::WeightInfo::unbond())]
-        pub fn unbond(origin: OriginFor<T>, cid: Cid, bond_type: BondType) -> DispatchResult {
+        pub fn unbond(
+            origin: OriginFor<T>,
+            cid: Cid,
+            bond_type: BondType
+        ) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
 
@@ -276,6 +275,39 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+    fn check_admin(origin: &T::AccountId, cid: Cid) -> DispatchResult {
+        match cid {
+            0..1_00_000 => ensure!(
+                    *origin == Self::high_admin_key(),
+                    Error::<T>::RequireHighAuthority
+                ),
+            1_00_000..1_000_000 => ensure!(
+                    *origin == Self::high_admin_key()
+                        || *origin == Self::medium_admin_key(),
+                    Error::<T>::RequireMediumAuthority
+                ),
+            1_000_000..1_000_000_000_000 => ensure!(
+                    *origin == Self::high_admin_key()
+                        || *origin == Self::medium_admin_key()
+                        || *origin == Self::low_admin_key(),
+                    Error::<T>::RequireLowAuthority
+                ),
+            _ => ensure!(false, Error::<T>::InvalidCid),
+        }
+
+        Ok(())
+    }
+
+    fn is_transferable(cid: Cid) -> DispatchResult {
+        match cid {
+            0..100_000 => ensure!(false, Error::<T>::BanTransfer),
+            100_000..1_000_000_000_000 => {},
+            _ => ensure!(false, Error::<T>::InvalidCid),
+        }
+
+        Ok(())
+    }
+
     fn is_valid(cid: Cid) -> bool {
         if cid < 1_000_000_000_000 {
             return true;
@@ -328,5 +360,52 @@ impl<T: Config> Pallet<T> {
 
     pub fn get_bond_data(cid: Cid) -> Option<CidDetails<T::AccountId>> {
         Self::distributed(cid)
+    }
+}
+
+impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
+    fn mint(
+        who: &T::AccountId,
+        cid: u64,
+        card: Vec<u8>
+    ) -> DispatchResult {
+        Self::check_admin(who, cid)?;
+
+        Distributed::<T>::try_mutate_exists(cid, |details| {
+            let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
+
+            // only update once
+            if detail.card.is_empty() {
+                detail.card = card.clone()
+            }
+
+            Self::deposit_event(Event::MintCard(cid, card));
+
+            Ok(())
+        })
+    }
+
+    fn transfer(
+        who: &T::AccountId,
+        cid: u64,
+        recipient: &T::AccountId
+    ) -> DispatchResult {
+        Self::is_transferable(cid)?;
+
+        Distributed::<T>::try_mutate_exists(cid, |details| {
+            let mut detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
+
+            ensure!(detail.owner == *who, Error::<T>::RequireOwner);
+
+            detail.owner = recipient.clone();
+            detail.bonds = Vec::new();
+
+            Self::account_cids_remove(who.clone(), cid);
+            Self::account_cids_add(recipient.clone(), cid);
+
+            Self::deposit_event(Event::Transferred(who.clone(), recipient.clone(), cid));
+
+            Ok(())
+        })
     }
 }

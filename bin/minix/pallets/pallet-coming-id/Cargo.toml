@@ -1,13 +1,9 @@
 [package]
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
+authors = ['Minix Chain Developer']
 edition = '2018'
 name = 'pallet-coming-id'
 version = "1.0.0"
 license = "Unlicense"
-homepage = "https://substrate.dev"
-repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
-description = "FRAME pallet template for defining custom runtime logic."
-readme = "README.md"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

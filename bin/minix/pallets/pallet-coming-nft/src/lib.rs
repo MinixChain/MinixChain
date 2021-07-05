@@ -1,5 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 pub use pallet::*;
 //pub use weights::WeightInfo;
 
@@ -36,6 +41,7 @@ pub mod pallet {
         #[pallet::weight(1000)]
         pub fn mint(origin: OriginFor<T>, cid: Cid, card: Vec<u8>) -> DispatchResult {
             let who = ensure_signed(origin)?;
+
             T::ComingNFT::mint(&who, cid, card)
         }
 

@@ -3,7 +3,7 @@
 
 pub use pallet::*;
 pub use weights::WeightInfo;
-pub use coming_nft::ComingNFT;
+pub use nft::ComingNFT;
 
 use codec::{Decode, Encode};
 use frame_support::inherent::Vec;
@@ -24,7 +24,7 @@ mod tests;
 mod benchmarking;
 
 pub mod weights;
-pub mod coming_nft;
+pub mod nft;
 
 pub type Cid = u64;
 pub type BondType = u16;

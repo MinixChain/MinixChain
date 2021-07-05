@@ -26,31 +26,6 @@ benchmarks! {
         assert!(Distributed::<T>::get(claim_cid).is_some());
     }
 
-    transfer {
-        let common_user: T::AccountId = account("common_user", 0, SEED);
-        let recipient: T::AccountId = account("recipient", 0, SEED);
-        let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(recipient.clone());
-        let claim_cid: Cid = 1000000;
-        let bonds: Vec<BondData> = Vec::new();
-
-        let _ = Distributed::<T>::try_mutate_exists::<_,_,Error<T>,_>(claim_cid, |details|{
-            *details = Some(CidDetails{
-                owner: common_user.clone(),
-                bonds: bonds,
-            });
-
-            Ok(())
-        })?;
-
-    }: transfer(RawOrigin::Signed(common_user), claim_cid, recipient_lookup)
-    verify {
-        let option = Distributed::<T>::get(claim_cid);
-        assert!(option.is_some());
-
-        let cid_details = option.unwrap();
-        assert_eq!(cid_details.owner, recipient);
-    }
-
     bond {
         let common_user: T::AccountId = account("common_user", 0, SEED);
         let claim_cid: Cid = 1000000;
@@ -59,6 +34,7 @@ benchmarks! {
             *details = Some(CidDetails{
                 owner: common_user.clone(),
                 bonds: Vec::new(),
+                card: Vec::new()
             });
 
             Ok(())
@@ -93,6 +69,7 @@ benchmarks! {
             *details = Some(CidDetails{
                 owner: common_user.clone(),
                 bonds: bonds,
+                card: Vec::new()
             });
 
             Ok(())

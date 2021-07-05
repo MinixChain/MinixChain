@@ -193,7 +193,8 @@ fn transfer_should_work() {
         assert_eq!(
             Some(CidDetails {
                 owner: COMMON_DAVE,
-                bonds: vec![]
+                bonds: vec![],
+                card: vec![],
             }),
             ComingId::get_bond_data(1000000)
         );
@@ -262,7 +263,8 @@ fn bond_should_work() {
         assert_eq!(
             Some(CidDetails {
                 owner: RESERVE2,
-                bonds: vec![new_bond1]
+                bonds: vec![new_bond1],
+                card: vec![]
             }),
             ComingId::get_bond_data(1)
         );
@@ -279,7 +281,8 @@ fn bond_should_work() {
         assert_eq!(
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
-                bonds: vec![bond.clone(), new_bond2]
+                bonds: vec![bond.clone(), new_bond2],
+                card: vec![]
             }),
             ComingId::get_bond_data(100000)
         );
@@ -297,7 +300,8 @@ fn bond_should_work() {
         assert_eq!(
             Some(CidDetails {
                 owner: COMMON_CHARLIE,
-                bonds: vec![bond, new_bond3]
+                bonds: vec![bond, new_bond3],
+                card: vec![]
             }),
             ComingId::get_bond_data(1000000)
         );
@@ -367,7 +371,8 @@ fn unbond_should_work() {
         assert_eq!(
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
-                bonds: vec![bond.clone(), new_bond2.clone()]
+                bonds: vec![bond.clone(), new_bond2.clone()],
+                card: vec![]
             }),
             ComingId::get_bond_data(100000)
         );
@@ -379,7 +384,8 @@ fn unbond_should_work() {
         assert_eq!(
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
-                bonds: vec![new_bond2]
+                bonds: vec![new_bond2],
+                card: vec![]
             }),
             ComingId::get_bond_data(100000)
         );

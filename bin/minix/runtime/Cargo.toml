@@ -47,7 +47,7 @@ hex-literal = { version = "0.3.1", optional = true }
 
 pallet-coming-id = { version = "1.0.0", default-features = false, path = "../pallets/pallet-coming-id" }
 pallet-coming-id-rpc-runtime-api = { version = "1.0.0", default-features = false, path = "../pallets/pallet-coming-id/rpc/runtime-api" }
-pallet-commodities = { version = "1.0.0", default-features = false, path = "../pallets/pallet-nft" }
+pallet-coming-nft = { version = "1.0.0", default-features = false, path = "../pallets/pallet-coming-nft" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "4.0.0", path = "../../../utils/wasm-builder" }
@@ -68,7 +68,7 @@ std = [
 	"pallet-utility/std",
 	"pallet-coming-id/std",
 	"pallet-coming-id-rpc-runtime-api/std",
-	"pallet-commodities/std",
+	"pallet-coming-nft/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",

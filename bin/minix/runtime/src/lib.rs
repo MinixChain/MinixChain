@@ -298,6 +298,10 @@ impl pallet_utility::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl pallet_coming_nft::Config for Runtime {
+	type ComingNFT = ComingId;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -315,6 +319,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		//NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
 		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
+		ComingNFT: pallet_coming_nft::{Pallet, Call},
 		Utility: pallet_utility::{Pallet, Call, Event},
 	}
 );

@@ -7,7 +7,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_std::prelude::*;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, Bytes};
 use sp_runtime::{
 	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
 	transaction_validity::{TransactionValidity, TransactionSource},
@@ -284,12 +284,14 @@ impl pallet_commodities::Config for Runtime {
 parameter_types! {
 	pub const ClaimValidatePeriod: BlockNumber = 600;
 	pub const CidsLimit: u32 = 500;
+	pub const MaxCardSize: u32 = 1024 * 1024;
 }
 
 /// Configure the pallet-coming-id in pallets/coming-id.
 impl pallet_coming_id::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_coming_id::weights::SubstrateWeight<Runtime>;
+	type MaxCardSize = MaxCardSize;
 }
 
 impl pallet_utility::Config for Runtime {
@@ -499,6 +501,10 @@ impl_runtime_apis! {
 
 		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>> {
 			ComingId::get_bond_data(cid)
+		}
+
+		fn get_card(cid: Cid) -> Option<Bytes> {
+			ComingId::get_card(cid)
 		}
 	}
 

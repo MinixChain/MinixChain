@@ -18,5 +18,5 @@ pub trait ComingNFT<AccountId> {
 
     fn owner_of_cid(cid: Cid) -> Option<AccountId>;
 
-    fn card_of_cid(cid: Cid) -> Option<Vec<u8>>;
+    fn card_of_cid(cid: Cid) -> Option<Bytes>;
 }

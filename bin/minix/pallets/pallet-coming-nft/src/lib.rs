@@ -15,9 +15,8 @@ pub use weights::WeightInfo;
 
 use frame_support::inherent::Vec;
 use sp_runtime::traits::StaticLookup;
-
+use sp_core::Bytes;
 use pallet_coming_id::{Cid, ComingNFT};
-
 use frame_support::pallet_prelude::*;
 
 #[frame_support::pallet]
@@ -74,7 +73,7 @@ impl<T: Config> Pallet<T> {
         T::ComingNFT::owner_of_cid(cid)
     }
 
-    fn card_of_cid(cid: Cid) -> Option<Vec<u8>> {
+    fn card_of_cid(cid: Cid) -> Option<Bytes> {
         T::ComingNFT::card_of_cid(cid)
     }
 }

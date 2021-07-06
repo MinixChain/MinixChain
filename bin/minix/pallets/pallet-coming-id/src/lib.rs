@@ -8,7 +8,7 @@ pub use nft::ComingNFT;
 use codec::{Decode, Encode};
 use frame_support::inherent::Vec;
 use sp_runtime::traits::StaticLookup;
-
+use sp_core::Bytes;
 use frame_support::pallet_prelude::*;
 
 #[cfg(feature = "std")]
@@ -34,7 +34,7 @@ pub type BondType = u16;
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct BondData {
     pub bond_type: BondType,
-    pub data: Vec<u8>,
+    pub data: Bytes,
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode)]
@@ -43,7 +43,7 @@ pub struct BondData {
 pub struct CidDetails<AccountId> {
     pub owner: AccountId,
     pub bonds: Vec<BondData>,
-    pub card: Vec<u8>,
+    pub card: Bytes,
 }
 
 #[frame_support::pallet]
@@ -59,6 +59,8 @@ pub mod pallet {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
+        /// Max size of c-card
+        type MaxCardSize: Get<u32>;
     }
 
     #[pallet::pallet]
@@ -148,6 +150,7 @@ pub mod pallet {
         UndistributedCid,
         InvalidCidEnd,
         NotFoundBondType,
+        TooBigCardSize
     }
 
     #[pallet::hooks]
@@ -186,7 +189,7 @@ pub mod pallet {
                 *details = Some(CidDetails {
                     owner: recipient.clone(),
                     bonds: Vec::new(),
-                    card: Vec::new(),
+                    card: Vec::new().into(),
                 });
 
                 Self::account_cids_add(recipient.clone(), cid);
@@ -361,6 +364,14 @@ impl<T: Config> Pallet<T> {
     pub fn get_bond_data(cid: Cid) -> Option<CidDetails<T::AccountId>> {
         Self::distributed(cid)
     }
+
+    pub fn get_card(cid: Cid) -> Option<Bytes> {
+        if let Some(cid_details) = Self::distributed(cid) {
+            Some(cid_details.card)
+        } else {
+            None
+        }
+    }
 }
 
 impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
@@ -370,13 +381,14 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         card: Vec<u8>
     ) -> DispatchResult {
         Self::check_admin(who, cid)?;
+        ensure!(card.len() <= T::MaxCardSize::get() as usize, Error::<T>::TooBigCardSize);
 
         Distributed::<T>::try_mutate_exists(cid, |details| {
             let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 
             // only update once
             if detail.card.is_empty() {
-                detail.card = card.clone()
+                detail.card = card.clone().into()
             }
 
             Self::deposit_event(Event::MintCard(cid, card));
@@ -417,11 +429,7 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         Self::get_account_id(cid)
     }
 
-    fn card_of_cid(cid: u64) -> Option<Vec<u8>> {
-        if let Some(cid_details) = Self::distributed(cid) {
-            Some(cid_details.card)
-        } else {
-            None
-        }
+    fn card_of_cid(cid: u64) -> Option<Bytes> {
+        Self::get_card(cid)
     }
 }

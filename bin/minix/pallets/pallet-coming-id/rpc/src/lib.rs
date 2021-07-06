@@ -24,6 +24,7 @@ use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
 use sp_runtime::{generic::BlockId, traits::{Block as BlockT}};
 use sp_api::ProvideRuntimeApi;
+use sp_core::Bytes;
 use pallet_coming_id_rpc_runtime_api::{
 	Cid, CidDetails
 };
@@ -51,6 +52,14 @@ pub trait ComingIdApi<BlockHash, AccountId> {
 		cid: Cid,
 		at: Option<BlockHash>
 	) -> Result<Option<CidDetails<AccountId>>>;
+
+	#[rpc(name = "get_card")]
+	fn get_card(
+		&self,
+		cid: Cid,
+		at: Option<BlockHash>
+	) -> Result<Option<Bytes>>;
+
 }
 
 /// A struct that implements the [`ComingIdApi`].
@@ -140,10 +149,30 @@ where
 		));
 
 
-		api.get_bond_data(&at, cid).map_err(|e| RpcError {
-			code: ErrorCode::ServerError(Error::RuntimeError.into()),
-			message: "Unable to get bond.".into(),
-			data: Some(format!("{:?}", e).into()),
-		})
+		api.get_bond_data(&at, cid)
+			.map_err(|e| RpcError {
+				code: ErrorCode::ServerError(Error::RuntimeError.into()),
+				message: "Unable to get bond.".into(),
+				data: Some(format!("{:?}", e).into()),
+			})
+	}
+
+	fn get_card(
+		&self,
+		cid: Cid,
+		at: Option<<Block as BlockT>::Hash>
+	) -> Result<Option<Bytes>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash
+		));
+
+		api.get_card(&at, cid)
+			.map_err(|e| RpcError {
+				code: ErrorCode::ServerError(Error::RuntimeError.into()),
+				message: "Unable to get card.".into(),
+				data: Some(format!("{:?}", e).into()),
+			})
 	}
 }

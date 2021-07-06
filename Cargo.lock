@@ -4448,6 +4448,7 @@ dependencies = [
  "pallet-coming-id",
  "parity-scale-codec",
  "sp-api",
+ "sp-core",
  "sp-std",
 ]
 

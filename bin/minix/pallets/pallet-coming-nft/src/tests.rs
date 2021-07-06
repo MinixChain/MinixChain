@@ -56,6 +56,11 @@ fn transfer_should_work() {
             Error::<Test>::UndistributedCid,
         );
 
+        assert_noop!(
+            ComingNFT::mint(Origin::signed(ADMIN), 1_000_000, vec![1; 1025 as usize]),
+            Error::<Test>::TooBigCardSize,
+        );
+
         // (5) mint card success
         let card = br#"{"name": "testCard"}"#.to_vec();
         assert_ok!(ComingNFT::mint(Origin::signed(ADMIN), 1_000_000, card.clone()));
@@ -66,7 +71,7 @@ fn transfer_should_work() {
 
         assert_eq!(ComingNFT::cids_of_owner(RESERVE2), vec![1_000_000]);
         assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE2));
-        assert_eq!(ComingNFT::card_of_cid(1_000_000), Some(card));
+        assert_eq!(ComingNFT::card_of_cid(1_000_000), Some(card.into()));
 
         assert_eq!(ComingNFT::cids_of_owner(RESERVE3), vec![1_000_001]);
     });

@@ -30,6 +30,7 @@ frame_support::construct_runtime!(
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub const SS58Prefix: u8 = 42;
+    pub const MaxCardSize: u32 = 1024;
 }
 
 impl system::Config for Test {
@@ -61,10 +62,12 @@ impl system::Config for Test {
 impl pallet_coming_id::Config for Test {
     type Event = Event;
     type WeightInfo = ();
+    type MaxCardSize = MaxCardSize;
 }
 
 impl pallet_coming_nft::Config for Test {
     type ComingNFT = ComingId;
+    type WeightInfo = ();
 }
 
 // Build test environment by setting the admin `key` for the Genesis.

@@ -93,5 +93,6 @@ runtime-benchmarks = [
 	"pallet-balances/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	"pallet-coming-id/runtime-benchmarks"
+	"pallet-coming-id/runtime-benchmarks",
+	"pallet-coming-nft/runtime-benchmarks"
 ]

@@ -4,6 +4,18 @@
 pallet-coming-nft 是从原pallet-coming-id中将相关的NFT业务剥离出来的,
 是以Cid为基础的NFT操作集合.
 
+```rust
+#[pallet::config]
+pub trait Config: frame_system::Config + pallet_coming_id::Config {
+    /// The implement of ComingNFT triat, eg. pallet-coming-id
+    type ComingNFT: ComingNFT<Self::AccountId>;
+    /// Weight information for extrinsics in this pallet.
+    type WeightInfo: WeightInfo;
+}
+```
+
+继承`pallet_coming_id::Config`是为了`benchmarking`.
+
 ## Intro
 - mint(cid, card): admin权限
     

@@ -2,11 +2,16 @@
 
 #[cfg(test)]
 mod mock;
+
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+mod weights;
+
 pub use pallet::*;
-//pub use weights::WeightInfo;
+pub use weights::WeightInfo;
 
 use frame_support::inherent::Vec;
 use sp_runtime::traits::StaticLookup;
@@ -23,10 +28,11 @@ pub mod pallet {
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
-    pub trait Config: frame_system::Config {
-        /// Weight information for extrinsics in this pallet.
+    pub trait Config: frame_system::Config + pallet_coming_id::Config {
+        /// The implement of ComingNFT triat, eg. pallet-coming-id
         type ComingNFT: ComingNFT<Self::AccountId>;
-        //type WeightInfo: WeightInfo;
+        /// Weight information for extrinsics in this pallet.
+        type WeightInfo: WeightInfo;
     }
 
     #[pallet::pallet]
@@ -38,14 +44,14 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        #[pallet::weight(1000)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::mint(card.len() as u32))]
         pub fn mint(origin: OriginFor<T>, cid: Cid, card: Vec<u8>) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
             T::ComingNFT::mint(&who, cid, card)
         }
 
-        #[pallet::weight(1000)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::transfer())]
         pub fn transfer(
             origin: OriginFor<T>,
             cid: Cid,

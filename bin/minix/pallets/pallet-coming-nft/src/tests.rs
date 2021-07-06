@@ -67,5 +67,7 @@ fn transfer_should_work() {
         assert_eq!(ComingNFT::cids_of_owner(RESERVE2), vec![1_000_000]);
         assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE2));
         assert_eq!(ComingNFT::card_of_cid(1_000_000), Some(card));
+
+        assert_eq!(ComingNFT::cids_of_owner(RESERVE3), vec![1_000_001]);
     });
 }

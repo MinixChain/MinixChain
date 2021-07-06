@@ -408,4 +408,20 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
             Ok(())
         })
     }
+
+    fn cids_of_owner(owner: T::AccountId) -> Vec<Cid> {
+        Self::get_cids(owner)
+    }
+
+    fn owner_of_cid(cid: u64) -> Option<T::AccountId> {
+        Self::get_account_id(cid)
+    }
+
+    fn card_of_cid(cid: u64) -> Option<Vec<u8>> {
+        if let Some(cid_details) = Self::distributed(cid) {
+            Some(cid_details.card)
+        } else {
+            None
+        }
+    }
 }

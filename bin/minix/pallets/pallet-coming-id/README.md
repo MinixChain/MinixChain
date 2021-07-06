@@ -36,12 +36,6 @@
     mediaAdmin 权限, 分配 6-12位 cid.
 
     lowAdmin 权限, 分配 7-12位 cid.
-   
-  - transfer(cid, recipient)
-     
-      user权限(owner), 只允许6-12位cid自由transfer.
-  
-      transfer to self = unbond all
   
   - bond(cid, bond_data)
   
@@ -168,7 +162,8 @@ fn get_bond_data(
   },
   "CidDetails": {
     "owner": "AccountId",
-    "bonds": "Vec<BondData>"
+    "bonds": "Vec<BondData>",
+    "card":  "Vec<u8>"
   }
 }
 ```

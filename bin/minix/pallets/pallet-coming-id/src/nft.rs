@@ -13,4 +13,10 @@ pub trait ComingNFT<AccountId> {
         cid: Cid,
         recipient: &AccountId
     ) -> DispatchResult;
+
+    fn cids_of_owner(owner: AccountId) -> Vec<Cid>;
+
+    fn owner_of_cid(cid: Cid) -> Option<AccountId>;
+
+    fn card_of_cid(cid: Cid) -> Option<Vec<u8>>;
 }

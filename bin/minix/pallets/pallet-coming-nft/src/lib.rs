@@ -58,3 +58,17 @@ pub mod pallet {
         }
     }
 }
+
+impl<T: Config> Pallet<T> {
+    fn cids_of_owner(who: T::AccountId) -> Vec<Cid> {
+        T::ComingNFT::cids_of_owner(who)
+    }
+
+    fn owner_of_cid(cid: Cid) -> Option<T::AccountId> {
+        T::ComingNFT::owner_of_cid(cid)
+    }
+
+    fn card_of_cid(cid: Cid) -> Option<Vec<u8>> {
+        T::ComingNFT::card_of_cid(cid)
+    }
+}

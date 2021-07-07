@@ -208,26 +208,10 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
 
-            let is_admin = match cid {
-                0..100_000 => {
-                    Self::high_admin_key() == who
-                },
-                100_000..1_000_000 => {
-                    Self::high_admin_key() == who
-                        || Self::medium_admin_key() == who
-                },
-                1000_000..1_000_000_000_000 => {
-                    Self::high_admin_key() == who
-                        || Self::medium_admin_key() == who
-                        || Self::low_admin_key() == who
-                },
-                _ => false,
-            };
-
             Distributed::<T>::try_mutate_exists(cid, |details| {
                 let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 
-                ensure!(is_admin || detail.owner == who, Error::<T>::RequireOwner);
+                ensure!(detail.owner == who, Error::<T>::RequireOwner);
 
                 let bond_type = bond_data.bond_type;
 

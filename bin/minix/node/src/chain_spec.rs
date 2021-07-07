@@ -121,6 +121,14 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 	))
 }
 
+pub fn live_testnet_config() -> Result<ChainSpec, String> {
+    ChainSpec::from_json_bytes(&include_bytes!("../res/testnet-raw.json")[..])
+}
+
+pub fn live_mainnet_config() -> Result<ChainSpec, String> {
+    ChainSpec::from_json_bytes(&include_bytes!("../res/minix-raw.json")[..])
+}
+
 /// Configure initial storage state for FRAME modules.
 pub fn minix_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,

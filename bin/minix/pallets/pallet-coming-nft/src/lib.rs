@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(unused)]
 
 #[cfg(test)]
 mod mock;

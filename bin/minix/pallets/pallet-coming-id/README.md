@@ -189,6 +189,8 @@ fn get_card(
 ## custom types
 ```json
 {
+  "Address": "MultiAddress",
+  "LookupSource": "MultiAddress",
   "Cid": "u64",
   "BondType": "u16",
   "BondData": {

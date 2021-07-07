@@ -136,10 +136,13 @@ pub mod pallet {
         UnBonded(T::AccountId, Cid, BondType),
         // cid, card
         MintCard(Cid, Vec<u8>),
+        // cid
+        Burned(Cid)
     }
 
     #[pallet::error]
     pub enum Error<T> {
+        BanBurn,
         BanTransfer,
         InvalidCid,
         RequireHighAuthority,
@@ -295,6 +298,16 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
+    fn is_burnable(cid: Cid) -> DispatchResult {
+        match cid {
+            0..100_000 => {},
+            100_000..1_000_000_000_000 => ensure!(false, Error::<T>::BanBurn),
+            _ => ensure!(false, Error::<T>::InvalidCid),
+        }
+
+        Ok(())
+    }
+
     fn is_valid(cid: Cid) -> bool {
         if cid < 1_000_000_000_000 {
             return true;
@@ -350,10 +363,9 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn get_card(cid: Cid) -> Option<Bytes> {
-        if let Some(cid_details) = Self::distributed(cid) {
-            Some(cid_details.card)
-        } else {
-            None
+        match Self::distributed(cid) {
+            Some(cid_details) if !cid_details.card.is_empty() => Some(cid_details.card),
+            _ => None
         }
     }
 }
@@ -379,6 +391,25 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
 
             Ok(())
         })
+    }
+
+    fn burn(
+        who: &T::AccountId,
+        cid: Cid,
+    ) -> DispatchResult {
+        Self::is_burnable(cid)?;
+        ensure!(*who == Self::high_admin_key(), Error::<T>::RequireHighAuthority);
+        ensure!(Distributed::<T>::contains_key(cid), Error::<T>::UndistributedCid);
+
+        if let Some(owner) = Self::owner_of_cid(cid) {
+            Self::account_cids_remove(owner, cid);
+        }
+
+        Distributed::<T>::remove(cid);
+
+        Self::deposit_event(Event::Burned(cid));
+
+        Ok(())
     }
 
     fn transfer(

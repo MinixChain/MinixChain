@@ -22,7 +22,7 @@ benchmarks! {
         let claim_cid: Cid = 1000000;
         let recipient: T::AccountId = account("recipient", 0, 0);
         let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(recipient.clone());
-        let b in 0 .. *T::BlockLength::get().max.get(DispatchClass::Normal) as u32;
+        let b in 1 .. T::MaxCardSize::get();
         let card = vec![1; b as usize];
 
         assert!(
@@ -36,9 +36,34 @@ benchmarks! {
 
     }: mint(RawOrigin::Signed(admin), claim_cid, card.clone())
     verify {
-        assert_eq!(ComingNFT::<T>::card_of_cid(claim_cid), Some(card));
+        assert_eq!(ComingNFT::<T>::card_of_cid(claim_cid), Some(Bytes::from(card)));
         assert_eq!(ComingNFT::<T>::owner_of_cid(claim_cid), Some(recipient.clone()));
         assert_eq!(ComingNFT::<T>::cids_of_owner(recipient), vec![claim_cid]);
+    }
+
+    burn {
+        let admin: T::AccountId = admin_account();
+        let claim_cid: Cid = 99999;
+        let recipient: T::AccountId = account("recipient", 0, 0);
+        let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(recipient.clone());
+
+        assert!(
+            ComingId::Pallet::<T>::register(
+                RawOrigin::Signed(admin.clone()).into(),
+                claim_cid,
+                recipient_lookup,
+            )
+            .is_ok()
+        );
+
+        assert_eq!(ComingNFT::<T>::card_of_cid(claim_cid), None);
+        assert_eq!(ComingNFT::<T>::owner_of_cid(claim_cid), Some(recipient.clone()));
+        assert_eq!(ComingNFT::<T>::cids_of_owner(recipient.clone()), vec![claim_cid]);
+    }: burn(RawOrigin::Signed(admin), claim_cid)
+    verify {
+        assert_eq!(ComingNFT::<T>::card_of_cid(claim_cid), None);
+        assert_eq!(ComingNFT::<T>::owner_of_cid(claim_cid), None);
+        assert!(ComingNFT::<T>::cids_of_owner(recipient).is_empty());
     }
 
     transfer {
@@ -72,7 +97,7 @@ benchmarks! {
 
     }: transfer(RawOrigin::Signed(owner.clone()), claim_cid, recipient_lookup)
     verify {
-        assert_eq!(ComingNFT::<T>::card_of_cid(claim_cid), Some(card));
+        assert_eq!(ComingNFT::<T>::card_of_cid(claim_cid), Some(Bytes::from(card)));
         assert_eq!(ComingNFT::<T>::owner_of_cid(claim_cid), Some(recipient.clone()));
         assert_eq!(ComingNFT::<T>::cids_of_owner(recipient), vec![claim_cid]);
 

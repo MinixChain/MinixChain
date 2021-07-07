@@ -8,6 +8,11 @@ pub trait ComingNFT<AccountId> {
         card: Vec<u8>
     ) -> DispatchResult;
 
+    fn burn(
+        who: &AccountId,
+        cid: Cid,
+    ) -> DispatchResult;
+
     fn transfer(
         who: &AccountId,
         cid: Cid,

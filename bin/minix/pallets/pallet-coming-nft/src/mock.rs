@@ -30,7 +30,7 @@ frame_support::construct_runtime!(
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub const SS58Prefix: u8 = 42;
-    pub const MaxCardSize: u32 = 1024;
+    pub const MaxCardSize: u32 = 1024 * 1024;
 }
 
 impl system::Config for Test {

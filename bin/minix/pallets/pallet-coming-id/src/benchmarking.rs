@@ -34,15 +34,15 @@ benchmarks! {
             *details = Some(CidDetails{
                 owner: common_user.clone(),
                 bonds: Vec::new(),
-                card: Vec::new()
+                card: Bytes::from(Vec::new())
             });
 
             Ok(())
         })?;
 
         let bond_data = BondData{
-            bond_type:1u16,
-            data:b"benchmark".to_vec(),
+            bond_type: 1u16,
+            data: Bytes::from(b"benchmark".to_vec()),
         };
 
     }: bond(RawOrigin::Signed(common_user.clone()), claim_cid, bond_data.clone())
@@ -58,8 +58,8 @@ benchmarks! {
         let common_user: T::AccountId = account("common_user", 0, SEED);
         let claim_cid: Cid = 1000000;
         let bond_data = BondData{
-            bond_type:1u16,
-            data:b"benchmark".to_vec(),
+            bond_type: 1u16,
+            data: Bytes::from(b"benchmark".to_vec()),
         };
 
         let mut bonds: Vec<BondData> = Vec::new();
@@ -69,7 +69,7 @@ benchmarks! {
             *details = Some(CidDetails{
                 owner: common_user.clone(),
                 bonds: bonds,
-                card: Vec::new()
+                card: Bytes::from(Vec::new())
             });
 
             Ok(())

@@ -51,6 +51,16 @@ pub mod pallet {
             T::ComingNFT::mint(&who, cid, card)
         }
 
+        #[pallet::weight(1000)]
+        pub fn burn(
+            origin: OriginFor<T>,
+            cid: Cid,
+        ) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            T::ComingNFT::burn(&who, cid)
+        }
+
         #[pallet::weight(<T as pallet::Config>::WeightInfo::transfer())]
         pub fn transfer(
             origin: OriginFor<T>,

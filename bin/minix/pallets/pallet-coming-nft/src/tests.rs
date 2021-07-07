@@ -27,6 +27,61 @@ fn mint_should_work() {
 }
 
 #[test]
+fn burn_should_work() {
+    new_test_ext(ADMIN).execute_with(|| {
+        // (1) register
+        assert_ok!(ComingId::register(Origin::signed(ADMIN), 1, RESERVE2));
+        expect_event(ComingIdEvent::Registered(RESERVE2, 1));
+
+        assert_eq!(ComingNFT::cids_of_owner(RESERVE2), vec![1]);
+        assert_eq!(ComingNFT::owner_of_cid(1), Some(RESERVE2));
+        assert_eq!(ComingNFT::card_of_cid(1), None);
+
+        // (2) burn
+        assert_ok!(ComingNFT::burn(Origin::signed(ADMIN), 1));
+        expect_event(ComingIdEvent::Burned(1));
+
+        assert!(ComingNFT::cids_of_owner(RESERVE2).is_empty());
+        assert_eq!(ComingNFT::owner_of_cid(1), None);
+        assert_eq!(ComingNFT::card_of_cid(1), None);
+
+        assert_noop!(
+            ComingNFT::burn(Origin::signed(ADMIN), 1),
+            Error::<Test>::UndistributedCid,
+        );
+    })
+}
+
+#[test]
+fn burn_should_not_work() {
+    new_test_ext(ADMIN).execute_with(|| {
+        // (1) register
+        assert_ok!(ComingId::register(Origin::signed(ADMIN), 100_000, RESERVE2));
+        expect_event(ComingIdEvent::Registered(RESERVE2, 100_000));
+
+        assert_eq!(ComingNFT::cids_of_owner(RESERVE2), vec![100_000]);
+        assert_eq!(ComingNFT::owner_of_cid(100_000), Some(RESERVE2));
+        assert_eq!(ComingNFT::card_of_cid(100_000), None);
+
+        // (2) burn
+        assert_noop!(
+            ComingNFT::burn(Origin::signed(ADMIN), 100_000),
+            Error::<Test>::BanBurn,
+        );
+
+        assert_noop!(
+            ComingNFT::burn(Origin::signed(RESERVE2), 1),
+            Error::<Test>::RequireHighAuthority,
+        );
+
+        assert_noop!(
+            ComingNFT::burn(Origin::signed(ADMIN), 1),
+            Error::<Test>::UndistributedCid,
+        );
+    })
+}
+
+#[test]
 fn transfer_should_work() {
     new_test_ext(ADMIN).execute_with(|| {
         // (1) register
@@ -57,7 +112,7 @@ fn transfer_should_work() {
         );
 
         assert_noop!(
-            ComingNFT::mint(Origin::signed(ADMIN), 1_000_000, vec![1; 1025 as usize]),
+            ComingNFT::mint(Origin::signed(ADMIN), 1_000_000, vec![1; 1048576 + 1 as usize]),
             Error::<Test>::TooBigCardSize,
         );
 

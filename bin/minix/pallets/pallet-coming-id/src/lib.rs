@@ -62,6 +62,8 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
         /// Max size of c-card
         type MaxCardSize: Get<u32>;
+
+        todo!("limit bond data size");
     }
 
     #[pallet::pallet]

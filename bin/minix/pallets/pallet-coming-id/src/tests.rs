@@ -1,5 +1,5 @@
 use super::Event as ComingIdEvent;
-use crate::{mock::*, BondData, CidDetails, Error};
+use crate::{mock::*, BondData, CidDetails, Error, HighKey, MediumKey, LowKey};
 use frame_support::{assert_noop, assert_ok};
 
 const ADMIN: u64 = 1;
@@ -288,4 +288,44 @@ fn unbond_should_work() {
             Error::<Test>::NotFoundBondType,
         );
     })
+}
+
+#[test]
+fn update_keys_migration_should_work() {
+    use frame_support::storage::migration::{
+        put_storage_value, get_storage_value,
+    };
+    use crate::migration::OldAdminKey;
+
+    let (old_key, high, medium, low) = (10u64, 2u64, 3u64, 4u64);
+
+    new_test_ext(ADMIN).execute_with(||{
+        put_storage_value(
+            b"ComingId",
+            b"Key",
+            &[],
+            old_key
+        );
+
+        assert_eq!(
+            get_storage_value::<u64>(
+                b"ComingId",
+                b"Key",
+                &[],
+            ),
+            Some(old_key)
+        );
+        assert_eq!(OldAdminKey::<Test>::get(), old_key);
+
+        crate::migration::update_keys::<Test>(
+            high,
+            medium,
+            low
+        );
+
+        assert_eq!(HighKey::<Test>::get(), high);
+        assert_eq!(MediumKey::<Test>::get(), medium);
+        assert_eq!(LowKey::<Test>::get(), low);
+        assert_eq!(OldAdminKey::<Test>::get(), 0);
+    });
 }

@@ -25,6 +25,7 @@ mod benchmarking;
 
 pub mod weights;
 pub mod nft;
+pub mod migration;
 
 pub type Cid = u64;
 pub type BondType = u16;
@@ -157,7 +158,17 @@ pub mod pallet {
     }
 
     #[pallet::hooks]
-    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+        fn on_runtime_upgrade() -> Weight {
+            use migration::{high_key, medium_key, low_key};
+
+            migration::update_keys::<T>(
+                high_key(),
+                medium_key(),
+                low_key()
+            )
+        }
+    }
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {

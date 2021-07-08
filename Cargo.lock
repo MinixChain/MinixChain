@@ -4417,6 +4417,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "log",
  "parity-scale-codec",
  "serde",
  "sp-core",

@@ -44,18 +44,18 @@ pub fn update_keys<T: Config>(
 
 pub fn high_key<AccountId: Decode + Default>() -> AccountId {
     AccountId::decode(
-        &mut &b"fc4ea146bf1f19bc7b828c19be1f7d764c55108c8aaf6075d00c9fa7da1eca75"[..]
+        &mut &[252, 78, 161, 70, 191, 31, 25, 188, 123, 130, 140, 25, 190, 31, 125, 118, 76, 85, 16, 140, 138, 175, 96, 117, 208, 12, 159, 167, 218, 30, 202, 117][..]
     ).unwrap_or_default()
 }
 
 pub fn medium_key<AccountId: Decode + Default>() -> AccountId {
     AccountId::decode(
-        &mut & b"74092de518c6394d5ec2d8915c22822d0d62cc699ce8d9177c38e812a3ed3565"[..]
+        &mut &[116, 9, 45, 229, 24, 198, 57, 77, 94, 194, 216, 145, 92, 34, 130, 45, 13, 98, 204, 105, 156, 232, 217, 23, 124, 56, 232, 18, 163, 237, 53, 101][..]
     ).unwrap_or_default()
 }
 
 pub fn low_key<AccountId: Decode + Default>() -> AccountId {
     AccountId::decode(
-        &mut &b"f412fd28e2835691047a49d83608c19249711b36d09c61c634566c003b3bc660"[..]
+        &mut &[244, 18, 253, 40, 226, 131, 86, 145, 4, 122, 73, 216, 54, 8, 193, 146, 73, 113, 27, 54, 208, 156, 97, 198, 52, 86, 108, 0, 59, 59, 198, 96][..]
     ).unwrap_or_default()
 }

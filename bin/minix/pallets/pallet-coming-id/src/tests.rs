@@ -329,3 +329,28 @@ fn update_keys_migration_should_work() {
         assert_eq!(OldAdminKey::<Test>::get(), 0);
     });
 }
+
+#[test]
+fn check_high_medium_low_account() {
+    use sp_core::crypto::AccountId32;
+    use hex_literal::hex;
+    use crate::migration::{
+        high_key,medium_key,low_key
+    };
+
+    let high = hex!["fc4ea146bf1f19bc7b828c19be1f7d764c55108c8aaf6075d00c9fa7da1eca75"];
+    let medium = hex!["74092de518c6394d5ec2d8915c22822d0d62cc699ce8d9177c38e812a3ed3565"];
+    let low = hex!["f412fd28e2835691047a49d83608c19249711b36d09c61c634566c003b3bc660"];
+
+    assert_eq!(high_key::<AccountId32>().as_ref(), high);
+    assert_eq!(medium_key::<AccountId32>().as_ref(), medium);
+    assert_eq!(low_key::<AccountId32>().as_ref(), low);
+
+    let high_account = "5HmXHKCw2sbceLDjU7HGtCSszAaPRcBFUh4z9ewYms8hSmak";
+    let medium_account = "5Egr8zWNDA8u5JVerNNM4aTpLMikRq3JVNxiqXDRGEXeXi4h";
+    let low_account = "5HajBWCkQkK697TFq2EWB1QioicvxSuY3HzeWitmTtQ33g1U";
+
+    assert_eq!(high_key::<AccountId32>().to_string(), high_account);
+    assert_eq!(medium_key::<AccountId32>().to_string(), medium_account);
+    assert_eq!(low_key::<AccountId32>().to_string(), low_account);
+}

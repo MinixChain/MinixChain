@@ -25,6 +25,7 @@ serde = { version = "1.0.119" }
 sp-core = { default-features = false, version = "3.0.0", path = "../../../../primitives/core" }
 sp-io = { default-features = false, version = "3.0.0", path = "../../../../primitives/io" }
 sp-runtime = { default-features = false, version = "3.0.0", path = "../../../../primitives/runtime" }
+hex-literal = { version = "0.3.1"}
 
 [features]
 default = ['std']

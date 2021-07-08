@@ -20,15 +20,15 @@ pub fn update_keys<T: Config>(
     let mut writes = 0;
     let mut reads = 0;
 
-    let is_exists = OldAdminKey::<T>::get() != T::AccountId::default();
+    let is_exists = OldAdminKey::<T>::try_get().is_ok();
     log::info!("ComingId: old key is exists? {}", is_exists);
 
     if is_exists {
-        log::info!("ComingId: update high key {:?}", high_key.clone());
+        log::info!("ComingId: update high key");
         HighKey::<T>::put(high_key);
-        log::info!("ComingId: update medium key {:?}", medium_key.clone());
+        log::info!("ComingId: update medium key");
         MediumKey::<T>::put(medium_key);
-        log::info!("ComingId: update low key {:?}", low_key.clone());
+        log::info!("ComingId: update low key");
         LowKey::<T>::put(low_key);
 
         log::info!("ComingId: kill old key");

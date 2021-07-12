@@ -1,15 +1,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(exclusive_range_pattern)]
 
+pub use nft::ComingNFT;
 pub use pallet::*;
 pub use weights::WeightInfo;
-pub use nft::ComingNFT;
 
 use codec::{Decode, Encode};
 use frame_support::inherent::Vec;
-use sp_runtime::traits::StaticLookup;
-use sp_core::Bytes;
 use frame_support::pallet_prelude::*;
+use sp_core::Bytes;
+use sp_runtime::traits::StaticLookup;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -23,9 +23,9 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-pub mod weights;
-pub mod nft;
 pub mod migration;
+pub mod nft;
+pub mod weights;
 
 pub type Cid = u64;
 pub type BondType = u16;
@@ -62,8 +62,6 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
         /// Max size of c-card
         type MaxCardSize: Get<u32>;
-
-        todo!("limit bond data size");
     }
 
     #[pallet::pallet]
@@ -140,7 +138,7 @@ pub mod pallet {
         // cid, card
         MintCard(Cid, Vec<u8>),
         // cid
-        Burned(Cid)
+        Burned(Cid),
     }
 
     #[pallet::error]
@@ -156,19 +154,21 @@ pub mod pallet {
         UndistributedCid,
         InvalidCidEnd,
         NotFoundBondType,
-        TooBigCardSize
+        TooBigCardSize,
     }
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_runtime_upgrade() -> Weight {
-            use migration::{high_key, medium_key, low_key};
+            use migration::{
+                high_key, low_key, medium_key, migrate_to_new_cid_details, migrate_to_new_admin_keys,
+            };
 
-            migration::update_keys::<T>(
-                high_key(),
-                medium_key(),
-                low_key()
-            )
+            let update_value_weight = migrate_to_new_admin_keys::<T>(high_key(), medium_key(), low_key());
+
+            let update_map_weight = migrate_to_new_cid_details::<T>();
+
+            sp_std::cmp::max(update_value_weight, update_map_weight)
         }
     }
 
@@ -216,11 +216,7 @@ pub mod pallet {
         }
 
         #[pallet::weight(T::WeightInfo::bond())]
-        pub fn bond(
-            origin: OriginFor<T>,
-            cid: Cid,
-            bond_data: BondData
-        ) -> DispatchResult {
+        pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
 
@@ -251,11 +247,7 @@ pub mod pallet {
         }
 
         #[pallet::weight(T::WeightInfo::unbond())]
-        pub fn unbond(
-            origin: OriginFor<T>,
-            cid: Cid,
-            bond_type: BondType
-        ) -> DispatchResult {
+        pub fn unbond(origin: OriginFor<T>, cid: Cid, bond_type: BondType) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
 
@@ -281,20 +273,19 @@ impl<T: Config> Pallet<T> {
     fn check_admin(origin: &T::AccountId, cid: Cid) -> DispatchResult {
         match cid {
             0..1_00_000 => ensure!(
-                    *origin == Self::high_admin_key(),
-                    Error::<T>::RequireHighAuthority
-                ),
+                *origin == Self::high_admin_key(),
+                Error::<T>::RequireHighAuthority
+            ),
             1_00_000..1_000_000 => ensure!(
-                    *origin == Self::high_admin_key()
-                        || *origin == Self::medium_admin_key(),
-                    Error::<T>::RequireMediumAuthority
-                ),
+                *origin == Self::high_admin_key() || *origin == Self::medium_admin_key(),
+                Error::<T>::RequireMediumAuthority
+            ),
             1_000_000..1_000_000_000_000 => ensure!(
-                    *origin == Self::high_admin_key()
-                        || *origin == Self::medium_admin_key()
-                        || *origin == Self::low_admin_key(),
-                    Error::<T>::RequireLowAuthority
-                ),
+                *origin == Self::high_admin_key()
+                    || *origin == Self::medium_admin_key()
+                    || *origin == Self::low_admin_key(),
+                Error::<T>::RequireLowAuthority
+            ),
             _ => ensure!(false, Error::<T>::InvalidCid),
         }
 
@@ -304,7 +295,7 @@ impl<T: Config> Pallet<T> {
     fn is_transferable(cid: Cid) -> DispatchResult {
         match cid {
             0..100_000 => ensure!(false, Error::<T>::BanTransfer),
-            100_000..1_000_000_000_000 => {},
+            100_000..1_000_000_000_000 => {}
             _ => ensure!(false, Error::<T>::InvalidCid),
         }
 
@@ -313,7 +304,7 @@ impl<T: Config> Pallet<T> {
 
     fn is_burnable(cid: Cid) -> DispatchResult {
         match cid {
-            0..100_000 => {},
+            0..100_000 => {}
             100_000..1_000_000_000_000 => ensure!(false, Error::<T>::BanBurn),
             _ => ensure!(false, Error::<T>::InvalidCid),
         }
@@ -378,7 +369,7 @@ impl<T: Config> Pallet<T> {
     pub fn get_card(cid: Cid) -> Option<Bytes> {
         match Self::distributed(cid) {
             Some(cid_details) if !cid_details.card.is_empty() => Some(cid_details.card),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -386,7 +377,10 @@ impl<T: Config> Pallet<T> {
 impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
     fn mint(who: &T::AccountId, cid: Cid, card: Vec<u8>) -> DispatchResult {
         Self::check_admin(who, cid)?;
-        ensure!(card.len() <= T::MaxCardSize::get() as usize, Error::<T>::TooBigCardSize);
+        ensure!(
+            card.len() <= T::MaxCardSize::get() as usize,
+            Error::<T>::TooBigCardSize
+        );
 
         Distributed::<T>::try_mutate_exists(cid, |details| {
             let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
@@ -404,8 +398,14 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
 
     fn burn(who: &T::AccountId, cid: Cid) -> DispatchResult {
         Self::is_burnable(cid)?;
-        ensure!(*who == Self::high_admin_key(), Error::<T>::RequireHighAuthority);
-        ensure!(Distributed::<T>::contains_key(cid), Error::<T>::UndistributedCid);
+        ensure!(
+            *who == Self::high_admin_key(),
+            Error::<T>::RequireHighAuthority
+        );
+        ensure!(
+            Distributed::<T>::contains_key(cid),
+            Error::<T>::UndistributedCid
+        );
 
         if let Some(owner) = Self::owner_of_cid(cid) {
             Self::account_cids_remove(owner, cid);

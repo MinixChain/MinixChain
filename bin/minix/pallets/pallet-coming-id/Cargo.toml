@@ -21,10 +21,12 @@ hex-literal = { version = "0.3.1", optional = true }
 log = { version = "0.4.14", default-features = false }
 
 [dev-dependencies]
+codec = { package = "parity-scale-codec", version = "2.0.0" }
 serde = { version = "1.0.119" }
 sp-core = { default-features = false, version = "3.0.0", path = "../../../../primitives/core" }
 sp-io = { default-features = false, version = "3.0.0", path = "../../../../primitives/io" }
 sp-runtime = { default-features = false, version = "3.0.0", path = "../../../../primitives/runtime" }
+sp-storage = { default-features = false, version = "3.0.0", path = "../../../../primitives/storage" }
 hex-literal = { version = "0.3.1"}
 
 [features]

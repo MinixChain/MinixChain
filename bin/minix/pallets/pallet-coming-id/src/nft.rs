@@ -1,4 +1,3 @@
-
 use super::*;
 
 pub trait ComingNFT<AccountId> {

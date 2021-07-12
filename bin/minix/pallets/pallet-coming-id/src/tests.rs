@@ -1,5 +1,8 @@
 use super::Event as ComingIdEvent;
-use crate::{mock::*, BondData, CidDetails, Error, HighKey, MediumKey, LowKey};
+use crate::{
+    mock::*, BondData, BondType, Cid, CidDetails, Distributed, Error, HighKey, LowKey, MediumKey,
+    StorageMap,
+};
 use frame_support::{assert_noop, assert_ok};
 
 const ADMIN: u64 = 1;
@@ -110,12 +113,11 @@ fn bond_should_work() {
             ComingId::bond(Origin::signed(RESERVE2), 1000000000000, bond.clone()),
             Error::<Test>::InvalidCid,
         );
-         // 1. Error::InvalidCid
+        // 1. Error::InvalidCid
         assert_noop!(
             ComingId::bond(Origin::signed(RESERVE2), 1_000_000_000_000, bond.clone()),
             Error::<Test>::InvalidCid,
         );
-
 
         // 2. Error::RequireOwner
         assert_noop!(
@@ -292,36 +294,21 @@ fn unbond_should_work() {
 
 #[test]
 fn update_keys_migration_should_work() {
-    use frame_support::storage::migration::{
-        put_storage_value, get_storage_value,
-    };
     use crate::migration::OldAdminKey;
+    use frame_support::storage::migration::{get_storage_value, put_storage_value};
 
     let (old_key, high, medium, low) = (10u64, 2u64, 3u64, 4u64);
 
-    new_test_ext(ADMIN).execute_with(||{
-        put_storage_value(
-            b"ComingId",
-            b"Key",
-            &[],
-            old_key
-        );
+    new_test_ext(ADMIN).execute_with(|| {
+        put_storage_value(b"ComingId", b"Key", &[], old_key);
 
         assert_eq!(
-            get_storage_value::<u64>(
-                b"ComingId",
-                b"Key",
-                &[],
-            ),
+            get_storage_value::<u64>(b"ComingId", b"Key", &[],),
             Some(old_key)
         );
         assert_eq!(OldAdminKey::<Test>::get(), old_key);
 
-        crate::migration::update_keys::<Test>(
-            high,
-            medium,
-            low
-        );
+        crate::migration::migrate_to_new_admin_keys::<Test>(high, medium, low);
 
         assert_eq!(HighKey::<Test>::get(), high);
         assert_eq!(MediumKey::<Test>::get(), medium);
@@ -332,11 +319,9 @@ fn update_keys_migration_should_work() {
 
 #[test]
 fn check_high_medium_low_account() {
-    use sp_core::crypto::AccountId32;
+    use crate::migration::{high_key, low_key, medium_key};
     use hex_literal::hex;
-    use crate::migration::{
-        high_key,medium_key,low_key
-    };
+    use sp_core::crypto::AccountId32;
 
     let high = hex!["fc4ea146bf1f19bc7b828c19be1f7d764c55108c8aaf6075d00c9fa7da1eca75"];
     let medium = hex!["74092de518c6394d5ec2d8915c22822d0d62cc699ce8d9177c38e812a3ed3565"];
@@ -353,4 +338,97 @@ fn check_high_medium_low_account() {
     assert_eq!(high_key::<AccountId32>().to_string(), high_account);
     assert_eq!(medium_key::<AccountId32>().to_string(), medium_account);
     assert_eq!(low_key::<AccountId32>().to_string(), low_account);
+}
+
+#[test]
+fn migrate_to_new_cid_details_should_work() {
+    use codec::{Decode, Encode};
+    use frame_support::Blake2_128Concat;
+    use sp_runtime::RuntimeDebug;
+    use sp_storage::Storage;
+
+    #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+    pub struct OldBondData {
+        pub bond_type: BondType,
+        pub data: Vec<u8>,
+    }
+
+    #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+    pub struct OldCidDetails<AccountId> {
+        pub owner: AccountId,
+        pub bonds: Vec<OldBondData>,
+    }
+
+    struct OldPalletStorageMapPrefix;
+    impl frame_support::traits::StorageInstance for OldPalletStorageMapPrefix {
+        const STORAGE_PREFIX: &'static str = "Distributed";
+        fn pallet_prefix() -> &'static str {
+            "ComingId"
+        }
+    }
+    type OldDistributed =
+        StorageMap<OldPalletStorageMapPrefix, Blake2_128Concat, Cid, OldCidDetails<u64>>;
+
+    let mut s = Storage::default();
+    let (cid1, cid2) = (1 as Cid, 2 as Cid);
+    let old_cid_details_1 = OldCidDetails {
+        owner: RESERVE2,
+        bonds: vec![OldBondData {
+            bond_type: 1u16,
+            data: b"old_cid_details_1".to_vec(),
+        }],
+    };
+
+    let old_cid_details_2 = OldCidDetails {
+        owner: RESERVE3,
+        bonds: vec![OldBondData {
+            bond_type: 2u16,
+            data: b"old_cid_details_2".to_vec(),
+        }],
+    };
+
+    let data = vec![
+        (
+            OldDistributed::hashed_key_for(cid1),
+            old_cid_details_1.encode().to_vec(),
+        ),
+        (
+            OldDistributed::hashed_key_for(cid2),
+            old_cid_details_2.encode().to_vec(),
+        ),
+    ];
+
+    s.top = data.into_iter().collect();
+
+    sp_io::TestExternalities::new(s).execute_with(|| {
+        assert_eq!(OldDistributed::get(cid1), Some(old_cid_details_1));
+        assert_eq!(OldDistributed::get(cid2), Some(old_cid_details_2));
+        assert_eq!(Distributed::<Test>::get(cid1), None);
+        assert_eq!(Distributed::<Test>::get(cid2), None);
+
+        crate::migration::migrate_to_new_cid_details::<Test>();
+
+        assert_eq!(
+            Distributed::<Test>::get(cid1),
+            Some(CidDetails {
+                owner: RESERVE2,
+                bonds: vec![BondData {
+                    bond_type: 1u16,
+                    data: b"old_cid_details_1".to_vec().into()
+                },],
+                card: vec![].into(),
+            })
+        );
+        assert_eq!(
+            Distributed::<Test>::get(cid2),
+            Some(CidDetails {
+                owner: RESERVE3,
+                bonds: vec![BondData {
+                    bond_type: 2u16,
+                    data: b"old_cid_details_2".to_vec().into()
+                },],
+                card: vec![].into(),
+            })
+        );
+    })
 }

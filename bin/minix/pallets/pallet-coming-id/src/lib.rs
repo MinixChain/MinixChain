@@ -384,11 +384,7 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
-    fn mint(
-        who: &T::AccountId,
-        cid: u64,
-        card: Vec<u8>
-    ) -> DispatchResult {
+    fn mint(who: &T::AccountId, cid: Cid, card: Vec<u8>) -> DispatchResult {
         Self::check_admin(who, cid)?;
         ensure!(card.len() <= T::MaxCardSize::get() as usize, Error::<T>::TooBigCardSize);
 
@@ -406,10 +402,7 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         })
     }
 
-    fn burn(
-        who: &T::AccountId,
-        cid: Cid,
-    ) -> DispatchResult {
+    fn burn(who: &T::AccountId, cid: Cid) -> DispatchResult {
         Self::is_burnable(cid)?;
         ensure!(*who == Self::high_admin_key(), Error::<T>::RequireHighAuthority);
         ensure!(Distributed::<T>::contains_key(cid), Error::<T>::UndistributedCid);
@@ -425,11 +418,7 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         Ok(())
     }
 
-    fn transfer(
-        who: &T::AccountId,
-        cid: u64,
-        recipient: &T::AccountId
-    ) -> DispatchResult {
+    fn transfer(who: &T::AccountId, cid: Cid, recipient: &T::AccountId) -> DispatchResult {
         Self::is_transferable(cid)?;
 
         Distributed::<T>::try_mutate_exists(cid, |details| {
@@ -453,11 +442,11 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         Self::get_cids(owner)
     }
 
-    fn owner_of_cid(cid: u64) -> Option<T::AccountId> {
+    fn owner_of_cid(cid: Cid) -> Option<T::AccountId> {
         Self::get_account_id(cid)
     }
 
-    fn card_of_cid(cid: u64) -> Option<Bytes> {
+    fn card_of_cid(cid: Cid) -> Option<Bytes> {
         Self::get_card(cid)
     }
 }

@@ -7,9 +7,7 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
 };
 
-pub use pallet_coming_id::{
-    BondData, CidDetails, Error, Event as ComingIdEvent
-};
+pub use pallet_coming_id::{BondData, CidDetails, Error, Event as ComingIdEvent};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

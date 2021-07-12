@@ -15,10 +15,10 @@ pub use pallet::*;
 pub use weights::WeightInfo;
 
 use frame_support::inherent::Vec;
-use sp_runtime::traits::StaticLookup;
-use sp_core::Bytes;
-use pallet_coming_id::{Cid, ComingNFT};
 use frame_support::pallet_prelude::*;
+use pallet_coming_id::{Cid, ComingNFT};
+use sp_core::Bytes;
+use sp_runtime::traits::StaticLookup;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -52,10 +52,7 @@ pub mod pallet {
         }
 
         #[pallet::weight(1000)]
-        pub fn burn(
-            origin: OriginFor<T>,
-            cid: Cid,
-        ) -> DispatchResult {
+        pub fn burn(origin: OriginFor<T>, cid: Cid) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
             T::ComingNFT::burn(&who, cid)

@@ -170,8 +170,9 @@ pub mod pallet {
                 high_key, low_key, medium_key, migrate_to_new_cid_details, migrate_to_new_admin_keys,
             };
 
+            // todo!(Remove me after upgrade minix mainnet)
             let update_value_weight = migrate_to_new_admin_keys::<T>(high_key(), medium_key(), low_key());
-
+            // todo!(Remove me after upgrade minix mainnet)
             let update_map_weight = migrate_to_new_cid_details::<T>();
 
             sp_std::cmp::max(update_value_weight, update_map_weight)

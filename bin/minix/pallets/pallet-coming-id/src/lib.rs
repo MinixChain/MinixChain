@@ -38,6 +38,12 @@ pub struct BondData {
     pub data: Bytes,
 }
 
+impl BondData {
+    pub fn len(&self) -> u32 {
+        (self.data.len() + 2) as u32
+    }
+}
+
 #[derive(Clone, Eq, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
@@ -215,7 +221,7 @@ pub mod pallet {
             })
         }
 
-        #[pallet::weight(T::WeightInfo::bond())]
+        #[pallet::weight(T::WeightInfo::bond(bond_data.len()))]
         pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);

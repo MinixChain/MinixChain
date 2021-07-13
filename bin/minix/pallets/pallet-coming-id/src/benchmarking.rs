@@ -6,6 +6,7 @@ use super::*;
 use crate::Pallet as ComingId;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
+use sp_std::vec;
 
 const SEED: u32 = 0;
 
@@ -40,9 +41,10 @@ benchmarks! {
             Ok(())
         })?;
 
+        let b in 0 .. *T::BlockLength::get().max.get(DispatchClass::Normal) as u32;
         let bond_data = BondData{
             bond_type: 1u16,
-            data: Bytes::from(b"benchmark".to_vec()),
+            data: vec![1; b as usize].into(),
         };
 
     }: bond(RawOrigin::Signed(common_user.clone()), claim_cid, bond_data.clone())

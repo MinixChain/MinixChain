@@ -167,16 +167,16 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_runtime_upgrade() -> Weight {
-            use migration::{
-                high_key, low_key, medium_key, migrate_to_new_cid_details, migrate_to_new_admin_keys,
-            };
+            use frame_support::traits::{GetPalletVersion, PalletVersion};
+
+            let storage_version = Self::storage_version().unwrap_or(PalletVersion::new(0, 0, 0));
 
             // todo!(Remove me after upgrade minix mainnet)
-            let update_value_weight = migrate_to_new_admin_keys::<T>(high_key(), medium_key(), low_key());
-            // todo!(Remove me after upgrade minix mainnet)
-            let update_map_weight = migrate_to_new_cid_details::<T>();
-
-            sp_std::cmp::max(update_value_weight, update_map_weight)
+            if storage_version < Self::current_version() {
+                migration::migrate_to_new_cid_details::<T>()
+            } else {
+                0
+            }
         }
     }
 

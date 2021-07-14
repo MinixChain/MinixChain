@@ -2,7 +2,7 @@
 authors = ['Minix Chain Developer']
 edition = '2018'
 name = 'pallet-coming-id'
-version = "1.0.0"
+version = "1.1.0"
 license = "Unlicense"
 
 [package.metadata.docs.rs]

@@ -149,6 +149,7 @@ pub mod pallet {
 
     #[pallet::error]
     pub enum Error<T> {
+        BanMint,
         BanBurn,
         BanTransfer,
         InvalidCid,
@@ -393,9 +394,8 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
             let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 
             // only update once
-            if detail.card.is_empty() {
-                detail.card = card.clone().into()
-            }
+            ensure!(detail.card.is_empty(), Error::<T>::BanMint);
+            detail.card = card.clone().into();
 
             Self::deposit_event(Event::MintCard(cid, card));
 

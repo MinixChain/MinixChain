@@ -21,7 +21,12 @@ fn mint_should_work() {
         // (3) mint card success
         let card = br#"{"name": "testCard"}"#.to_vec();
         assert_ok!(ComingNFT::mint(Origin::signed(ADMIN), 1, card.clone()));
-        expect_event(ComingIdEvent::MintCard(1, card));
+        expect_event(ComingIdEvent::MintCard(1, card.clone()));
+
+        assert_noop!(
+            ComingNFT::mint(Origin::signed(ADMIN), 1, card.clone()),
+            Error::<Test>::BanMint
+        );
     });
 }
 

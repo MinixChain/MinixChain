@@ -7,7 +7,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_std::prelude::*;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata, Bytes};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
 	transaction_validity::{TransactionValidity, TransactionSource},
@@ -38,7 +38,6 @@ pub use frame_support::{
 	},
 };
 use pallet_transaction_payment::CurrencyAdapter;
-use pallet_coming_id::{Cid, CidDetails};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -266,42 +265,17 @@ impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
-/*
-parameter_types! {
-    pub const MaxCommodities: u128 = 5;
-    pub const MaxCommoditiesPerUser: u64 = 2;
-}*/
 
-/*
-/// Configure the pallet-template in pallets/template.
-impl pallet_commodities::Config for Runtime {
-	type Event = Event;
-    type CommodityAdmin = frame_system::EnsureRoot<AccountId>;
-    type CommodityInfo = Vec<u8>;
-    type CommodityLimit = MaxCommodities;
-    type UserCommodityLimit = MaxCommoditiesPerUser;
-}*/
 parameter_types! {
 	pub const ClaimValidatePeriod: BlockNumber = 600;
 	pub const CidsLimit: u32 = 500;
 	pub const MaxCardSize: u32 = 1024 * 1024;
 }
 
-/// Configure the pallet-coming-id in pallets/coming-id.
-impl pallet_coming_id::Config for Runtime {
-	type Event = Event;
-	type WeightInfo = pallet_coming_id::weights::SubstrateWeight<Runtime>;
-	type MaxCardSize = MaxCardSize;
-}
 
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
-	type WeightInfo = ();
-}
-
-impl pallet_coming_nft::Config for Runtime {
-	type ComingNFT = ComingId;
 	type WeightInfo = ();
 }
 
@@ -320,9 +294,6 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		//NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
-		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
-		ComingNFT: pallet_coming_nft::{Pallet, Call},
 		Utility: pallet_utility::{Pallet, Call, Event},
 	}
 );
@@ -490,24 +461,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_coming_id_rpc_runtime_api::ComingIdApi<Block, AccountId> for Runtime {
-		fn get_account_id(cid: Cid) -> Option<AccountId> {
-			ComingId::get_account_id(cid)
-		}
-
-		fn get_cids(account: AccountId) -> Vec<Cid> {
-			ComingId::get_cids(account)
-		}
-
-		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>> {
-			ComingId::get_bond_data(cid)
-		}
-
-		fn get_card(cid: Cid) -> Option<Bytes> {
-			ComingId::get_card(cid)
-		}
-	}
-
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn dispatch_benchmark(
@@ -537,8 +490,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_coming_id, ComingId);
-			add_benchmark!(params, batches, pallet_coming_nft, ComingNFT);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

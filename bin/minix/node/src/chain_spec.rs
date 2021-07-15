@@ -1,6 +1,6 @@
 pub use minix_runtime::{
-    AccountId, AuraConfig, BalancesConfig, /*NFTConfig,*/ ComingIdConfig, GenesisConfig,
-    GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    AccountId, AuraConfig, BalancesConfig,
+    GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY, GenesisConfig,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -164,14 +164,5 @@ pub fn minix_genesis(
             // Assign network admin rights.
             key: root_key.clone(),
         },
-        pallet_coming_id: ComingIdConfig {
-            // Assign network admin rights.
-            high_admin_key: root_key.clone(),
-            medium_admin_key: root_key.clone(),
-            low_admin_key: root_key,
-        },
-        /*pallet_commodities: NFTConfig {
-            balances: Vec::new(),
-        },*/
     }
 }

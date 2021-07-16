@@ -159,3 +159,55 @@ fn transfer_should_work() {
         assert_eq!(ComingNFT::cids_of_owner(RESERVE3), vec![1_000_001]);
     });
 }
+
+#[test]
+fn transfer_to_self_should_do_nothing() {
+    new_test_ext(ADMIN).execute_with(|| {
+        // (1) register
+        assert_ok!(ComingId::register(
+            Origin::signed(ADMIN),
+            1_000_000,
+            RESERVE2
+        ));
+        expect_event(ComingIdEvent::Registered(RESERVE2, 1_000_000));
+
+        // (2) mint
+        let card = br#"{"name": "testCard"}"#.to_vec();
+        assert_ok!(ComingNFT::mint(
+            Origin::signed(ADMIN),
+            1_000_000,
+            card.clone()
+        ));
+        expect_event(ComingIdEvent::MintCard(1_000_000, card.clone()));
+
+        // (3) bond
+        let bond = BondData {
+            bond_type: 1u16,
+            data: b"testbond".to_vec().into(),
+        };
+
+        assert_ok!(ComingId::bond(Origin::signed(RESERVE2), 1_000_000, bond.clone()));
+        expect_event(ComingIdEvent::Bonded(RESERVE2, 1_000_000, 1u16));
+
+        // (3) transfer to self
+        assert_ok!(ComingNFT::transfer(
+            Origin::signed(RESERVE2),
+            1_000_000,
+            RESERVE2
+        ));
+        expect_event(ComingIdEvent::Transferred(RESERVE2, RESERVE2, 1_000_000));
+
+        assert_eq!(ComingNFT::cids_of_owner(RESERVE2), vec![1_000_000]);
+        assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE2));
+        assert_eq!(ComingNFT::card_of_cid(1_000_000), Some(card.clone().into()));
+
+        assert_eq!(
+            Some(CidDetails {
+                owner: RESERVE2,
+                bonds: vec![bond],
+                card: card.into()
+            }),
+            ComingId::get_bond_data(1_000_000)
+        );
+    });
+}

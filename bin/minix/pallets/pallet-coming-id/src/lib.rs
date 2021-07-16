@@ -84,6 +84,16 @@ pub mod pallet {
     pub type AccountIdCids<T: Config> =
         StorageMap<_, Blake2_128Concat, T::AccountId, Vec<Cid>, ValueQuery>;
 
+    #[pallet::storage]
+    #[pallet::getter(fn cid_to_approval)]
+    pub type CidToApproval<T: Config> =
+    StorageMap<_, Identity, Cid, T::AccountId>;
+
+    #[pallet::storage]
+    #[pallet::getter(fn cid_to_approval_all)]
+    pub type OwnerToApprovalAll<T: Config> =
+    StorageMap<_, Identity, (T::AccountId, T::AccountId), bool, ValueQuery>;
+
     /// The `AccountId` of the sudo key.
     #[pallet::storage]
     #[pallet::getter(fn high_admin_key)]
@@ -145,6 +155,10 @@ pub mod pallet {
         MintCard(Cid, Vec<u8>),
         // cid
         Burned(Cid),
+        // owner, operator, cid
+        Approval(T::AccountId, T::AccountId, Cid),
+        // owner, operator, approved
+        ApprovalForAll(T::AccountId, T::AccountId, bool)
     }
 
     #[pallet::error]
@@ -152,6 +166,7 @@ pub mod pallet {
         BanMint,
         BanBurn,
         BanTransfer,
+        BanApprove,
         InvalidCid,
         RequireHighAuthority,
         RequireMediumAuthority,
@@ -300,7 +315,7 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
-    fn is_transferable(cid: Cid) -> DispatchResult {
+    fn can_transfer(cid: Cid) -> DispatchResult {
         match cid {
             0..100_000 => ensure!(false, Error::<T>::BanTransfer),
             100_000..1_000_000_000_000 => {}
@@ -310,7 +325,20 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
-    fn is_burnable(cid: Cid) -> DispatchResult {
+    fn can_transfer_from(operator: &T::AccountId, cid: Cid) -> bool {
+        match Self::cid_to_approval(cid) {
+            Some(approved) if approved == operator.clone() => return true,
+            _ => {}
+        }
+
+        match Self::get_account_id(cid) {
+            Some(owner) if owner == operator.clone() => true,
+            Some(owner) => Self::cid_to_approval_all((owner, operator.clone())),
+            None => false
+        }
+    }
+
+    fn can_burn(cid: Cid) -> DispatchResult {
         match cid {
             0..100_000 => {}
             100_000..1_000_000_000_000 => ensure!(false, Error::<T>::BanBurn),
@@ -318,6 +346,22 @@ impl<T: Config> Pallet<T> {
         }
 
         Ok(())
+    }
+
+    fn can_approve(operator: &T::AccountId, approved: &T::AccountId, cid: Cid) -> bool {
+        match cid {
+            1000_000..1_000_000_000_000 => {},
+            _ => return false
+        }
+
+        match Self::get_account_id(cid) {
+            Some(owner) if owner == operator.clone() => true,
+            Some(owner) if owner == approved.clone() => false,
+            Some(owner) => {
+                Self::cid_to_approval_all((owner, operator.clone()))
+            },
+            None => false
+        }
     }
 
     fn is_valid(cid: Cid) -> bool {
@@ -404,7 +448,7 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
     }
 
     fn burn(who: &T::AccountId, cid: Cid) -> DispatchResult {
-        Self::is_burnable(cid)?;
+        Self::can_burn(cid)?;
         ensure!(
             *who == Self::high_admin_key(),
             Error::<T>::RequireHighAuthority
@@ -426,18 +470,21 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
     }
 
     fn transfer(who: &T::AccountId, cid: Cid, recipient: &T::AccountId) -> DispatchResult {
-        Self::is_transferable(cid)?;
+        Self::can_transfer(cid)?;
 
         Distributed::<T>::try_mutate_exists(cid, |details| {
             let mut detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
 
             ensure!(detail.owner == *who, Error::<T>::RequireOwner);
 
-            detail.owner = recipient.clone();
-            detail.bonds = Vec::new();
+            // transfer to self do nothing
+            if detail.owner != recipient.clone() {
+                detail.owner = recipient.clone();
+                detail.bonds = Vec::new();
 
-            Self::account_cids_remove(who.clone(), cid);
-            Self::account_cids_add(recipient.clone(), cid);
+                Self::account_cids_remove(who.clone(), cid);
+                Self::account_cids_add(recipient.clone(), cid);
+            }
 
             Self::deposit_event(Event::Transferred(who.clone(), recipient.clone(), cid));
 
@@ -445,8 +492,8 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         })
     }
 
-    fn cids_of_owner(owner: T::AccountId) -> Vec<Cid> {
-        Self::get_cids(owner)
+    fn cids_of_owner(owner: &T::AccountId) -> Vec<Cid> {
+        Self::get_cids(owner.clone())
     }
 
     fn owner_of_cid(cid: Cid) -> Option<T::AccountId> {
@@ -455,5 +502,48 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
 
     fn card_of_cid(cid: Cid) -> Option<Bytes> {
         Self::get_card(cid)
+    }
+
+    fn transfer_from(
+        operator: &T::AccountId,
+        from: &T::AccountId,
+        to: &T::AccountId,
+        cid: Cid,
+    ) -> DispatchResult {
+        ensure!(Self::can_transfer_from(operator, cid), Error::<T>::BanTransfer);
+
+        Self::transfer(from, cid, to)?;
+
+        CidToApproval::<T>::remove(cid);
+
+        Ok(())
+    }
+
+    fn approve(who: &T::AccountId, approved: &T::AccountId, cid: Cid) -> DispatchResult {
+        ensure!(Self::can_approve(who, approved, cid), Error::<T>::BanApprove);
+        let owner = Self::get_account_id(cid)
+            .expect("cid owner is exists; qed");
+
+        CidToApproval::<T>::insert(cid, approved.clone());
+
+        Self::deposit_event(Event::Approval(owner, approved.clone(), cid));
+
+        Ok(())
+    }
+
+    fn set_approval_for_all(owner: &T::AccountId, operator: &T::AccountId, approved: bool) -> DispatchResult {
+        OwnerToApprovalAll::<T>::insert((owner.clone(), operator.clone()), approved);
+
+        Self::deposit_event(Event::ApprovalForAll(owner.clone(), operator.clone(), approved));
+
+        Ok(())
+    }
+
+    fn get_approved(cid: Cid) -> Option<T::AccountId> {
+        Self::cid_to_approval(cid)
+    }
+
+    fn is_approved_for_all(owner: &T::AccountId, operator: &T::AccountId) -> bool {
+        Self::cid_to_approval_all((owner.clone(), operator.clone()))
     }
 }

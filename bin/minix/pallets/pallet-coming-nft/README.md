@@ -30,7 +30,7 @@ pub trait Config: frame_system::Config + pallet_coming_id::Config {
     
     user权限(owner), 只允许6-12位cid自由transfer.
     
-    transfer to self = unbond all.
+    transfer to self = do nothing.
 
 - burn(cid):
     high admin权限, 只允许销毁1-5位cid.

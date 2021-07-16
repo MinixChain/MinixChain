@@ -31,6 +31,8 @@ pub trait Config: frame_system::Config + pallet_coming_id::Config {
     user权限(owner), 只允许6-12位cid自由transfer.
     
     transfer to self = do nothing.
+    
+    clear CidToApprove
 
 - burn(cid):
     high admin权限, 只允许销毁1-5位cid.
@@ -40,3 +42,22 @@ pub trait Config: frame_system::Config + pallet_coming_id::Config {
     如果cid无效,则报错
     
     如果cid未register,则报错
+
+- approve(approved, cid):
+    user权限(owner), 只允许6-12位cid自由approve.
+    
+    在transfer或transfer_from之后, clear CidToApprove.
+    
+- set_approval_for_all(operator, flag):
+    user权限(owner),
+    
+    参考ERC721, 独立于Cid存在
+     
+    将owner所有NFT的所有权代理给operator或者取消operator的代理权限
+    
+- transfer_from(from, to, cid):
+    user权限(operator)
+    
+    operator将from的cid转移给to
+    
+    clear CidToApprove

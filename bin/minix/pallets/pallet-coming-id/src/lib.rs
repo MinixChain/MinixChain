@@ -491,6 +491,9 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
                 Self::account_cids_add(recipient.clone(), cid);
             }
 
+            // clear approval
+            CidToApproval::<T>::remove(cid);
+
             Self::deposit_event(Event::Transferred(who.clone(), recipient.clone(), cid));
 
             Ok(())
@@ -518,8 +521,6 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         ensure!(Self::can_transfer_from(operator, cid), Error::<T>::BanTransfer);
 
         Self::transfer(from, cid, to)?;
-
-        CidToApproval::<T>::remove(cid);
 
         Ok(())
     }

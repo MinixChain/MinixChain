@@ -562,3 +562,37 @@ fn transfer_from_should_work_after_set_approval_all(){
         assert!(!ComingNFT::is_approved_for_all(&RESERVE2, &RESERVE3));
     });
 }
+
+#[test]
+fn transfer_from_after_transfer_should_not_work(){
+    new_test_ext(ADMIN).execute_with(|| {
+        assert_ok!(ComingId::register(
+            Origin::signed(ADMIN),
+            1_000_000,
+            RESERVE2
+        ));
+        assert_eq!(ComingNFT::get_approved(1_000_000), None);
+        assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE2));
+        assert_ok!(
+            ComingNFT::approve(
+                Origin::signed(RESERVE2),
+                RESERVE3,
+                1_000_000,
+            )
+        );
+        expect_event(ComingIdEvent::Approval(RESERVE2, RESERVE3, 1_000_000));
+        assert_eq!(ComingNFT::get_approved(1_000_000), Some(RESERVE3));
+        assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE2));
+
+        assert_ok!(
+            ComingNFT::transfer(
+                Origin::signed(RESERVE2),
+                1_000_000,
+                RESERVE3,
+            )
+        );
+
+        assert_eq!(ComingNFT::get_approved(1_000_000), None);
+        assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE3));
+    });
+}

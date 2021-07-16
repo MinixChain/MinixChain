@@ -350,13 +350,18 @@ impl<T: Config> Pallet<T> {
 
     fn can_approve(operator: &T::AccountId, approved: &T::AccountId, cid: Cid) -> bool {
         match cid {
-            1000_000..1_000_000_000_000 => {},
+            1_000_000..1_000_000_000_000 => {},
             _ => return false
         }
 
         match Self::get_account_id(cid) {
-            Some(owner) if owner == operator.clone() => true,
-            Some(owner) if owner == approved.clone() => false,
+            Some(owner) if owner == operator.clone() => {
+                if owner == approved.clone() {
+                    false
+                } else {
+                    true
+                }
+            },
             Some(owner) => {
                 Self::cid_to_approval_all((owner, operator.clone()))
             },

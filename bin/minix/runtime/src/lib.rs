@@ -279,6 +279,14 @@ impl pallet_utility::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const MaxPeriod: BlockNumber = HOURS;
+}
+impl pallet_talent_contract::Config for Runtime {
+	type Event = Event;
+	type Period = MaxPeriod;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -295,6 +303,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Utility: pallet_utility::{Pallet, Call, Event},
+		TalentContract: pallet_talent_contract::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

@@ -6,6 +6,7 @@ members = [
 	"bin/minix/pallets/pallet-coming-id",
 	"bin/minix/pallets/pallet-coming-nft",
 	"bin/minix/pallets/pallet-nft",
+	"bin/minix/pallets/pallet-talent-contract",
 	"bin/minix/runtime",
 	"bin/utils/chain-spec-builder",
 	"bin/utils/subkey",

@@ -350,7 +350,7 @@ impl<T: Config> Pallet<T> {
 
     fn can_approve(operator: &T::AccountId, approved: &T::AccountId, cid: Cid) -> bool {
         match cid {
-            1_000_000..1_000_000_000_000 => {},
+            100_000..1_000_000_000_000 => {},
             _ => return false
         }
 

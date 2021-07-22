@@ -7,7 +7,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_std::prelude::*;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, Bytes};
 use sp_runtime::{
 	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
 	transaction_validity::{TransactionValidity, TransactionSource},
@@ -101,7 +101,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 100,
+	spec_version: 105,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -284,17 +284,24 @@ impl pallet_commodities::Config for Runtime {
 parameter_types! {
 	pub const ClaimValidatePeriod: BlockNumber = 600;
 	pub const CidsLimit: u32 = 500;
+	pub const MaxCardSize: u32 = 1024 * 1024;
 }
 
 /// Configure the pallet-coming-id in pallets/coming-id.
 impl pallet_coming_id::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_coming_id::weights::SubstrateWeight<Runtime>;
+	type MaxCardSize = MaxCardSize;
 }
 
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
+	type WeightInfo = ();
+}
+
+impl pallet_coming_nft::Config for Runtime {
+	type ComingNFT = ComingId;
 	type WeightInfo = ();
 }
 
@@ -315,6 +322,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		//NFT: pallet_commodities::{Pallet, Call, Config<T>, Storage, Event<T>},
 		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
+		ComingNFT: pallet_coming_nft::{Pallet, Call},
 		Utility: pallet_utility::{Pallet, Call, Event},
 	}
 );
@@ -494,6 +502,10 @@ impl_runtime_apis! {
 		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>> {
 			ComingId::get_bond_data(cid)
 		}
+
+		fn get_card(cid: Cid) -> Option<Bytes> {
+			ComingId::get_card(cid)
+		}
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -526,6 +538,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			add_benchmark!(params, batches, pallet_coming_id, ComingId);
+			add_benchmark!(params, batches, pallet_coming_nft, ComingNFT);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

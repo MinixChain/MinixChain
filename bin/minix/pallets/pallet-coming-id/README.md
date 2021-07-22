@@ -36,12 +36,6 @@
     mediaAdmin 权限, 分配 6-12位 cid.
 
     lowAdmin 权限, 分配 7-12位 cid.
-   
-  - transfer(cid, recipient)
-     
-      user权限(owner), 只允许6-12位cid自由transfer.
-  
-      transfer to self = unbond all
   
   - bond(cid, bond_data)
   
@@ -150,9 +144,44 @@ fn get_bond_data(
 {
   "jsonrpc": "2.0",
   "result": {
-    "bonds": [],
-    "owner": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
+    "bonds": [
+      {
+        "bondType": 1,
+        "data": "0x7b226e616d65223a227465737432227d"
+      }
+    ],
+    "card": "0x7b226e616d65223a202274657374227d",
+    "owner": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"
   },
+  "id": 1
+}
+```
+
+- get_card:
+ 获取指定cid的c-card
+
+```
+#[rpc(name = "get_card")]
+fn get_card(
+    &self,
+    cid: Cid,
+    at: Option<BlockHash>
+) -> Result<Option<CidDetails<AccountId>>>;
+```
+输入：
+```json
+{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"get_card",
+  "params": [99]
+}
+```
+输出：
+```json
+{
+  "jsonrpc": "2.0",
+  "result": "0x7b226e616d65223a202274657374227d",
   "id": 1
 }
 ```
@@ -160,15 +189,18 @@ fn get_bond_data(
 ## custom types
 ```json
 {
+  "Address": "MultiAddress",
+  "LookupSource": "MultiAddress",
   "Cid": "u64",
   "BondType": "u16",
   "BondData": {
     "bond_type": "BondType",
-    "data": "Vec<u8>"
+    "data": "Bytes"
   },
   "CidDetails": {
     "owner": "AccountId",
-    "bonds": "Vec<BondData>"
+    "bonds": "Vec<BondData>",
+    "card":  "Bytes"
   }
 }
 ```
@@ -221,6 +253,21 @@ fn get_bond_data(
         }
       ],
       "type": "Option<CidDetails>"
+    },
+    "getCard": {
+      "description": "comingId getCard",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Option<Bytes>"
     }
   }
 }

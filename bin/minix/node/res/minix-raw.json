@@ -2,9 +2,7 @@
   "name": "MiniX",
   "id": "MiniX",
   "chainType": "Live",
-  "bootNodes": [
-    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWShPgRSK3QCqxrhZ52SJsRxLSHUDeuCX89eLFJdK6ei17"
-  ],
+  "bootNodes": [],
   "telemetryEndpoints": null,
   "protocolId": null,
   "properties": {

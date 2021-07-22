@@ -47,12 +47,28 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+		use sp_core::crypto::{set_default_ss58_version, Ss58AddressFormat};
+
 		Ok(match id {
 			"dev" => Box::new(chain_spec::development_config()?),
+			"testnet" => {
+				set_default_ss58_version(Ss58AddressFormat::ChainXAccount);
+
+				Box::new(chain_spec::live_testnet_config()?)
+			},
+			"minix" => {
+				set_default_ss58_version(Ss58AddressFormat::ChainXAccount);
+
+				Box::new(chain_spec::live_mainnet_config()?)
+			},
 			"" | "local" => Box::new(chain_spec::local_testnet_config()?),
-			path => Box::new(chain_spec::ChainSpec::from_json_file(
-				std::path::PathBuf::from(path),
-			)?),
+			path => {
+				set_default_ss58_version(Ss58AddressFormat::ChainXAccount);
+
+				Box::new(chain_spec::ChainSpec::from_json_file(
+					std::path::PathBuf::from(path),
+				)?)
+			},
 		})
 	}
 

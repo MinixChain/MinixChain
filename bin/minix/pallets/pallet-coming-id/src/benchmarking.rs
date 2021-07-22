@@ -6,6 +6,7 @@ use super::*;
 use crate::Pallet as ComingId;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
+use sp_std::vec;
 
 const SEED: u32 = 0;
 
@@ -26,31 +27,6 @@ benchmarks! {
         assert!(Distributed::<T>::get(claim_cid).is_some());
     }
 
-    transfer {
-        let common_user: T::AccountId = account("common_user", 0, SEED);
-        let recipient: T::AccountId = account("recipient", 0, SEED);
-        let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(recipient.clone());
-        let claim_cid: Cid = 1000000;
-        let bonds: Vec<BondData> = Vec::new();
-
-        let _ = Distributed::<T>::try_mutate_exists::<_,_,Error<T>,_>(claim_cid, |details|{
-            *details = Some(CidDetails{
-                owner: common_user.clone(),
-                bonds: bonds,
-            });
-
-            Ok(())
-        })?;
-
-    }: transfer(RawOrigin::Signed(common_user), claim_cid, recipient_lookup)
-    verify {
-        let option = Distributed::<T>::get(claim_cid);
-        assert!(option.is_some());
-
-        let cid_details = option.unwrap();
-        assert_eq!(cid_details.owner, recipient);
-    }
-
     bond {
         let common_user: T::AccountId = account("common_user", 0, SEED);
         let claim_cid: Cid = 1000000;
@@ -59,14 +35,16 @@ benchmarks! {
             *details = Some(CidDetails{
                 owner: common_user.clone(),
                 bonds: Vec::new(),
+                card: Bytes::from(Vec::new())
             });
 
             Ok(())
         })?;
 
+        let b in 0 .. *T::BlockLength::get().max.get(DispatchClass::Normal) as u32;
         let bond_data = BondData{
-            bond_type:1u16,
-            data:b"benchmark".to_vec(),
+            bond_type: 1u16,
+            data: vec![1; b as usize].into(),
         };
 
     }: bond(RawOrigin::Signed(common_user.clone()), claim_cid, bond_data.clone())
@@ -82,8 +60,8 @@ benchmarks! {
         let common_user: T::AccountId = account("common_user", 0, SEED);
         let claim_cid: Cid = 1000000;
         let bond_data = BondData{
-            bond_type:1u16,
-            data:b"benchmark".to_vec(),
+            bond_type: 1u16,
+            data: Bytes::from(b"benchmark".to_vec()),
         };
 
         let mut bonds: Vec<BondData> = Vec::new();
@@ -93,6 +71,7 @@ benchmarks! {
             *details = Some(CidDetails{
                 owner: common_user.clone(),
                 bonds: bonds,
+                card: Bytes::from(Vec::new())
             });
 
             Ok(())

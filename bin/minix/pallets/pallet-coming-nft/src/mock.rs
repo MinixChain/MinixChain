@@ -1,4 +1,4 @@
-use crate as pallet_coming_id;
+use crate as pallet_coming_nft;
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 use sp_core::H256;
@@ -6,6 +6,8 @@ use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
 };
+
+pub use pallet_coming_id::{BondData, CidDetails, Error, Event as ComingIdEvent};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -19,13 +21,14 @@ frame_support::construct_runtime!(
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
+        ComingNFT: pallet_coming_nft::{Pallet, Call},
     }
 );
 
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub const SS58Prefix: u8 = 42;
-    pub const MaxCardSize: u32 = 1024*1024; // 1 MB
+    pub const MaxCardSize: u32 = 1024 * 1024;
 }
 
 impl system::Config for Test {
@@ -60,6 +63,11 @@ impl pallet_coming_id::Config for Test {
     type MaxCardSize = MaxCardSize;
 }
 
+impl pallet_coming_nft::Config for Test {
+    type ComingNFT = ComingId;
+    type WeightInfo = ();
+}
+
 // Build test environment by setting the admin `key` for the Genesis.
 pub fn new_test_ext(
     admin_key: <Test as frame_system::Config>::AccountId,
@@ -88,18 +96,4 @@ pub(crate) fn last_event() -> Event {
 
 pub(crate) fn expect_event<E: Into<Event>>(e: E) {
     assert_eq!(last_event(), e.into());
-}
-
-pub(crate) fn last_events(n: usize) -> Vec<Event> {
-    system::Pallet::<Test>::events()
-        .into_iter()
-        .rev()
-        .take(n)
-        .rev()
-        .map(|e| e.event)
-        .collect()
-}
-
-pub(crate) fn expect_events(e: Vec<Event>) {
-    assert_eq!(last_events(e.len()), e);
 }

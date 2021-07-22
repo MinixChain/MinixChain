@@ -3852,7 +3852,7 @@ dependencies = [
  "pallet-balances",
  "pallet-coming-id",
  "pallet-coming-id-rpc-runtime-api",
- "pallet-commodities",
+ "pallet-coming-nft",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -4411,18 +4411,20 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-id"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex-literal",
+ "log",
  "parity-scale-codec",
  "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "sp-storage",
 ]
 
 [[package]]
@@ -4448,6 +4450,24 @@ dependencies = [
  "pallet-coming-id",
  "parity-scale-codec",
  "sp-api",
+ "sp-core",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-coming-nft"
+version = "1.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "pallet-coming-id",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 

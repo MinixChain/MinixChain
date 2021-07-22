@@ -21,8 +21,10 @@
 
 use codec::Codec;
 use sp_std::prelude::Vec;
+use sp_core::Bytes;
+
 pub use pallet_coming_id::{
-    Cid, CidDetails, BondData, BondType, //RpcBondData, RpcCidDetails
+    Cid, CidDetails, BondData, BondType
 };
 
 sp_api::decl_runtime_apis! {
@@ -32,5 +34,6 @@ sp_api::decl_runtime_apis! {
 		fn get_account_id(cid: Cid) -> Option<AccountId>;
 		fn get_cids(account: AccountId) -> Vec<Cid>;
 		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>>;
+		fn get_card(cid: Cid) -> Option<Bytes>;
 	}
 }

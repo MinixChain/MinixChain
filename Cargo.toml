@@ -1,0 +1,14 @@
+[workspace]
+resolver = "2"
+
+members = [
+	"node",
+	"runtime",
+
+	"pallets/pallet-coming-id",
+	"pallets/pallet-coming-nft",
+]
+
+[profile.release]
+# Substrate runtime requires unwinding.
+panic = "unwind"

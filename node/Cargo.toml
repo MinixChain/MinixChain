@@ -1,0 +1,65 @@
+[package]
+name = "minix"
+version = "1.1.0"
+authors = ["ChainNet"]
+edition = "2018"
+build = "build.rs"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[[bin]]
+name = "minix"
+
+[dependencies]
+structopt = "0.3.8"
+jsonrpc-core = "15.1.0"
+
+# Substrate
+sc-cli = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8", features = ["wasmtime"] }
+sc-client-api = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sc-consensus = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sc-consensus-aura = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sc-executor = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8", features = ["wasmtime"] }
+sc-finality-grandpa = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sc-keystore = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sc-service = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8", features = ["wasmtime"] }
+sc-telemetry = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sc-transaction-pool = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+
+sp-consensus-aura = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-consensus = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-core = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-finality-grandpa = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-inherents = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-runtime = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-transaction-pool = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-timestamp = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+
+# These dependencies are used for the node template's RPCs
+sc-rpc = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sc-rpc-api = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sc-basic-authorship = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-api = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-blockchain = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+sp-block-builder = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+substrate-frame-rpc-system = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+pallet-transaction-payment-rpc = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+
+# These dependencies are used for runtime benchmarking
+frame-benchmarking = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+frame-benchmarking-cli = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+
+# Minix
+pallet-coming-id = { version = "1.1.0", path = "../pallets/pallet-coming-id" }
+pallet-coming-id-rpc = { version = "1.1.0", path = "../pallets/pallet-coming-id/rpc" }
+minix-runtime = { version = "3.0.0", path = "../runtime" }
+
+[build-dependencies]
+substrate-build-script-utils = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+
+[features]
+default = []
+runtime-benchmarks = [
+	"minix-runtime/runtime-benchmarks",
+]

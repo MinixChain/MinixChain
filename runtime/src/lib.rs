@@ -40,6 +40,13 @@ pub use frame_support::{
 use pallet_transaction_payment::CurrencyAdapter;
 use pallet_coming_id::{Cid, CidDetails};
 
+// evm
+use pallet_evm::{
+	EnsureAddressNever, EnsureAddressRoot, FeeCalculator, HashedAddressMapping
+};
+use sp_core::U256;
+use sp_std::convert::TryFrom;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -294,6 +301,65 @@ impl pallet_coming_nft::Config for Runtime {
 	type WeightInfo = ();
 }
 
+
+/// Current approximation of the gas/s consumption considering
+/// EVM execution over compiled WASM (on 4.4Ghz CPU).
+/// Given the 500ms Weight, from which 75% only are used for transactions,
+/// the total EVM execution gas limit is: GAS_PER_SECOND * 0.500 * 0.75 ~= 15_000_000.
+pub const GAS_PER_SECOND: u64 = 40_000_000;
+
+/// Approximate ratio of the amount of Weight per Gas.
+/// u64 works for approximations because Weight is a very small unit compared to gas.
+pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND / GAS_PER_SECOND;
+
+/// Maximum weight per block
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+
+parameter_types! {
+	pub BlockGasLimit: U256
+		= U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WEIGHT_PER_GAS);
+}
+
+pub struct MinixGasWeightMapping;
+impl pallet_evm::GasWeightMapping for MinixGasWeightMapping {
+	fn gas_to_weight(gas: u64) -> Weight {
+		gas.saturating_mul(WEIGHT_PER_GAS)
+	}
+	fn weight_to_gas(weight: Weight) -> u64 {
+		u64::try_from(weight.wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
+	}
+}
+
+pub struct FixedGasPrice;
+impl FeeCalculator for FixedGasPrice {
+	fn min_gas_price() -> U256 {
+		1_000_000_000.into()
+	}
+}
+
+impl pallet_ethereum_chain_id::Config for Runtime {}
+
+impl pallet_evm::Config for Runtime {
+	type FeeCalculator = FixedGasPrice;
+	type GasWeightMapping = MinixGasWeightMapping;
+	type CallOrigin = EnsureAddressRoot<AccountId>;
+	type WithdrawOrigin = EnsureAddressNever<AccountId>;
+	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type Currency = Balances;
+	type Event = Event;
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
+	type Precompiles = (); // todo: MoonriverPrecompiles<Self>
+	type ChainId = EthereumChainId;
+	type OnChargeTransaction = ();
+	type BlockGasLimit = BlockGasLimit;
+}
+
+impl pallet_ethereum::Config for Runtime {
+	type Event = Event;
+	type FindAuthor = (); // todo: AuthorInherent
+	type StateRoot = pallet_ethereum::IntermediateStateRoot;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -311,6 +377,11 @@ construct_runtime!(
 		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
 		ComingNFT: pallet_coming_nft::{Pallet, Call},
 		Utility: pallet_utility::{Pallet, Call, Event},
+
+				// Ethereum compatibility
+		EthereumChainId: pallet_ethereum_chain_id::{Pallet, Storage, Config} = 50,
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 51,
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 52,
 	}
 );
 

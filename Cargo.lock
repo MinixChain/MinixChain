@@ -1400,10 +1400,112 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethbloom"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "779864b9c7f7ead1f092972c3257496c6a84b46dba2ce131dd8a282cb2cc5972"
+dependencies = [
+ "crunchy",
+ "fixed-hash",
+ "impl-codec",
+ "impl-rlp",
+ "impl-serde",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "ethereum"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "567ce064a8232c16e2b2c2173a936b91fbe35c2f2c5278871f5a1a31688b42e9"
+dependencies = [
+ "ethereum-types",
+ "funty",
+ "hash-db",
+ "hash256-std-hasher",
+ "parity-scale-codec",
+ "rlp",
+ "rlp-derive",
+ "serde",
+ "sha3 0.9.1",
+ "triehash",
+]
+
+[[package]]
+name = "ethereum-types"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f64b5df66a228d85e4b17e5d6c6aa43b0310898ffe8a85988c4c032357aaabfd"
+dependencies = [
+ "ethbloom",
+ "fixed-hash",
+ "impl-codec",
+ "impl-rlp",
+ "impl-serde",
+ "primitive-types",
+ "uint",
+]
+
+[[package]]
 name = "event-listener"
 version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
+
+[[package]]
+name = "evm"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f833b0e642bec8286b80f00ad6cc6a95e50210c77949b9cb484637e6a05ed596"
+dependencies = [
+ "environmental",
+ "ethereum",
+ "evm-core",
+ "evm-gasometer",
+ "evm-runtime",
+ "log",
+ "parity-scale-codec",
+ "primitive-types",
+ "rlp",
+ "serde",
+ "sha3 0.8.2",
+]
+
+[[package]]
+name = "evm-core"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "908739da31125d17a69533c290a6c818b494176e59a2ce8accbf122f7d76835c"
+dependencies = [
+ "funty",
+ "parity-scale-codec",
+ "primitive-types",
+ "serde",
+]
+
+[[package]]
+name = "evm-gasometer"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4118f952ce320c11e1b7b8a575e477d70bc86a3b92ea23e427174d979cf1da26"
+dependencies = [
+ "environmental",
+ "evm-core",
+ "evm-runtime",
+ "primitive-types",
+]
+
+[[package]]
+name = "evm-runtime"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "952296b416c3b334b26933ad1f9cfa9203e251691586fb317e411872886ca31b"
+dependencies = [
+ "environmental",
+ "evm-core",
+ "primitive-types",
+ "sha3 0.8.2",
+]
 
 [[package]]
 name = "exit-future"
@@ -1547,6 +1649,64 @@ dependencies = [
 ]
 
 [[package]]
+name = "fp-consensus"
+version = "1.0.0"
+source = "git+https://github.com/purestake/frontier?branch=moonbeam-polkadot-v0.9.8#7791640de26445134a50f84126909fcab3431a33"
+dependencies = [
+ "ethereum",
+ "parity-scale-codec",
+ "rlp",
+ "sha3 0.8.2",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "fp-evm"
+version = "1.0.1-dev"
+source = "git+https://github.com/purestake/frontier?branch=moonbeam-polkadot-v0.9.8#7791640de26445134a50f84126909fcab3431a33"
+dependencies = [
+ "evm",
+ "impl-trait-for-tuples 0.1.3",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-std",
+]
+
+[[package]]
+name = "fp-rpc"
+version = "1.0.1-dev"
+source = "git+https://github.com/purestake/frontier?branch=moonbeam-polkadot-v0.9.8#7791640de26445134a50f84126909fcab3431a33"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "fp-evm",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "fp-storage"
+version = "1.0.1-dev"
+source = "git+https://github.com/purestake/frontier?branch=moonbeam-polkadot-v0.9.8#7791640de26445134a50f84126909fcab3431a33"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "fp-evm",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "frame-benchmarking"
 version = "3.1.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
@@ -1622,7 +1782,7 @@ dependencies = [
  "bitflags",
  "frame-metadata",
  "frame-support-procedural",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "log",
  "max-encoded-len",
  "once_cell",
@@ -1681,7 +1841,7 @@ version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
 dependencies = [
  "frame-support",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "log",
  "parity-scale-codec",
  "serde",
@@ -2384,12 +2544,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "impl-rlp"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f28220f89297a075ddc7245cd538076ee98b01f2a9c23a53a4f1105d5a322808"
+dependencies = [
+ "rlp",
+]
+
+[[package]]
 name = "impl-serde"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b47ca4d2b6931707a55fce5cf66aff80e2178c8b63bbb4ecb5695cbc870ddf6f"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "impl-trait-for-tuples"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ef5550a42e3740a0e71f909d4c861056a284060af885ae7aa6242820f920d9d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3041,7 +3221,7 @@ dependencies = [
  "pin-project 1.0.8",
  "rand 0.7.3",
  "salsa20",
- "sha3",
+ "sha3 0.9.1",
 ]
 
 [[package]]
@@ -3347,7 +3527,7 @@ name = "max-encoded-len"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
 dependencies = [
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "max-encoded-len-derive",
  "parity-scale-codec",
  "primitive-types",
@@ -3462,6 +3642,7 @@ dependencies = [
  "minix-runtime",
  "pallet-coming-id",
  "pallet-coming-id-rpc",
+ "pallet-evm",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
@@ -3508,6 +3689,9 @@ dependencies = [
  "pallet-coming-id",
  "pallet-coming-id-rpc-runtime-api",
  "pallet-coming-nft",
+ "pallet-ethereum",
+ "pallet-ethereum-chain-id",
+ "pallet-evm",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -3645,7 +3829,7 @@ dependencies = [
  "generic-array 0.14.4",
  "multihash-derive",
  "sha2 0.9.5",
- "sha3",
+ "sha3 0.9.1",
  "unsigned-varint 0.5.1",
 ]
 
@@ -3907,7 +4091,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#741
 dependencies = [
  "frame-support",
  "frame-system",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "parity-scale-codec",
  "sp-authorship",
  "sp-runtime",
@@ -3992,6 +4176,69 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-ethereum"
+version = "1.0.1-dev"
+source = "git+https://github.com/purestake/frontier?branch=moonbeam-polkadot-v0.9.8#7791640de26445134a50f84126909fcab3431a33"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "fp-consensus",
+ "fp-evm",
+ "fp-rpc",
+ "fp-storage",
+ "frame-support",
+ "frame-system",
+ "libsecp256k1",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rlp",
+ "rustc-hex",
+ "serde",
+ "sha3 0.8.2",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-ethereum-chain-id"
+version = "1.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+]
+
+[[package]]
+name = "pallet-evm"
+version = "3.0.1-dev"
+source = "git+https://github.com/purestake/frontier?branch=moonbeam-polkadot-v0.9.8#7791640de26445134a50f84126909fcab3431a33"
+dependencies = [
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "primitive-types",
+ "rlp",
+ "serde",
+ "sha3 0.8.2",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "3.1.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
@@ -4033,7 +4280,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#741
 dependencies = [
  "frame-support",
  "frame-system",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -4067,7 +4314,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "log",
  "parity-scale-codec",
  "sp-inherents",
@@ -4179,7 +4426,7 @@ dependencies = [
  "arrayvec 0.7.1",
  "bitvec 0.20.4",
  "byte-slice-cast",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "parity-scale-codec-derive",
  "serde",
 ]
@@ -4229,7 +4476,7 @@ checksum = "664a8c6b8e62d8f9f2f937e391982eb433ab285b4cd9545b342441e04a906e42"
 dependencies = [
  "cfg-if 1.0.0",
  "hashbrown 0.9.1",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "parity-util-mem-derive",
  "parking_lot 0.11.1",
  "primitive-types",
@@ -4582,6 +4829,7 @@ checksum = "06345ee39fbccfb06ab45f3a1a5798d9dafa04cb8921a76d227040003a234b0e"
 dependencies = [
  "fixed-hash",
  "impl-codec",
+ "impl-rlp",
  "impl-serde",
  "uint",
 ]
@@ -5094,6 +5342,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "rlp"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e54369147e3e7796c9b885c7304db87ca3d09a0a98f72843d532868675bbfba8"
+dependencies = [
+ "bytes 1.0.1",
+ "rustc-hex",
+]
+
+[[package]]
+name = "rlp-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e33d7b2abe0c340d8797fe2907d3f20d3b5ea5908683618bfe80df7f621f672a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "rocksdb"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5297,7 +5566,7 @@ name = "sc-chain-spec"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
 dependencies = [
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "parity-scale-codec",
  "sc-chain-spec-derive",
  "sc-consensus-babe",
@@ -5536,7 +5805,7 @@ dependencies = [
  "async-trait",
  "futures 0.3.15",
  "futures-timer 3.0.2",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "log",
  "parity-scale-codec",
  "sc-client-api",
@@ -6367,6 +6636,19 @@ dependencies = [
 
 [[package]]
 name = "sha3"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd26bc0e7a2e3a7c959bc494caf58b72ee0c71d67704e9520f736ca7e4853ecf"
+dependencies = [
+ "block-buffer 0.7.3",
+ "byte-tools",
+ "digest 0.8.1",
+ "keccak",
+ "opaque-debug 0.2.3",
+]
+
+[[package]]
+name = "sha3"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f81199417d4e5de3f04b1e871023acea7389672c4135918f05aa9cbf2f2fa809"
@@ -6798,7 +7080,7 @@ version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
 dependencies = [
  "async-trait",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
@@ -6904,7 +7186,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#741
 dependencies = [
  "either",
  "hash256-std-hasher",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "log",
  "max-encoded-len",
  "parity-scale-codec",
@@ -6924,7 +7206,7 @@ name = "sp-runtime-interface"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
 dependencies = [
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "parity-scale-codec",
  "primitive-types",
  "sp-externalities",
@@ -7156,7 +7438,7 @@ name = "sp-wasm-interface"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.8#74101dc21cfffb4c2d014fcc28edc166d5ca1b16"
 dependencies = [
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.1",
  "parity-scale-codec",
  "sp-std",
  "wasmi",
@@ -7897,6 +8179,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "652931506d2c1244d7217a70b99f56718a7b4161b37f04e7cd868072a99f68cd"
 dependencies = [
  "hash-db",
+]
+
+[[package]]
+name = "triehash"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1631b201eb031b563d2e85ca18ec8092508e262a3196ce9bd10a67ec87b9f5c"
+dependencies = [
+ "hash-db",
+ "rlp",
 ]
 
 [[package]]

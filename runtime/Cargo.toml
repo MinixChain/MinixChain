@@ -47,6 +47,11 @@ pallet-coming-id = { version = "1.1.0", default-features = false, path = "../pal
 pallet-coming-id-rpc-runtime-api = { version = "1.1.0", default-features = false, path = "../pallets/pallet-coming-id/rpc/runtime-api" }
 pallet-coming-nft = { version = "1.1.0", default-features = false, path = "../pallets/pallet-coming-nft" }
 
+# EVM
+pallet-ethereum-chain-id = { version = "1.0.0", default-features = false, path = "../pallets/ethereum-chain-id"}
+pallet-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+pallet-ethereum = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+
 [build-dependencies]
 substrate-wasm-builder = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
 
@@ -85,6 +90,9 @@ std = [
 	"pallet-coming-id-rpc-runtime-api/std",
 	"pallet-coming-nft/std",
 
+	"pallet-ethereum-chain-id/std",
+	"pallet-evm/std",
+	"pallet-ethereum/std",
 ]
 runtime-benchmarks = [
 	"hex-literal",

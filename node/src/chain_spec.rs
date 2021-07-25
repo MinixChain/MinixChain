@@ -1,6 +1,7 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingIdConfig, GenesisConfig,
     GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    EthereumChainIdConfig, EVMConfig, EthereumConfig
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -170,5 +171,29 @@ pub fn minix_genesis(
             medium_admin_key: root_key.clone(),
             low_admin_key: root_key,
         },
+        ethereum_chain_id: EthereumChainIdConfig {
+            chain_id: 1500u64
+        },
+        evm: EVMConfig {
+            accounts: {
+                use std::str::FromStr;
+
+                let mut map = std::collections::BTreeMap::new();
+                map.insert(
+                    sp_core::H160::from_str("6be02d1d3665660d22ff9624b7be0551ee1ac91b")
+                        .expect("internal H160 is valid; qed"),
+                    pallet_evm::GenesisAccount {
+                        balance: sp_core::U256::from_str("0xffffffffffffffffffffffffffffffff")
+                            .expect("internal U256 is valid; qed"),
+                        code: Default::default(),
+                        nonce: Default::default(),
+                        storage: Default::default(),
+                    }
+                );
+                map
+            },
+        },
+        ethereum: EthereumConfig {},
+
     }
 }

@@ -21,8 +21,7 @@ pub mod pallet {
 
 	impl<T: Config> Get<u64> for Pallet<T> {
 		fn get() -> u64 {
-			1500u64
-			//Self::chain_id()
+			Self::chain_id()
 		}
 	}
 

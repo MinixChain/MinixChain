@@ -7,7 +7,8 @@ members = [
 
 	"pallets/pallet-coming-id",
 	"pallets/pallet-coming-nft",
-	"pallets/ethereum-chain-id"
+	"pallets/ethereum-chain-id",
+	"pallets/custom-signatures",
 ]
 
 [profile.release]

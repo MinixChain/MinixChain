@@ -41,11 +41,12 @@ use pallet_transaction_payment::CurrencyAdapter;
 use pallet_coming_id::{Cid, CidDetails};
 
 // evm
-use pallet_evm::{
-	EnsureAddressNever, EnsureAddressRoot, FeeCalculator, HashedAddressMapping
-};
+use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, FeeCalculator, HashedAddressMapping};
 use sp_core::U256;
-use sp_std::convert::TryFrom;
+use sp_runtime::transaction_validity::TransactionPriority;
+
+mod precompiles;
+use precompiles::MinixPrecompiles;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -326,7 +327,7 @@ impl pallet_evm::GasWeightMapping for MinixGasWeightMapping {
 		gas.saturating_mul(WEIGHT_PER_GAS)
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
-		u64::try_from(weight.wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
+		weight.wrapping_div(WEIGHT_PER_GAS)
 	}
 }
 
@@ -348,7 +349,7 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type Precompiles = (); // todo: MoonriverPrecompiles<Self>
+	type Precompiles = MinixPrecompiles<Self>;
 	type ChainId = EthereumChainId;
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
@@ -358,6 +359,17 @@ impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
 	type FindAuthor = (); // todo: AuthorInherent
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
+}
+
+parameter_types! {
+    pub const EcdsaUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
+}
+impl pallet_custom_signatures::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Signature = pallet_custom_signatures::ethereum::EthereumSignature;
+	type Signer = <Signature as Verify>::Signer;
+	type UnsignedPriority = EcdsaUnsignedPriority;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -378,10 +390,11 @@ construct_runtime!(
 		ComingNFT: pallet_coming_nft::{Pallet, Call},
 		Utility: pallet_utility::{Pallet, Call, Event},
 
-				// Ethereum compatibility
+		// Ethereum compatibility
 		EthereumChainId: pallet_ethereum_chain_id::{Pallet, Storage, Config} = 50,
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 51,
+		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 51,
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 52,
+		EthCall: pallet_custom_signatures::{Pallet, Call, Event<T>, ValidateUnsigned} = 53,
 	}
 );
 

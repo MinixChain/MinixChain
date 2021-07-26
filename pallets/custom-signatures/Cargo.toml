@@ -1,0 +1,40 @@
+[package]
+name = "pallet-custom-signatures"
+version = "1.9.0"
+authors = ["Stake Technologies <devops@stake.co.jp>", "Minix Chain Developer"]
+edition = "2018"
+license = "Apache-2.0"
+homepage = "https://docs.plasmnet.io/"
+repository = "https://github.com/staketechnologies/Plasm/"
+description = "FRAME pallet for user defined extrinsic signatures"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "2.0", features = ["derive"], default-features = false }
+serde = { version = "1.0.119", optional = true }
+
+sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+
+[dev-dependencies]
+libsecp256k1 = { version = "0.3.2", features = ["hmac"] }
+hex-literal = "0.3.3"
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+
+[features]
+default = ["std"]
+std = [
+    "serde",
+    "codec/std",
+    "sp-io/std",
+    "sp-std/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "frame-support/std",
+    "frame-system/std",
+]

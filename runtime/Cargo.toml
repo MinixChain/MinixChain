@@ -51,6 +51,15 @@ pallet-coming-nft = { version = "1.1.0", default-features = false, path = "../pa
 pallet-ethereum-chain-id = { version = "1.0.0", default-features = false, path = "../pallets/ethereum-chain-id"}
 pallet-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
 pallet-ethereum = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+pallet-custom-signatures = { default-features = false, path = "../pallets/custom-signatures" }
+
+# EVM precompile
+evm = { version="0.27.0", default-features=false, features=["with-codec"] }
+pallet-evm-precompile-bn128 = { git="https://github.com/purestake/frontier", default-features=false, branch="moonbeam-polkadot-v0.9.8" }
+pallet-evm-precompile-dispatch = { git="https://github.com/purestake/frontier", default-features=false, branch="moonbeam-polkadot-v0.9.8" }
+pallet-evm-precompile-modexp = { git="https://github.com/purestake/frontier", default-features=false, branch="moonbeam-polkadot-v0.9.8" }
+pallet-evm-precompile-simple = { git="https://github.com/purestake/frontier", default-features=false, branch="moonbeam-polkadot-v0.9.8" }
+pallet-evm-precompile-sha3fips = { git="https://github.com/purestake/frontier", default-features=false, branch="moonbeam-polkadot-v0.9.8" }
 
 [build-dependencies]
 substrate-wasm-builder = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
@@ -93,6 +102,7 @@ std = [
 	"pallet-ethereum-chain-id/std",
 	"pallet-evm/std",
 	"pallet-ethereum/std",
+	"pallet-custom-signatures/std"
 ]
 runtime-benchmarks = [
 	"hex-literal",

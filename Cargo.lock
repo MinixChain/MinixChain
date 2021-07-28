@@ -3682,6 +3682,7 @@ name = "minix-runtime"
 version = "3.0.0"
 dependencies = [
  "evm",
+ "fp-rpc",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",

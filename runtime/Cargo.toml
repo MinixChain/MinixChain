@@ -61,6 +61,9 @@ pallet-evm-precompile-modexp = { git="https://github.com/purestake/frontier", de
 pallet-evm-precompile-simple = { git="https://github.com/purestake/frontier", default-features=false, branch="moonbeam-polkadot-v0.9.8" }
 pallet-evm-precompile-sha3fips = { git="https://github.com/purestake/frontier", default-features=false, branch="moonbeam-polkadot-v0.9.8" }
 
+# ETH API
+fp-rpc = { git="https://github.com/purestake/frontier", default-features=false, branch="moonbeam-polkadot-v0.9.8" }
+
 [build-dependencies]
 substrate-wasm-builder = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
 
@@ -102,7 +105,8 @@ std = [
 	"pallet-ethereum-chain-id/std",
 	"pallet-evm/std",
 	"pallet-ethereum/std",
-	"pallet-custom-signatures/std"
+	"pallet-custom-signatures/std",
+	"fp-rpc/std"
 ]
 runtime-benchmarks = [
 	"hex-literal",

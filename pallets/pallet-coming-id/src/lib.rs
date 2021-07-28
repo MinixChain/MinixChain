@@ -87,13 +87,12 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn cid_to_approval)]
-    pub type CidToApproval<T: Config> =
-    StorageMap<_, Identity, Cid, T::AccountId>;
+    pub type CidToApproval<T: Config> = StorageMap<_, Identity, Cid, T::AccountId>;
 
     #[pallet::storage]
     #[pallet::getter(fn cid_to_approval_all)]
     pub type OwnerToApprovalAll<T: Config> =
-    StorageMap<_, Identity, (T::AccountId, T::AccountId), bool, ValueQuery>;
+        StorageMap<_, Identity, (T::AccountId, T::AccountId), bool, ValueQuery>;
 
     /// The `AccountId` of the sudo key.
     #[pallet::storage]
@@ -159,7 +158,7 @@ pub mod pallet {
         // owner, operator, cid
         Approval(T::AccountId, T::AccountId, Cid),
         // owner, operator, approved
-        ApprovalForAll(T::AccountId, T::AccountId, bool)
+        ApprovalForAll(T::AccountId, T::AccountId, bool),
     }
 
     #[pallet::error]
@@ -185,7 +184,8 @@ pub mod pallet {
         fn on_runtime_upgrade() -> Weight {
             use frame_support::traits::{GetPalletVersion, PalletVersion};
 
-            let storage_version = Self::storage_version().unwrap_or_else(|| PalletVersion::new(0, 0, 0));
+            let storage_version =
+                Self::storage_version().unwrap_or_else(|| PalletVersion::new(0, 0, 0));
 
             // todo!(Remove me after upgrade minix mainnet)
             if storage_version < Self::current_version() {
@@ -335,7 +335,7 @@ impl<T: Config> Pallet<T> {
         match Self::get_account_id(cid) {
             Some(owner) if owner == operator.clone() => true,
             Some(owner) => Self::cid_to_approval_all((owner, operator.clone())),
-            None => false
+            None => false,
         }
     }
 
@@ -351,18 +351,14 @@ impl<T: Config> Pallet<T> {
 
     fn can_approve(operator: &T::AccountId, approved: &T::AccountId, cid: Cid) -> bool {
         match cid {
-            100_000..1_000_000_000_000 => {},
-            _ => return false
+            100_000..1_000_000_000_000 => {}
+            _ => return false,
         }
 
         match Self::get_account_id(cid) {
-            Some(owner) if owner == operator.clone() => {
-                owner != approved.clone()
-            },
-            Some(owner) => {
-                Self::cid_to_approval_all((owner, operator.clone()))
-            },
-            None => false
+            Some(owner) if owner == operator.clone() => owner != approved.clone(),
+            Some(owner) => Self::cid_to_approval_all((owner, operator.clone())),
+            None => false,
         }
     }
 
@@ -514,7 +510,10 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         to: &T::AccountId,
         cid: Cid,
     ) -> DispatchResult {
-        ensure!(Self::can_transfer_from(operator, cid), Error::<T>::BanTransfer);
+        ensure!(
+            Self::can_transfer_from(operator, cid),
+            Error::<T>::BanTransfer
+        );
 
         Self::transfer(from, cid, to)?;
 
@@ -522,9 +521,11 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
     }
 
     fn approve(who: &T::AccountId, approved: &T::AccountId, cid: Cid) -> DispatchResult {
-        ensure!(Self::can_approve(who, approved, cid), Error::<T>::BanApprove);
-        let owner = Self::get_account_id(cid)
-            .expect("cid owner is exists; qed");
+        ensure!(
+            Self::can_approve(who, approved, cid),
+            Error::<T>::BanApprove
+        );
+        let owner = Self::get_account_id(cid).expect("cid owner is exists; qed");
 
         CidToApproval::<T>::insert(cid, approved.clone());
 
@@ -533,10 +534,18 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         Ok(())
     }
 
-    fn set_approval_for_all(owner: &T::AccountId, operator: &T::AccountId, approved: bool) -> DispatchResult {
+    fn set_approval_for_all(
+        owner: &T::AccountId,
+        operator: &T::AccountId,
+        approved: bool,
+    ) -> DispatchResult {
         OwnerToApprovalAll::<T>::insert((owner.clone(), operator.clone()), approved);
 
-        Self::deposit_event(Event::ApprovalForAll(owner.clone(), operator.clone(), approved));
+        Self::deposit_event(Event::ApprovalForAll(
+            owner.clone(),
+            operator.clone(),
+            approved,
+        ));
 
         Ok(())
     }

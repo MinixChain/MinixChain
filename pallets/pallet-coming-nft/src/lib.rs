@@ -108,7 +108,6 @@ pub mod pallet {
 
             T::ComingNFT::set_approval_for_all(&who, &operator, approved)
         }
-
     }
 }
 

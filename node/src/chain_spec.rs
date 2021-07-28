@@ -1,7 +1,6 @@
 pub use minix_runtime::{
-    AccountId, AuraConfig, BalancesConfig, ComingIdConfig, GenesisConfig,
-    GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
-    EthereumChainIdConfig, EvmConfig, EthereumConfig
+    AccountId, AuraConfig, BalancesConfig, ComingIdConfig, EthereumChainIdConfig, EthereumConfig,
+    EvmConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -74,52 +73,54 @@ pub fn development_config() -> Result<ChainSpec, String> {
 }
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
-	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "mini".into());
-	properties.insert("tokenDecimals".into(), 8.into());
+    let mut properties = Properties::new();
+    properties.insert("tokenSymbol".into(), "mini".into());
+    properties.insert("tokenDecimals".into(), 8.into());
 
-	Ok(ChainSpec::from_genesis(
-		// Name
-		"Local Testnet",
-		// ID
-		"local_testnet",
-		ChainType::Local,
-		move || minix_genesis(
-			// Initial PoA authorities
-			vec![
-				authority_keys_from_seed("Alice"),
-				authority_keys_from_seed("Bob"),
-			],
-			// Sudo account
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
-			// Pre-funded accounts
-			vec![
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie"),
-				get_account_id_from_seed::<sr25519::Public>("Dave"),
-				get_account_id_from_seed::<sr25519::Public>("Eve"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-			],
-			true,
-		),
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		// Properties
-		Some(properties),
-		// Extensions
-		None,
-	))
+    Ok(ChainSpec::from_genesis(
+        // Name
+        "Local Testnet",
+        // ID
+        "local_testnet",
+        ChainType::Local,
+        move || {
+            minix_genesis(
+                // Initial PoA authorities
+                vec![
+                    authority_keys_from_seed("Alice"),
+                    authority_keys_from_seed("Bob"),
+                ],
+                // Sudo account
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
+                // Pre-funded accounts
+                vec![
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Bob"),
+                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
+                    get_account_id_from_seed::<sr25519::Public>("Dave"),
+                    get_account_id_from_seed::<sr25519::Public>("Eve"),
+                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+                ],
+                true,
+            )
+        },
+        // Bootnodes
+        vec![],
+        // Telemetry
+        None,
+        // Protocol ID
+        None,
+        // Properties
+        Some(properties),
+        // Extensions
+        None,
+    ))
 }
 
 pub fn live_testnet_config() -> Result<ChainSpec, String> {
@@ -171,9 +172,7 @@ pub fn minix_genesis(
             medium_admin_key: root_key.clone(),
             low_admin_key: root_key,
         },
-        ethereum_chain_id: EthereumChainIdConfig {
-            chain_id: 1500u64
-        },
+        ethereum_chain_id: EthereumChainIdConfig { chain_id: 1500u64 },
         evm: EvmConfig {
             accounts: vec![(
                 H160::from(hex_literal::hex![
@@ -191,6 +190,5 @@ pub fn minix_genesis(
             .collect(),
         },
         ethereum: EthereumConfig {},
-
     }
 }

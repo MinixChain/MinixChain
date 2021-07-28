@@ -36,90 +36,90 @@
 // --template=./.frame-weight-template.hbs
 // --output-analysis=max
 
-
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{
+    traits::Get,
+    weights::{constants::RocksDbWeight, Weight},
+};
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_coming_nft.
 pub trait WeightInfo {
-	fn mint(b: u32, ) -> Weight;
-	fn burn() -> Weight;
-	fn transfer() -> Weight;
-	fn transfer_from() -> Weight;
-	fn approve() -> Weight;
-	fn set_approval_for_all() -> Weight;
+    fn mint(b: u32) -> Weight;
+    fn burn() -> Weight;
+    fn transfer() -> Weight;
+    fn transfer_from() -> Weight;
+    fn approve() -> Weight;
+    fn set_approval_for_all() -> Weight;
 }
 
 /// Weights for pallet_coming_nft using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	fn mint(b: u32, ) -> Weight {
-		(2_700_000 as Weight)
-			// Standard Error: 0
-			.saturating_add((8_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn burn() -> Weight {
-		(38_772_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
-	fn transfer() -> Weight {
-		(38_445_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
-	}
-	fn transfer_from() -> Weight {
-		(45_651_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
-	}
-	fn approve() -> Weight {
-		(27_409_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn set_approval_for_all() -> Weight {
-		(19_156_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
+    fn mint(b: u32) -> Weight {
+        (2_700_000 as Weight)
+            // Standard Error: 0
+            .saturating_add((8_000 as Weight).saturating_mul(b as Weight))
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+    }
+    fn burn() -> Weight {
+        (38_772_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(3 as Weight))
+            .saturating_add(T::DbWeight::get().writes(2 as Weight))
+    }
+    fn transfer() -> Weight {
+        (38_445_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(3 as Weight))
+            .saturating_add(T::DbWeight::get().writes(3 as Weight))
+    }
+    fn transfer_from() -> Weight {
+        (45_651_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(4 as Weight))
+            .saturating_add(T::DbWeight::get().writes(4 as Weight))
+    }
+    fn approve() -> Weight {
+        (27_409_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(1 as Weight))
+            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+    }
+    fn set_approval_for_all() -> Weight {
+        (19_156_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
+    }
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn mint(b: u32, ) -> Weight {
-		(2_700_000 as Weight)
-			// Standard Error: 0
-			.saturating_add((8_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn burn() -> Weight {
-		(38_772_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
-	}
-	fn transfer() -> Weight {
-		(38_445_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
-	}
-	fn transfer_from() -> Weight {
-		(45_651_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
-	}
-	fn approve() -> Weight {
-		(27_409_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn set_approval_for_all() -> Weight {
-		(19_156_000 as Weight)
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
+    fn mint(b: u32) -> Weight {
+        (2_700_000 as Weight)
+            // Standard Error: 0
+            .saturating_add((8_000 as Weight).saturating_mul(b as Weight))
+            .saturating_add(RocksDbWeight::get().reads(2 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(1 as Weight))
+    }
+    fn burn() -> Weight {
+        (38_772_000 as Weight)
+            .saturating_add(RocksDbWeight::get().reads(3 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(2 as Weight))
+    }
+    fn transfer() -> Weight {
+        (38_445_000 as Weight)
+            .saturating_add(RocksDbWeight::get().reads(3 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(3 as Weight))
+    }
+    fn transfer_from() -> Weight {
+        (45_651_000 as Weight)
+            .saturating_add(RocksDbWeight::get().reads(4 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(4 as Weight))
+    }
+    fn approve() -> Weight {
+        (27_409_000 as Weight)
+            .saturating_add(RocksDbWeight::get().reads(1 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(1 as Weight))
+    }
+    fn set_approval_for_all() -> Weight {
+        (19_156_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
+    }
 }

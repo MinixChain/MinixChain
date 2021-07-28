@@ -9,15 +9,15 @@ pub use pallet::*;
 
 #[pallet]
 pub mod pallet {
+    pub use codec::Encode;
     use frame_support::pallet_prelude::*;
-    use frame_system::pallet_prelude::*;
     use frame_support::{
         dispatch::DispatchResultWithPostInfo,
         traits::{Get, UnfilteredDispatchable},
         weights::{GetDispatchInfo, Pays},
         Parameter,
     };
-    pub use codec::Encode;
+    use frame_system::pallet_prelude::*;
 
     use frame_system::ensure_none;
     use sp_runtime::{

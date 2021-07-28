@@ -55,7 +55,19 @@ frame-benchmarking-cli = { git = 'https://github.com/paritytech/substrate', bran
 pallet-coming-id = { version = "1.1.0", path = "../pallets/pallet-coming-id" }
 pallet-coming-id-rpc = { version = "1.1.0", path = "../pallets/pallet-coming-id/rpc" }
 minix-runtime = { version = "3.0.0", path = "../runtime" }
+# EVM
+futures = "0.3.4"
+jsonrpc-pubsub = "15.0.0"
+sc-network = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }
+fp-consensus = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+fp-rpc = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+fc-consensus  = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+fc-rpc-core = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+fc-rpc = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+fc-mapping-sync = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+fc-db = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
 pallet-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
+pallet-ethereum = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.8", default-features = false }
 
 [build-dependencies]
 substrate-build-script-utils = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.8" }

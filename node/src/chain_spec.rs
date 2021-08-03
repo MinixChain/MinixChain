@@ -56,6 +56,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
                     get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
                 ],
+                vec![],
                 true,
             )
         },
@@ -107,6 +108,30 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
                     get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
                 ],
+                vec![
+                    // Alith
+                    H160::from(hex_literal::hex!["f24FF3a9CF04c71Dbc94D0b566f7A27B94566cac"]),
+                    // Baltathar
+                    H160::from(hex_literal::hex!["3Cd0A705a2DC65e5b1E1205896BaA2be8A07c6e0"]),
+                    // Charleth
+                    H160::from(hex_literal::hex!["798d4Ba9baf0064Ec19eB4F0a1a45785ae9D6DFc"]),
+                    // Dorothy
+                    H160::from(hex_literal::hex!["773539d4Ac0e786233D90A233654ccEE26a613D9"]),
+                    // Ethan
+                    H160::from(hex_literal::hex!["Ff64d3F6efE2317EE2807d223a0Bdc4c0c49dfDB"]),
+                    // Faith
+                    H160::from(hex_literal::hex!["C0F0f4ab324C46e55D02D0033343B4Be8A55532d"]),
+                    // Goliath
+                    H160::from(hex_literal::hex!["7BF369283338E12C90514468aa3868A551AB2929"]),
+                    // Heath
+                    H160::from(hex_literal::hex!["931f3600a299fd9B24cEfB3BfF79388D19804BeA"]),
+                    // Ida
+                    H160::from(hex_literal::hex!["C41C5F1123ECCd5ce233578B2e7ebd5693869d73"]),
+                    // Judith
+                    H160::from(hex_literal::hex!["2898FE7a42Be376C8BC7AF536A940F7Fd5aDd423"]),
+                    // Gerald
+                    H160::from(hex_literal::hex!["6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b"]),
+                ],
                 true,
             )
         },
@@ -136,6 +161,7 @@ pub fn minix_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
+    addresses: Vec<H160>,
     _enable_println: bool,
 ) -> GenesisConfig {
     let wasm_binary = WASM_BINARY.unwrap();
@@ -174,20 +200,20 @@ pub fn minix_genesis(
         },
         ethereum_chain_id: EthereumChainIdConfig { chain_id: 1500u64 },
         evm: EvmConfig {
-            accounts: vec![(
-                H160::from(hex_literal::hex![
-                    "B45cf380FF9A33c2bf7c41043530dc8Bb2e5295B"
-                ]),
-                pallet_evm::GenesisAccount {
-                    balance: U256::from(1_000_000_000_000_000_000_000u128),
-                    nonce: Default::default(),
-                    code: Default::default(),
-                    storage: Default::default(),
-                },
-            )]
-            .iter()
-            .cloned()
-            .collect(),
+            accounts: addresses
+                .into_iter()
+                .map(|addr| {
+                    (
+                        addr,
+                        pallet_evm::GenesisAccount {
+                            balance: U256::from(1_000_000_000_000_000_000_000u128),
+                            nonce: Default::default(),
+                            code: Default::default(),
+                            storage: Default::default(),
+                        },
+                    )
+                })
+                .collect()
         },
         ethereum: EthereumConfig {},
     }

@@ -2,13 +2,13 @@
 resolver = "2"
 
 members = [
-	"node",
-	"runtime",
+    "node",
+    "runtime",
 
-	"pallets/pallet-coming-id",
-	"pallets/pallet-coming-nft",
-	"pallets/ethereum-chain-id",
-	"pallets/custom-signatures",
+    "pallets/pallet-coming-id",
+    "pallets/pallet-coming-nft",
+    "pallets/ethereum-chain-id",
+    "pallets/custom-signatures",
 ]
 
 [profile.release]

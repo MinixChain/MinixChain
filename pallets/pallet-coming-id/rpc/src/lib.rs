@@ -7,7 +7,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// 	http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -94,8 +94,8 @@ where
     ) -> Result<Option<AccountId>> {
         let api = self.client.runtime_api();
         let at = BlockId::hash(at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
 
         api.get_account_id(&at, cid).map_err(|e| RpcError {
             code: ErrorCode::ServerError(Error::RuntimeError.into()),
@@ -111,8 +111,8 @@ where
     ) -> Result<Vec<Cid>> {
         let api = self.client.runtime_api();
         let at = BlockId::hash(at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
 
         api.get_cids(&at, account).map_err(|e| RpcError {
             code: ErrorCode::ServerError(Error::RuntimeError.into()),
@@ -128,8 +128,8 @@ where
     ) -> Result<Option<CidDetails<AccountId>>> {
         let api = self.client.runtime_api();
         let at = BlockId::hash(at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
 
         api.get_bond_data(&at, cid).map_err(|e| RpcError {
             code: ErrorCode::ServerError(Error::RuntimeError.into()),
@@ -141,8 +141,8 @@ where
     fn get_card(&self, cid: Cid, at: Option<<Block as BlockT>::Hash>) -> Result<Option<Bytes>> {
         let api = self.client.runtime_api();
         let at = BlockId::hash(at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
 
         api.get_card(&at, cid).map_err(|e| RpcError {
             code: ErrorCode::ServerError(Error::RuntimeError.into()),

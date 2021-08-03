@@ -18,9 +18,9 @@ pallet-coming-id = { version = "1.1.0", default-features = false, path = "../../
 [features]
 default = ["std"]
 std = [
-	"sp-api/std",
-	"sp-std/std",
-	"sp-core/std",
-	"codec/std",
-	"pallet-coming-id/std",
+    "sp-api/std",
+    "sp-std/std",
+    "sp-core/std",
+    "codec/std",
+    "pallet-coming-id/std",
 ]

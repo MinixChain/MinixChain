@@ -12,3 +12,28 @@ Based on Substrate framework, MiniX Chain is an open Alliance Blockchain adoptin
 MiniX Chain as an open alliance chain will adhere to laws and regulations of various countries, which is a prerequisite for it to support the launch of applications like DID/NFT. Coming will become the first user of MiniX alliance chain onto which its decentralized identity system and NFT will be deployed with Mini credit as service fees.
 
 Of course as an open alliance chain, we do hope to attract more alliance-chain companies as nodes and applications to enrich the ecosystem.
+
+# EVM Support
+## 1. launch local test
+
+```bash
+cargo build --release
+
+./target/release/minix --tmp --chain=local --alice --rpc-port=8545 --rpc-cors=all -levm=trace
+./target/release/minix --tmp --chain=local --bob 
+```
+## 2. metamask (for account)
+
+```txt
+Network Name: mini-test
+New RPC URL: http://127.0.0.1:8545
+Chain ID: 1500
+Currency Symbol: MINI
+Block Explorer URL:
+```
+
+Refer [Connect MetaMask to Moonbase Alpha](https://docs.moonbeam.network/getting-started/moonbase/metamask/)
+
+## 3. Remix (for contract)
+
+Refer [Interacting with Moonbeam Using Remix](https://docs.moonbeam.network/getting-started/local-node/using-remix/)

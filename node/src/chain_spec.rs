@@ -148,6 +148,80 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
+pub fn dev_evm_config() -> Result<ChainSpec, String> {
+    let mut properties = Properties::new();
+    properties.insert("tokenSymbol".into(), "mini".into());
+    properties.insert("tokenDecimals".into(), 8.into());
+
+    Ok(ChainSpec::from_genesis(
+        // Name
+        "Local Testnet",
+        // ID
+        "local_testnet",
+        ChainType::Local,
+        move || {
+            minix_genesis(
+                // Initial PoA authorities
+                vec![
+                    authority_keys_from_seed("Alice"),
+                ],
+                // Sudo account
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
+                // Pre-funded accounts
+                vec![
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Bob"),
+                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
+                    get_account_id_from_seed::<sr25519::Public>("Dave"),
+                    get_account_id_from_seed::<sr25519::Public>("Eve"),
+                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+                ],
+                vec![
+                    // Alith
+                    H160::from(hex_literal::hex!["f24FF3a9CF04c71Dbc94D0b566f7A27B94566cac"]),
+                    // Baltathar
+                    H160::from(hex_literal::hex!["3Cd0A705a2DC65e5b1E1205896BaA2be8A07c6e0"]),
+                    // Charleth
+                    H160::from(hex_literal::hex!["798d4Ba9baf0064Ec19eB4F0a1a45785ae9D6DFc"]),
+                    // Dorothy
+                    H160::from(hex_literal::hex!["773539d4Ac0e786233D90A233654ccEE26a613D9"]),
+                    // Ethan
+                    H160::from(hex_literal::hex!["Ff64d3F6efE2317EE2807d223a0Bdc4c0c49dfDB"]),
+                    // Faith
+                    H160::from(hex_literal::hex!["C0F0f4ab324C46e55D02D0033343B4Be8A55532d"]),
+                    // Goliath
+                    H160::from(hex_literal::hex!["7BF369283338E12C90514468aa3868A551AB2929"]),
+                    // Heath
+                    H160::from(hex_literal::hex!["931f3600a299fd9B24cEfB3BfF79388D19804BeA"]),
+                    // Ida
+                    H160::from(hex_literal::hex!["C41C5F1123ECCd5ce233578B2e7ebd5693869d73"]),
+                    // Judith
+                    H160::from(hex_literal::hex!["2898FE7a42Be376C8BC7AF536A940F7Fd5aDd423"]),
+                    // Gerald
+                    H160::from(hex_literal::hex!["6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b"]),
+                ],
+                true,
+            )
+        },
+        // Bootnodes
+        vec![],
+        // Telemetry
+        None,
+        // Protocol ID
+        None,
+        // Properties
+        Some(properties),
+        // Extensions
+        None,
+    ))
+}
+
 pub fn live_testnet_config() -> Result<ChainSpec, String> {
     ChainSpec::from_json_bytes(&include_bytes!("../res/testnet-raw.json")[..])
 }

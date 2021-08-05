@@ -61,6 +61,11 @@ impl SubstrateCli for Cli {
 
                 Box::new(chain_spec::live_mainnet_config()?)
             }
+            "dev-evm" => {
+                set_default_ss58_version(Ss58AddressFormat::ChainXAccount);
+
+                Box::new(chain_spec::dev_evm_config()?)
+            }
             "" | "local" => Box::new(chain_spec::local_testnet_config()?),
             path => {
                 set_default_ss58_version(Ss58AddressFormat::ChainXAccount);

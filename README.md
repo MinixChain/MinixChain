@@ -68,6 +68,11 @@ cargo build --release
 
 ./target/release/minix --tmp --chain=local --alice --rpc-port=8545 --rpc-cors=all -levm=trace
 ./target/release/minix --tmp --chain=local --bob 
+
+or
+
+./target/release/minix --tmp --chain=dev-evm --alice --rpc-port=8545 --rpc-cors=all -levm=trace
+
 ```
 ## 2. metamask (for account)
 

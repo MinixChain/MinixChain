@@ -12,7 +12,7 @@ You can interact with MinixChain in two ways: by using Substrate RPC endpoints o
 
 First, we start with a fresh and default [MetaMask](https://metamask.io/) installation from the Chrome store. After downloading, installing, and initializing the extension, follow the "Get Started" guide. In there, you need to create a wallet, set a password, and store your secret backup phrase (this gives direct access to your funds, so make sure to store these in a secure place). 
 
-![image-20210804162828274](image-20210804162828274.png)
+![image-20210804162828274](images/image-20210804162828274.png)
 
 
 
@@ -54,11 +54,11 @@ Once completed, we will import the development account,  The details for the dev
 
 On the import screen, select “Private Key” and paste in one of the keys listed above. For this example we'll use Gerald's key:
 
-![image-20210804163147729](image-20210804163147729.png)
+![image-20210804163147729](images/image-20210804163147729.png)
 
 You should end up with an imported “Account 2” that looks like this:
 
-![image-20210804163256968](image-20210804163256968.png)
+![image-20210804163256968](images/image-20210804163256968.png)
 
 ## Connecting MetaMask to MinixChain
 
@@ -72,7 +72,7 @@ To connect MetaMask to MinixChain, navigate to Settings -> Networks -> Add Netwo
 
 When you hit "save" and exit the network settings screen, MetaMask should be connected to the MinixChain node via its Web3 RPC, and you should see the MinixChain dev account with a balance of 1000 MINI.
 
-![image-20210804164623505](image-20210804164623505.png)
+![image-20210804164623505](images/image-20210804164623505.png)
 
 
 
@@ -82,18 +82,18 @@ Let’s try sending some tokens with MetaMask.
 
 For simplicity, we will transfer from this dev account to the one created while setting up MetaMask. Click "Send" to initiate the transfer. Consequently, we can use the “Transfer between my accounts” option. Let’s transfer 100 tokens and leave all other settings as they are:
 
-![image-20210804164904601](image-20210804164904601.png)
+![image-20210804164904601](images/image-20210804164904601.png)
 
 Once you have submitted the transaction, you will see it “pending” until it is confirmed, as shown in the following image:
 
-![image-20210804164946489](image-20210804164946489.png)
+![image-20210804164946489](images/image-20210804164946489.png)
 
 When the transaction is confirmed, the balance of Account 2 will be updated, as shown in the following image:
 
-![image-20210804165226294](image-20210804165226294.png)
+![image-20210804165226294](images/image-20210804165226294.png)
 
 Note that the Account 2 balance has been decreased by the sent amount + gas fees. 
 
 Flipping over to Account 1, we see the 50 sent tokens have arrived:
 
-![image-20210804165545970](image-20210804165545970.png)
+![image-20210804165545970](images/image-20210804165545970.png)

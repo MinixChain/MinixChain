@@ -18,7 +18,7 @@ Launch Remix by navigating to https://remix.ethereum.org/. In the main screen, u
 
 We will create a new file to save the Solidity smart contract. Hit the + button under File Explorers and enter the name "MyToken.sol" in the popup dialog:
 
-![Create a new file for your Solidity contract](using-remix-4.png)
+![Create a new file for your Solidity contract](images/using-remix-4.png)
 
 Next, let's paste the following smart contract into the editor tab that comes up:
 
@@ -39,11 +39,11 @@ This is a simple ERC-20 contract based on the current Open Zeppelin ERC-20 templ
 
 Once you have pasted the contract into the editor, it should look like this:
 
-![Paste the contract into the editor](using-remix-5.png)
+![Paste the contract into the editor](images/using-remix-5.png)
 
 Now, navigate to the compile sidebar option to press the “Compile MyToken.sol” button:
 
-![Compile MyToken.sol](using-remix-6.png)
+![Compile MyToken.sol](images/using-remix-6.png)
 
 You will see Remix download all of the Open Zeppelin dependencies and compile the contract.
 
@@ -57,25 +57,25 @@ Back on Remix, you should see that the account you wish to use for deployment is
 
 Once you have entered this value, select "Deploy."
 
-![Enter an account balance and deploy](using-remix-8.png)
+![Enter an account balance and deploy](images/using-remix-8.png)
 
 You will be prompted in MetaMask to confirm the contract deployment transaction.
 
-![image-20210804171240675](image-20210804171240675.png)
+![image-20210804171240675](images/image-20210804171240675.png)
 
 After you press Confirm and the deployment is complete, you will see the transaction listed in MetaMask. And the contract will appear under Deployed Contracts in Remix.
 
-![image-20210804172814914](image-20210804172814914.png)
+![image-20210804172814914](images/image-20210804172814914.png)
 
 Once the contract is deployed, you can interact with it from within Remix.
 
 Drill down on the contract under “Deployed Contracts.” Clicking on name, symbol, and totalSupply should return “MyToken,” “MYTOK,” and “8000000000000000000000000” respectively.
 
-![image-20210804173438668](image-20210804173438668.png)
+![image-20210804173438668](images/image-20210804173438668.png)
 
  If you copy the account address from which you deployed the contract and paste it into the balanceOf field, then click balanceOf button , you should see the entirety of the balance of the ERC20 as belonging to that user. 
 
-![image-20210804180215993](image-20210804180215993.png)
+![image-20210804180215993](images/image-20210804180215993.png)
 
 
 
@@ -85,26 +85,26 @@ At last, copy the contract address by clicking the button next to the contract n
 
 Now, open MetaMask to add the newly deployed ERC-20 tokens. Before doing so, make sure you have copied the contract's address from Remix. Back in MetaMask, click on “Add Token” as shown below. Make sure you are in the account that deployed the token contract.
 
-![image-20210804180510362](image-20210804180510362.png)
+![image-20210804180510362](images/image-20210804180510362.png)
 
 Paste the copied contract address into the “Token Contract Address” field. The “Token Symbol” and “Token Decimal” fields should be automatically populated.
 
-![image-20210804180834192](image-20210804180834192.png)
+![image-20210804180834192](images/image-20210804180834192.png)
 
 After hitting “Next,” you will need to confirm that you want to add these tokens to your MetaMask account. Hit “Add Token” and you should see a balance of 8M MyTokens in MetaMask:
 
-![image-20210804180955754](image-20210804180955754.png)
+![image-20210804180955754](images/image-20210804180955754.png)
 
 Now we can send some of these ERC-20 tokens to the other account that we have set up in MetaMask. Hit “send” to initiate the transfer of 500 MyTokens and select the destination account.
 
 After hitting “next,” you will be asked to confirm (similar to what is pictured below).
 
-![image-20210804181525089](image-20210804181525089.png)
+![image-20210804181525089](images/image-20210804181525089.png)
 
 Hit “Confirm” and, after the transaction is complete, you will see a confirmation and a reduction of the MyToken account balance from the sender account in MetaMask:
 
-![image-20210804181717174](image-20210804181717174.png)
+![image-20210804181717174](images/image-20210804181717174.png)
 
 If you own the account that you sent the tokens to, you can add the token asset to verify that the transfer arrived.
 
-![image-20210804182125169](image-20210804182125169.png)
+![image-20210804182125169](images/image-20210804182125169.png)

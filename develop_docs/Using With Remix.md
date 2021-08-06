@@ -12,7 +12,7 @@ Now, let’s fire up Remix to exercise more advanced functionalities in MinixCha
 
 Launch Remix by navigating to https://remix.ethereum.org/. In the main screen, under Environments, select Solidity to configure Remix for Solidity development, then navigate to the File Explorers view:
 
-![File explorer](using-remix-3.png)
+![File explorer](images/using-remix-3.png)
 
 
 

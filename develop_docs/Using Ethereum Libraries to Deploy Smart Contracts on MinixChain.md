@@ -1,8 +1,8 @@
-# Using Ethereum Libraries to Deploy Smart Contracts on Moonbeam
+# Using Ethereum Libraries to Deploy Smart Contracts on MinixChain
 
 ## Introduction
 
-This guide walks through using the Solidity compiler and three different Ethereum libraries to sign and send a transaction on Moonbeam manually. The three libraries covered by this tutorial are:
+This guide walks through using the Solidity compiler and two different Ethereum libraries to sign and send a transaction on MinixChain manually. The two libraries covered by this tutorial are:
 
 - [Web3.js](https://web3js.readthedocs.io/)
 

@@ -53,11 +53,8 @@ Let's start,  follow the steps below.
 Once this operation is completed, you'll now have a project structure with the following items:
 
 **contracts/**: Directory for Solidity contracts
-
 **migrations/**: Directory for scriptable deployment files
-
 **test/**: Directory for test files for testing your application and contracts
-
 **truffle-config.js**: Truffle configuration file
 
 
@@ -71,14 +68,15 @@ module.exports = {
     development: {
       host: "127.0.0.1",
       port: 8545,
-      network_id: "*"
+      network_id: "*",
+      from: "0x19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A",
     }
   }    
 
 };
 ```
 
-
+Note that this is slightly different from [Ganache](https://www.trufflesuite.com/ganache). The **from** parameter must be configured here.
 
 4.Compile the Truffle project
 
@@ -114,82 +112,83 @@ Compiling your contracts...
 Starting migrations...
 ======================
 > Network name:    'development'
-> Network id:      1627899638136
-> Block gas limit: 6721975 (0x6691b7)
+> Network id:      1500
+> Block gas limit: 15000000 (0xe4e1c0)
 
 
 1_initial_migration.js
 ======================
 
-   Deploying 'Migrations'
+   Replacing 'Migrations'
    ----------------------
-   > transaction hash:    0x80a58c383b64d025270122264090a5adddd28cc6ebea4093e09408a4b9a89943
+   > transaction hash:    0x423177b44d39f5c6f55d6ed763ef85f4fea70a7bc30c898851dea4ee75906d39
    > Blocks: 0            Seconds: 0
-   > contract address:    0xD156AF6dc2C85635598de526709188D110650E76
-   > block number:        1
-   > block timestamp:     1627899705
-   > account:             0x21ca314A5105eEE8e591aA7B6b8c35D33DcF0D12
-   > balance:             99.9967165
+   > contract address:    0xAE519FC2Ba8e6fFE6473195c092bF1BAe986ff90
+   > block number:        6
+   > block timestamp:     1628678154
+   > account:             0x19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A
+   > balance:             999.999835825
    > gas used:            164175 (0x2814f)
-   > gas price:           20 gwei
+   > gas price:           1 gwei
    > value sent:          0 ETH
-   > total cost:          0.0032835 ETH
+   > total cost:          0.000164175 ETH
 
 
    > Saving migration to chain.
    > Saving artifacts
    -------------------------------------
-   > Total cost:           0.0032835 ETH
+   > Total cost:         0.000164175 ETH
 
 
 2_deploy_contracts.js
 =====================
 
-   Deploying 'ConvertLib'
+   Replacing 'ConvertLib'
    ----------------------
-   > transaction hash:    0xba51d392a0ef16f319f9e2ae040d7f200063f63074da4f8065bbee9130be895d
-   > Blocks: 0            Seconds: 0
-   > contract address:    0x4c5762ddE9f44431E485e473e0AACBd79d1B837d
-   > block number:        3
-   > block timestamp:     1627899705
-   > account:             0x21ca314A5105eEE8e591aA7B6b8c35D33DcF0D12
-   > balance:             99.99396028
+   > transaction hash:    0x53e1e737687e3cf872d3cecb1993524734c4520258c4cab5be8abb23a07e9070
+   > Blocks: 0            Seconds: 4
+   > contract address:    0x7d73424a8256C0b2BA245e5d5a3De8820E45F390
+   > block number:        8
+   > block timestamp:     1628678166
+   > account:             0x19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A
+   > balance:             999.999698014
    > gas used:            95470 (0x174ee)
-   > gas price:           20 gwei
+   > gas price:           1 gwei
    > value sent:          0 ETH
-   > total cost:          0.0019094 ETH
+   > total cost:          0.00009547 ETH
 
 
    Linking
    -------
-   * Contract: MetaCoin <--> Library: ConvertLib (at address: 0x4c5762ddE9f44431E485e473e0AACBd79d1B837d)
+   * Contract: MetaCoin <--> Library: ConvertLib (at address: 0x7d73424a8256C0b2BA245e5d5a3De8820E45F390)
 
-   Deploying 'MetaCoin'
+   Replacing 'MetaCoin'
    --------------------
-   > transaction hash:    0xc51e87889a78acefd2db7fea1afe6c7714d633575c65d8b2f046e33029b21d94
-   > Blocks: 0            Seconds: 0
-   > contract address:    0xAC9859CbC99fB36320aED71bB707c4563Ff58D0D
-   > block number:        4
-   > block timestamp:     1627899705
-   > account:             0x21ca314A5105eEE8e591aA7B6b8c35D33DcF0D12
-   > balance:             99.98822898
+   > transaction hash:    0x8eceaa5e8290bab692bb3d5abdbd44e32a295c3f426f594ef2555fcc6aa8e524
+   > Blocks: 0            Seconds: 4
+   > contract address:    0x08425D9Df219f93d5763c3e85204cb5B4cE33aAa
+   > block number:        9
+   > block timestamp:     1628678172
+   > account:             0x19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A
+   > balance:             999.999411449
    > gas used:            286565 (0x45f65)
-   > gas price:           20 gwei
+   > gas price:           1 gwei
    > value sent:          0 ETH
-   > total cost:          0.0057313 ETH
+   > total cost:          0.000286565 ETH
 
 
    > Saving migration to chain.
    > Saving artifacts
    -------------------------------------
-   > Total cost:           0.0076407 ETH
+   > Total cost:         0.000382035 ETH
 
 
 Summary
 =======
 > Total deployments:   3
-> Final cost:          0.0109242 ETH
-   
+> Final cost:          0.00054621 ETH
+
+
 ```
 
 
@@ -235,7 +234,7 @@ contract MetaCoin {
 }
 ```
 
-Now let's look at the Javascript object called `MetaCoin` provided for us by Truffle, as made available in the [Truffle console](https://www.trufflesuite.com/docs/truffle/getting-started/using-truffle-develop-and-the-console):
+Now, let's look at the Javascript object called `MetaCoin` provided for us by Truffle, as made available in the [Truffle console](https://www.trufflesuite.com/docs/truffle/getting-started/using-truffle-develop-and-the-console):
 
 ```
 truffle(development)> let instance = await MetaCoin.deployed()
@@ -244,7 +243,7 @@ truffle(development)> instance
 
    ...
 
-   methods: {
+    methods: {
       sendCoin: [Function: bound _createTxObject],
       '0x90b98a11': [Function: bound _createTxObject],
       'sendCoin(address,uint256)': [Function: bound _createTxObject],
@@ -261,9 +260,9 @@ truffle(development)> instance
       'Transfer(address,address,uint256)': [Function: bound ],
       allEvents: [Function: bound ]
     },
-    _address: '0xAC9859CbC99fB36320aED71bB707c4563Ff58D0D',
-    
-    
+    _address: '0x08425D9Df219f93d5763c3e85204cb5B4cE33aAa',
+
+        
  ...
 
 
@@ -280,41 +279,40 @@ When calling `sendCoin`, we'll execute it as a transaction. In the following exa
       
 truffle(development)> let accounts = await web3.eth.getAccounts()
 undefined
-truffle(development)> instance.sendCoin(accounts[1], 10, {from: accounts[0]})
+truffle(development)> instance.sendCoin("0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b", 10, {from: accounts[0]})
 {
-  tx: '0x9c434c333be966cbfc39cb898637abd05728c605574bafdbd102124941097428',
+  tx: '0xf080c9d277f78bb29cb5a5619c1c5f4bdc79e426d0fb3f7d259928fe973384dc',
   receipt: {
-    transactionHash: '0x9c434c333be966cbfc39cb898637abd05728c605574bafdbd102124941097428',
-    transactionIndex: 0,
-    blockHash: '0xe6662f4600baac7225853c9cabddc6064aec431ef87ed4b09a0bc4c6f29d43c6',
-    blockNumber: 6,
-    from: '0x21ca314a5105eee8e591aa7b6b8c35d33dcf0d12',
-    to: '0xac9859cbc99fb36320aed71bb707c4563ff58d0d',
-    gasUsed: 51508,
-    cumulativeGasUsed: 51508,
+    blockHash: '0x02aae907afd086a36d0b3f417fd3b205b9c1c757a72b2e20da83666d2e36e9cb',
+    blockNumber: 40,
     contractAddress: null,
+    cumulativeGasUsed: 47308,
+    from: '0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a',
+    gasUsed: 47308,
     logs: [ [Object] ],
+    logsBloom: '0x80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000800000000000000000000000000000000000000000000000000000000020000000000000000000000010000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000002000000000000000020000800000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000008000000000000000000000000',
     status: true,
-    logsBloom: '0x00000000000000000004000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000010000000000000000000000000000000000000000000000010000000000000000000000080000000000000000000000000000000000000000800010000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000040000000000000',
+    to: '0x08425d9df219f93d5763c3e85204cb5b4ce33aaa',
+    transactionHash: '0xf080c9d277f78bb29cb5a5619c1c5f4bdc79e426d0fb3f7d259928fe973384dc',
+    transactionIndex: 0,
     rawLogs: [ [Object] ]
   },
   logs: [
     {
+      address: '0x08425D9Df219f93d5763c3e85204cb5B4cE33aAa',
+      blockHash: '0x02aae907afd086a36d0b3f417fd3b205b9c1c757a72b2e20da83666d2e36e9cb',
+      blockNumber: 40,
       logIndex: 0,
-      transactionIndex: 0,
-      transactionHash: '0x9c434c333be966cbfc39cb898637abd05728c605574bafdbd102124941097428',
-      blockHash: '0xe6662f4600baac7225853c9cabddc6064aec431ef87ed4b09a0bc4c6f29d43c6',
-      blockNumber: 6,
-      address: '0xAC9859CbC99fB36320aED71bB707c4563Ff58D0D',
-      type: 'mined',
       removed: false,
-      id: 'log_d631b672',
+      transactionHash: '0xf080c9d277f78bb29cb5a5619c1c5f4bdc79e426d0fb3f7d259928fe973384dc',
+      transactionIndex: 0,
+      transactionLogIndex: '0x0',
+      id: 'log_1a8b84e8',
       event: 'Transfer',
       args: [Result]
     }
   ]
 }
-
 
    
 ```

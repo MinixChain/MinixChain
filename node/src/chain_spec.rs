@@ -131,6 +131,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     H160::from(hex_literal::hex!["2898FE7a42Be376C8BC7AF536A940F7Fd5aDd423"]),
                     // Gerald
                     H160::from(hex_literal::hex!["6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b"]),
+                    // Frontier pre-funded account
+                    H160::from(hex_literal::hex!["19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A"]),
                 ],
                 true,
             )
@@ -205,6 +207,8 @@ pub fn dev_evm_config() -> Result<ChainSpec, String> {
                     H160::from(hex_literal::hex!["2898FE7a42Be376C8BC7AF536A940F7Fd5aDd423"]),
                     // Gerald
                     H160::from(hex_literal::hex!["6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b"]),
+                    // Frontier pre-funded account
+                    H160::from(hex_literal::hex!["19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A"]),
                 ],
                 true,
             )

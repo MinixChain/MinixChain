@@ -34,8 +34,7 @@ cargo build --release
 Then, you will want to run the node using the following command:
 
 ```
-./target/release/minix --tmp --chain=local --alice --rpc-port=8545 --rpc-cors=all -levm=trace
-./target/release/minix --tmp --chain=local --bob
+./target/release/minix --tmp --chain=dev-evm --alice --rpc-port=8545 --rpc-cors=all -levm=trace
 ```
 
 ## Connecting Polkadot JS Apps to a Local MinixChain Node
@@ -47,14 +46,14 @@ The development node is a Substrate-based node, so you can interact with it usin
 
 Start by connecting to it with Polkadot JS Apps. Open a browser to: https://polkadot.js.org/apps/#/explorer. This will open Polkadot JS Apps, which automatically connects to Polkadot MainNet.
 
-![image-20210804155318675](images/image-20210804155318675.png)
+![image-20210804155318675](image-20210804155318675.png)
 
 Click on the top left corner to open the menu to configure the networks, and then navigate down to open the Development sub-menu. In there, you will want to toggle the "Local Node" option, which points Polkadot JS Apps to `ws://127.0.0.1:9944`. Next, select the Switch button, and the site should connect to your MinixChain development node.
 
-![image-20210804155431152](images/image-20210804155431152.png)
+![image-20210804155431152](image-20210804155431152.png)
 
 
 
 With Polkadot JS Apps connected, you will see some information similar to the following:
 
-![image-20210804155957328](images/image-20210804155957328.png)
+![image-20210804155957328](image-20210804155957328.png)

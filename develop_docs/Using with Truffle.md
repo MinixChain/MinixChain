@@ -76,7 +76,7 @@ module.exports = {
 };
 ```
 
-Note that this is slightly different from [Ganache](https://www.trufflesuite.com/ganache). The **from** parameter must be configured here. The account `0x19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A` is pre-funded , and it's corresponding private key is also stored on MinixChain.
+Note that this is slightly different from [Ganache](https://www.trufflesuite.com/ganache). The **from** parameter must be configured here. The account `0x19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A` is pre-funded , and it's corresponding private key is also stored on the node.
 
 
 

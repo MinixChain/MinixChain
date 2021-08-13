@@ -76,7 +76,36 @@ module.exports = {
 };
 ```
 
-Note that this is slightly different from [Ganache](https://www.trufflesuite.com/ganache). The **from** parameter must be configured here.
+Note that this is slightly different from [Ganache](https://www.trufflesuite.com/ganache). The **from** parameter must be configured here. The account `0x19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A` is pre-funded , and it's corresponding private key is also stored on MinixChain.
+
+
+
+In addition, if you want to deploy contract with your own account,  you need to configure the truffle-config.js file as below:
+
+    const HDWalletProvider = require("truffle-hdwallet-provider");
+    
+    //privateKey，without 0x prefix
+    const privateKeys = '99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342'; //address: 0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b
+    
+    module.exports = {
+    
+      networks: {
+        development: {
+          network_id: "*",
+          provider: () => new HDWalletProvider(privateKeys, `http://127.0.0.1:8545`),
+        }
+      }
+    };
+
+As you can see in the above file , it needs  `truffle-hdwallet-provider` to run properly,  so you should execute the following command to install:
+
+```
+npm install truffle-hdwallet-provider
+```
+
+Also, you should make sure you have enough MINI in your account.
+
+
 
 4.Compile the Truffle project
 

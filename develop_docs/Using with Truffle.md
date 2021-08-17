@@ -100,7 +100,7 @@ In addition, if you want to deploy contract with your own account,  you need to 
 As you can see in the above file , it needs  `truffle-hdwallet-provider` to run properly,  so you should execute the following command to install:
 
 ```
-npm install truffle-hdwallet-provider
+/MetaCoin$ npm install truffle-hdwallet-provider
 ```
 
 Also, you should make sure you have enough MINI in your account.

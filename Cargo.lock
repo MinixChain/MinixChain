@@ -4411,7 +4411,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-id"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4429,7 +4429,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-id-rpc"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -4445,7 +4445,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-id-rpc-runtime-api"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "pallet-coming-id",
  "parity-scale-codec",
@@ -4456,7 +4456,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-nft"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

@@ -29,7 +29,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-    type BaseCallFilter = frame_support::traits::AllowAll;
+    type BaseCallFilter = ();
     type BlockWeights = ();
     type BlockLength = ();
     type DbWeight = ();
@@ -58,8 +58,6 @@ parameter_types! {
 }
 impl pallet_balances::Config for Test {
     type MaxLocks = ();
-    type MaxReserves = ();
-    type ReserveIdentifier = [u8; 8];
     type Balance = u64;
     type Event = Event;
     type DustRemoval = ();

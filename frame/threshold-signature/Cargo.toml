@@ -1,0 +1,61 @@
+[package]
+authors = ['The ChainX Authors']
+edition = '2018'
+name = 'pallet-threshold-signature'
+version = '3.0.0'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+# [dev.dependencies]
+[dependencies]
+sp-io ={ version = "3.0.0", default-features = false, path = "../../primitives/io" }
+sp-core = { version = "3.0.0", default-features = false, path = "../../primitives/core" }
+sp-runtime = { version = "3.0.0", default-features = false, path = "../../primitives/runtime" }
+sp-std = { version = "3.0.0", default-features = false, path = "../../primitives/std" }
+frame-system = { version = "3.0.0", default-features = false, path = "../system" }
+frame-support = { version = "3.0.0", default-features = false, path = "../support" }
+frame-benchmarking = { version = "3.1.0", default-features = false, path = "../benchmarking", optional = true }
+
+libsecp256k1 = { version = "0.6", default-features = false, features = ["hmac", "static-context"] }
+arrayref = { version = "0.3.6" }
+core2 = { version = "0.3.0", default-features = false, features = ["alloc"] }
+digest = { version = "0.9.0", default-features = false }
+sha2 = { version = "0.9.5", default-features = false }
+hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
+rand = { version = "0.8.4", default-features = false, features = ["alloc"] }
+rand_core = { version = "0.6.3", default-features = false, features = ["alloc"] }
+serde = { version = "=1.0", features = ["derive"] }
+serde_json = { version = "^1.0" }
+serde_derive = { version = "1.0", default-features = false }
+log = "0.4"
+
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+bitcoin_hashes = { version = "0.10.0", default-features = false, features = ["alloc"] }
+schnorrkel = { version = "0.10.1", default-features = false, features = ["u64_backend"] }
+curve25519-dalek = { package = "curve25519-dalek-ng", version = "4.0", default-features = false }
+
+[dev-dependencies]
+pallet-balances = { version = "3.0.0", default-features = false, path = "../balances" }
+
+[features]
+default = ['std', 'getrandom']
+runtime-benchmarks = ['frame-benchmarking']
+getrandom = ['rand/getrandom']
+try-runtime = ['frame-support/try-runtime']
+std = [
+    'codec/std',
+    'frame-support/std',
+    'frame-system/std',
+    'frame-benchmarking/std',
+    "pallet-balances/std",
+    "bitcoin_hashes/std",
+    "hex/std",
+    "schnorrkel/std",
+    "curve25519-dalek/std"
+]
+no-std = [
+    "bitcoin_hashes/alloc",
+    "core2/alloc",
+    "curve25519-dalek/alloc"
+]

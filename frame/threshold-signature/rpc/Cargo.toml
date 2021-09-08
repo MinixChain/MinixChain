@@ -1,0 +1,50 @@
+[package]
+authors = ['The ChainX Authors']
+name = "pallet-threshold-signature-rpc"
+edition = "2018"
+version = '3.0.0-monthly-2021-08'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[dependencies.sp-std]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'monthly-2021-08'
+version = '4.0.0-dev'
+
+[dependencies.sp-blockchain]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'monthly-2021-08'
+version = '4.0.0-dev'
+
+[dependencies.sp-runtime]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'monthly-2021-08'
+version = '4.0.0-dev'
+
+[dependencies.sp-api]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'monthly-2021-08'
+version = '4.0.0-dev'
+
+[dependencies.jsonrpc-core]
+version = "15.0.0"
+default-features = false
+
+[dependencies.jsonrpc-core-client]
+version = "15.0.0"
+default-features = false
+
+[dependencies.jsonrpc-derive]
+version = "15.0.0"
+default-features = false
+
+[dependencies]
+pallet-threshold-signature-rpc-runtime-api = { path = "./runtime-api" }
+# # hex = "0.4.3"
+# [dependencies.hex]
+# version = "0.4.3"

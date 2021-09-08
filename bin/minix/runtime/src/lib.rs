@@ -305,6 +305,12 @@ impl pallet_coming_nft::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl pallet_threshold_signature::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type WeightInfo = pallet_threshold_signature::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -324,6 +330,7 @@ construct_runtime!(
 		ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
 		ComingNFT: pallet_coming_nft::{Pallet, Call},
 		Utility: pallet_utility::{Pallet, Call, Event},
+		ThresholdSignature: pallet_threshold_signature::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

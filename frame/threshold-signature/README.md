@@ -18,11 +18,11 @@
 
   Verify the threshold signature address and then call other transactions.
 
-  `addr`: Represents a threshold signature address. For example, the aggregate public key of ABC
-  `signature`: Usually represents the aggregate signature of m individuals. For example, the aggregate signature of AB
-  `script`: Usually represents the aggregate public key of m individuals. For example, the aggregate public key of AB
-  `message`: Message used in the signing process.
-  `call`: The transaction that needs to be called after the threshold signature verification is passed.
+  `addr`: Represents a threshold signature address. For example, the aggregate public key of ABC   
+  `signature`: Usually represents the aggregate signature of m individuals. For example, the aggregate signature of AB   
+  `script`: Usually represents the aggregate public key of m individuals. For example, the aggregate public key of AB   
+  `message`: Message used in the signing process.   
+  `call`: The transaction that needs to be called after the threshold signature verification is passed.   
 
 ## Tests
 

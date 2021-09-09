@@ -26,7 +26,7 @@
 
 ## Tests
 
-Refer to the [mock runtime](src/mock.rs) and [provided tests](src/tests.rs) to see the NFT implementation in action.
+Refer to the [mock runtime](src/mock.rs) and [provided tests](src/tests.rs) to see the implementation in action.
 
 ## Example
 

@@ -1,24 +1,19 @@
 //! Benchmarking setup for pallet-coming-nft
 
+#![cfg(feature = "runtime-benchmarks")]
+
 use super::*;
 
 #[allow(unused)]
 use crate::Pallet as ComingNFT;
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
+use frame_benchmarking::{whitelisted_caller, account, benchmarks};
 use frame_system::RawOrigin;
 use pallet_coming_id as ComingId;
 use sp_std::vec;
 
-// Alice
-fn admin_account<AccountId: Decode + Default>() -> AccountId {
-    let alice =
-        hex_literal::hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"];
-    AccountId::decode(&mut &alice[..]).unwrap_or_default()
-}
-
 benchmarks! {
     mint {
-        let admin: T::AccountId = admin_account();
+        let admin: T::AccountId = whitelisted_caller();
         let claim_cid: Cid = 1000000;
         let recipient: T::AccountId = account("recipient", 0, 0);
         let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(recipient.clone());
@@ -42,7 +37,7 @@ benchmarks! {
     }
 
     burn {
-        let admin: T::AccountId = admin_account();
+        let admin: T::AccountId = whitelisted_caller();
         let claim_cid: Cid = 99999;
         let recipient: T::AccountId = account("recipient", 0, 0);
         let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(recipient.clone());
@@ -67,7 +62,7 @@ benchmarks! {
     }
 
     transfer {
-        let admin: T::AccountId = admin_account();
+        let admin: T::AccountId = whitelisted_caller();
         let claim_cid: Cid = 1000000;
         let owner: T::AccountId = account("recipient", 0, 0);
         let owner_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(owner.clone());
@@ -105,7 +100,7 @@ benchmarks! {
     }
 
     transfer_from {
-        let admin: T::AccountId = admin_account();
+        let admin: T::AccountId = whitelisted_caller();
         let claim_cid: Cid = 1000000;
         let owner: T::AccountId = account("recipient", 0, 0);
         let owner_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(owner.clone());
@@ -155,7 +150,7 @@ benchmarks! {
     }
 
     approve {
-        let admin: T::AccountId = admin_account();
+        let admin: T::AccountId = whitelisted_caller();
         let claim_cid: Cid = 1000000;
         let owner: T::AccountId = account("recipient", 0, 0);
         let owner_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(owner.clone());
@@ -179,7 +174,7 @@ benchmarks! {
     }
 
     set_approval_for_all {
-        let owner: T::AccountId = account("recipient", 0, 0);
+        let owner: T::AccountId = whitelisted_caller();
         let owner_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(owner.clone());
         let operator: T::AccountId = account("recipient", 0, 1);
         let operator_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(operator.clone());
@@ -191,9 +186,3 @@ benchmarks! {
         assert!(ComingNFT::<T>::is_approved_for_all(&owner, &operator));
     }
 }
-
-impl_benchmark_test_suite!(
-    ComingNFT,
-    crate::mock::new_test_ext(super::admin_account()),
-    crate::mock::Test,
-);

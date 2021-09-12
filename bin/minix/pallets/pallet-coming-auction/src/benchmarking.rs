@@ -5,7 +5,7 @@
 use super::*;
 
 use crate::Pallet as ComingAuction;
-use frame_benchmarking::{whitelisted_caller, benchmarks, impl_benchmark_test_suite};
+use frame_benchmarking::{whitelisted_caller, benchmarks};
 use frame_system::RawOrigin;
 use frame_support::{
     assert_ok, dispatch::DispatchResult

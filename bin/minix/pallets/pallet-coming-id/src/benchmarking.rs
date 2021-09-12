@@ -1,24 +1,35 @@
 //! Benchmarking setup for pallet-coming-id
 
+#![cfg(feature = "runtime-benchmarks")]
+
 use super::*;
 
-use crate::Pallet as ComingId;
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
+use frame_benchmarking::{whitelisted_caller, benchmarks};
 use frame_system::RawOrigin;
 use sp_std::vec;
 
-const SEED: u32 = 0;
+fn bond_data(t: u16, b: u32) -> BondData {
+    BondData{
+        bond_type: t,
+        data: vec![1; b as usize].into(),
+    }
+}
 
-// Alice
-fn admin_account<AccountId: Decode + Default>() -> AccountId {
-    let alice =
-        hex_literal::hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"];
-    AccountId::decode(&mut &alice[..]).unwrap_or_default()
+fn update_bond<T: Config>(cid: Cid, t: u16, b: u32) -> Result<(), &'static str> {
+    for i in 0..b {
+        Distributed::<T>::mutate_exists(cid, |details|{
+            if let Some(detail) = details {
+                detail.bonds.push(bond_data(t, i));
+            }
+        })
+    }
+
+    Ok(())
 }
 
 benchmarks! {
     register {
-        let admin: T::AccountId = admin_account();
+        let admin: T::AccountId = whitelisted_caller();
         let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(admin.clone());
         let claim_cid: Cid = 1000000;
     }: register(RawOrigin::Signed(admin), claim_cid, recipient_lookup)
@@ -27,7 +38,7 @@ benchmarks! {
     }
 
     bond {
-        let common_user: T::AccountId = account("common_user", 0, SEED);
+        let common_user: T::AccountId = whitelisted_caller();
         let claim_cid: Cid = 1000000;
 
         let _ = Distributed::<T>::try_mutate_exists::<_,_,Error<T>,_>(claim_cid, |details|{
@@ -40,13 +51,11 @@ benchmarks! {
             Ok(())
         })?;
 
-        let b in 0 .. *T::BlockLength::get().max.get(DispatchClass::Normal) as u32;
-        let bond_data = BondData{
-            bond_type: 1u16,
-            data: vec![1; b as usize].into(),
+        let b in 0 .. (T::MaxCardSize::get() / 1024) => {
+            update_bond::<T>(claim_cid, 1u16, b)?;
         };
 
-    }: bond(RawOrigin::Signed(common_user.clone()), claim_cid, bond_data.clone())
+    }: bond(RawOrigin::Signed(common_user.clone()), claim_cid, bond_data(1u16, b))
     verify {
         let option = Distributed::<T>::get(claim_cid);
         assert!(option.is_some());
@@ -56,7 +65,7 @@ benchmarks! {
     }
 
     unbond {
-        let common_user: T::AccountId = account("common_user", 0, SEED);
+        let common_user: T::AccountId = whitelisted_caller();
         let claim_cid: Cid = 1000000;
         let bond_data = BondData{
             bond_type: 1u16,
@@ -85,9 +94,3 @@ benchmarks! {
         assert_eq!(cid_details.owner, common_user);
     }
 }
-
-impl_benchmark_test_suite!(
-    ComingId,
-    crate::mock::new_test_ext(super::admin_account()),
-    crate::mock::Test,
-);

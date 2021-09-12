@@ -245,7 +245,7 @@ pub mod pallet {
             })
         }
 
-        #[pallet::weight(T::WeightInfo::bond(bond_data.length()))]
+        #[pallet::weight(T::WeightInfo::bond((bond_data.length() / 1024).max(1)))]
         pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);

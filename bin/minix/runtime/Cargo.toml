@@ -45,9 +45,11 @@ frame-benchmarking = { version = "3.1.0", default-features = false, path = "../.
 frame-system-benchmarking = { version = "3.0.0", default-features = false, path = "../../../frame/system/benchmarking", optional = true }
 hex-literal = { version = "0.3.1", optional = true }
 
-pallet-coming-id = { version = "1.1.0", default-features = false, path = "../pallets/pallet-coming-id" }
-pallet-coming-id-rpc-runtime-api = { version = "1.1.0", default-features = false, path = "../pallets/pallet-coming-id/rpc/runtime-api" }
-pallet-coming-nft = { version = "1.1.0", default-features = false, path = "../pallets/pallet-coming-nft" }
+pallet-coming-id = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-id" }
+pallet-coming-id-rpc-runtime-api = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-id/rpc/runtime-api" }
+pallet-coming-nft = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-nft" }
+pallet-coming-auction = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-auction" }
+pallet-coming-auction-rpc-runtime-api = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-auction/rpc/runtime-api" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "4.0.0", path = "../../../utils/wasm-builder" }
@@ -69,6 +71,8 @@ std = [
 	"pallet-coming-id/std",
 	"pallet-coming-id-rpc-runtime-api/std",
 	"pallet-coming-nft/std",
+	"pallet-coming-auction/std",
+	"pallet-coming-auction-rpc-runtime-api/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -94,5 +98,6 @@ runtime-benchmarks = [
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"pallet-coming-id/runtime-benchmarks",
-	"pallet-coming-nft/runtime-benchmarks"
+	"pallet-coming-nft/runtime-benchmarks",
+	"pallet-coming-auction/runtime-benchmarks"
 ]

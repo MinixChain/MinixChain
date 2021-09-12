@@ -5,6 +5,7 @@ members = [
 	"bin/minix/node",
 	"bin/minix/pallets/pallet-coming-id",
 	"bin/minix/pallets/pallet-coming-nft",
+	"bin/minix/pallets/pallet-coming-auction",
 	"bin/minix/runtime",
 ]
 

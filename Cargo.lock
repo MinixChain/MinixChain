@@ -3428,6 +3428,8 @@ dependencies = [
  "frame-benchmarking-cli",
  "jsonrpc-core",
  "minix-runtime",
+ "pallet-coming-auction",
+ "pallet-coming-auction-rpc",
  "pallet-coming-id",
  "pallet-coming-id-rpc",
  "pallet-transaction-payment-rpc",
@@ -3472,6 +3474,8 @@ dependencies = [
  "hex-literal",
  "pallet-aura",
  "pallet-balances",
+ "pallet-coming-auction",
+ "pallet-coming-auction-rpc-runtime-api",
  "pallet-coming-id",
  "pallet-coming-id-rpc-runtime-api",
  "pallet-coming-nft",
@@ -3894,6 +3898,51 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-coming-auction"
+version = "1.2.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "pallet-balances",
+ "pallet-coming-id",
+ "parity-scale-codec",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-coming-auction-rpc"
+version = "1.2.0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-coming-auction-rpc-runtime-api",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-coming-auction-rpc-runtime-api"
+version = "1.2.0"
+dependencies = [
+ "pallet-coming-auction",
+ "parity-scale-codec",
+ "sp-api",
  "sp-runtime",
  "sp-std",
 ]

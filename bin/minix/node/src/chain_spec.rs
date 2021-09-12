@@ -1,6 +1,7 @@
 pub use minix_runtime::{
-    AccountId, AuraConfig, BalancesConfig, /*NFTConfig,*/ ComingIdConfig, GenesisConfig,
+    AccountId, AuraConfig, BalancesConfig, ComingIdConfig, GenesisConfig,
     GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    ComingAuctionConfig
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -34,6 +35,41 @@ where
 /// Generate an Aura authority key.
 pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub fn benchmarks_config() -> Result<ChainSpec, String> {
+    Ok(ChainSpec::from_genesis(
+        "Benchmarks",
+        "benchmarks",
+        ChainType::Development,
+        move || {
+            let caller: AccountId = frame_benchmarking::whitelisted_caller();
+            minix_genesis(
+                // Initial PoA authorities
+                vec![authority_keys_from_seed("Alice")],
+                // Sudo account
+                caller.clone(),
+                // Pre-funded accounts
+                vec![
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+                    caller
+                ],
+                true,
+            )
+        },
+        // Bootnodes
+        vec![],
+        // Telemetry
+        None,
+        // Protocol ID
+        None,
+        // Properties
+        None,
+        // Extensions
+        None,
+    ))
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
@@ -168,10 +204,10 @@ pub fn minix_genesis(
             // Assign network admin rights.
             high_admin_key: root_key.clone(),
             medium_admin_key: root_key.clone(),
-            low_admin_key: root_key,
+            low_admin_key: root_key.clone(),
         },
-        /*pallet_commodities: NFTConfig {
-            balances: Vec::new(),
-        },*/
+        pallet_coming_auction: ComingAuctionConfig {
+            admin_key: Some(root_key)
+        }
     }
 }

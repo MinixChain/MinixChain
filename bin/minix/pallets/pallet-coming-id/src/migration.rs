@@ -3,6 +3,7 @@ pub use migration_testnet::{
     OldAdminKey, migrate_to_new_admin_keys, high_key, medium_key, low_key
 };
 pub use migration_mainnet_1_1_0::migrate_to_new_cid_details;
+pub use migration_mainnet_1_2_0::migrate_to_set_stats;
 
 pub mod migration_testnet {
     use crate::*;
@@ -134,5 +135,25 @@ pub mod migration_mainnet_1_1_0 {
         } else {
             0
         }
+    }
+}
+
+pub mod migration_mainnet_1_2_0 {
+    use crate::*;
+
+    pub fn migrate_to_set_stats<T: Config>() -> Weight {
+        let (mut nominal_holders, mut real_holders, mut cid_total) = (0u64, 0u64, 0u64);
+        for (_, cids ) in AccountIdCids::<T>::iter() {
+            nominal_holders = nominal_holders.saturating_add(1);
+
+            if !cids.is_empty() {
+                real_holders = real_holders.saturating_add(1);
+                cid_total = cid_total.saturating_add(cids.len() as u64);
+            }
+        }
+
+        Stats::<T>::put((nominal_holders, real_holders, cid_total));
+
+        T::BlockWeights::get().max_block
     }
 }

@@ -2,7 +2,7 @@
 authors = ['Minix Chain Developer']
 edition = '2018'
 name = 'pallet-coming-id'
-version = "1.1.0"
+version = "1.2.0"
 license = "Unlicense"
 
 [package.metadata.docs.rs]
@@ -11,23 +11,22 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0.119", optional = true }
+log = { version = "0.4.14", default-features = false }
+hex-literal = { version = "0.3.1", optional = true }
+
 frame-support = { default-features = false, version = "3.0.0", path = "../../../../frame/support" }
 frame-system = { default-features = false,  version = "3.0.0",  path = "../../../../frame/system" }
 frame-benchmarking = { default-features = false,  version = "3.1.0",  path = "../../../../frame/benchmarking", optional = true }
 sp-runtime = { default-features = false, version = "3.0.0", path = "../../../../primitives/runtime" }
 sp-std = { default-features = false, version = "3.0.0", path = "../../../../primitives/std" }
 sp-core = { default-features = false, version = "3.0.0", path = "../../../../primitives/core" }
-hex-literal = { version = "0.3.1", optional = true }
-log = { version = "0.4.14", default-features = false }
 
 [dev-dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.0" }
 serde = { version = "1.0.119" }
-sp-core = { default-features = false, version = "3.0.0", path = "../../../../primitives/core" }
-sp-io = { default-features = false, version = "3.0.0", path = "../../../../primitives/io" }
-sp-runtime = { default-features = false, version = "3.0.0", path = "../../../../primitives/runtime" }
-sp-storage = { default-features = false, version = "3.0.0", path = "../../../../primitives/storage" }
 hex-literal = { version = "0.3.1"}
+sp-io = { version = "3.0.0", path = "../../../../primitives/io" }
+sp-storage = { version = "3.0.0", path = "../../../../primitives/storage" }
 
 [features]
 default = ['std']

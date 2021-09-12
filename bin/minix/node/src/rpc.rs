@@ -58,7 +58,7 @@ pub fn create_full<C, P>(
 	);
 
 	io.extend_with(
-		ComingIdApi::to_delegate(ComingId::new(client.clone()))
+		ComingIdApi::to_delegate(ComingId::new(client))
 	);
 
 	// Extend this RPC with a custom API by using the following syntax.

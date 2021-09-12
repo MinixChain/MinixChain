@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(exclusive_range_pattern)]
+#![allow(clippy::unused_unit)]
 
 pub use nft::ComingNFT;
 pub use pallet::*;
@@ -10,6 +11,7 @@ use frame_support::inherent::Vec;
 use frame_support::pallet_prelude::*;
 use sp_core::Bytes;
 use sp_runtime::traits::StaticLookup;
+use sp_std::vec;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -39,7 +41,7 @@ pub struct BondData {
 }
 
 impl BondData {
-    pub fn len(&self) -> u32 {
+    pub fn length(&self) -> u32 {
         (self.data.len() + 2) as u32
     }
 }
@@ -184,7 +186,7 @@ pub mod pallet {
         fn on_runtime_upgrade() -> Weight {
             use frame_support::traits::{GetPalletVersion, PalletVersion};
 
-            let storage_version = Self::storage_version().unwrap_or(PalletVersion::new(0, 0, 0));
+            let storage_version = Self::storage_version().unwrap_or_else(|| PalletVersion::new(0, 0, 0));
 
             // todo!(Remove me after upgrade minix mainnet)
             if storage_version < Self::current_version() {
@@ -238,7 +240,7 @@ pub mod pallet {
             })
         }
 
-        #[pallet::weight(T::WeightInfo::bond(bond_data.len()))]
+        #[pallet::weight(T::WeightInfo::bond(bond_data.length()))]
         pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
@@ -295,11 +297,11 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
     fn check_admin(origin: &T::AccountId, cid: Cid) -> DispatchResult {
         match cid {
-            0..1_00_000 => ensure!(
+            0..100_000 => ensure!(
                 *origin == Self::high_admin_key(),
                 Error::<T>::RequireHighAuthority
             ),
-            1_00_000..1_000_000 => ensure!(
+            100_000..1_000_000 => ensure!(
                 *origin == Self::high_admin_key() || *origin == Self::medium_admin_key(),
                 Error::<T>::RequireMediumAuthority
             ),
@@ -356,11 +358,7 @@ impl<T: Config> Pallet<T> {
 
         match Self::get_account_id(cid) {
             Some(owner) if owner == operator.clone() => {
-                if owner == approved.clone() {
-                    false
-                } else {
-                    true
-                }
+                owner != approved.clone()
             },
             Some(owner) => {
                 Self::cid_to_approval_all((owner, operator.clone()))
@@ -386,9 +384,7 @@ impl<T: Config> Pallet<T> {
             if let Some(cids) = cids {
                 cids.push(cid)
             } else {
-                let mut new_cids: Vec<Cid> = Vec::new();
-                new_cids.push(cid);
-                *cids = Some(new_cids);
+                *cids = Some(vec![cid]);
             }
 
             Ok(())

@@ -2,7 +2,6 @@
 
 use super::*;
 
-#[allow(unused)]
 use crate::Pallet as ComingId;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;

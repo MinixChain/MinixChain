@@ -18,6 +18,7 @@
 //! Runtime API definition for pallet-coming-id module.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 
 use codec::Codec;
 use sp_std::prelude::Vec;

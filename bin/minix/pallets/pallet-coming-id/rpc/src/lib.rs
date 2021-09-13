@@ -114,7 +114,7 @@ where
 
 		api.get_account_id(&at, cid).map_err(|e| RpcError {
 			code: ErrorCode::ServerError(Error::RuntimeError.into()),
-			message: "Unable to get bond.".into(),
+			message: "Unable to get account id.".into(),
 			data: Some(format!("{:?}", e).into()),
 		})
 	}
@@ -132,7 +132,7 @@ where
 
 		api.get_cids(&at, account).map_err(|e| RpcError {
 			code: ErrorCode::ServerError(Error::RuntimeError.into()),
-			message: "Unable to get bonds.".into(),
+			message: "Unable to get cids.".into(),
 			data: Some(format!("{:?}", e).into()),
 		})
 	}
@@ -152,7 +152,7 @@ where
 		api.get_bond_data(&at, cid)
 			.map_err(|e| RpcError {
 				code: ErrorCode::ServerError(Error::RuntimeError.into()),
-				message: "Unable to get bond.".into(),
+				message: "Unable to get bond data.".into(),
 				data: Some(format!("{:?}", e).into()),
 			})
 	}

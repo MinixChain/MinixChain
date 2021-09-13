@@ -53,6 +53,7 @@ pallet-coming-id = { version = "1.2.0", path = "../../minix/pallets/pallet-comin
 pallet-coming-id-rpc = { version = "1.2.0", path = "../../minix/pallets/pallet-coming-id/rpc" }
 pallet-coming-auction = { version = "1.2.0", path = "../../minix/pallets/pallet-coming-auction" }
 pallet-coming-auction-rpc = { version = "1.2.0", path = "../../minix/pallets/pallet-coming-auction/rpc" }
+pallet-threshold-signature-rpc = { version = "3.0.0", path = "../../minix/pallets/threshold-signature/rpc"}
 
 minix-runtime = { version = "3.0.0", path = "../runtime" }
 

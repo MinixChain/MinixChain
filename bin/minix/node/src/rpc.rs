@@ -38,11 +38,13 @@ pub fn create_full<C, P>(
 	C::Api: pallet_coming_id_rpc::ComingIdRuntimeApi<Block, AccountId>,
 	P: TransactionPool + 'static,
 	C::Api: pallet_coming_auction_rpc::ComingAuctionRuntimeApi<Block, Balance>,
+	C::Api: pallet_threshold_signature_rpc::ThresholdSignatureRuntimeApi<Block>
 {
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use pallet_coming_id_rpc::{ComingId, ComingIdApi};
 	use pallet_coming_auction_rpc::{ComingAuction, ComingAuctionApi};
+	use pallet_threshold_signature_rpc::{ThresholdSignature, ThresholdSignatureApi};
 
 	let mut io = jsonrpc_core::IoHandler::default();
 	let FullDeps {
@@ -64,7 +66,11 @@ pub fn create_full<C, P>(
 	);
 
 	io.extend_with(
-		ComingAuctionApi::to_delegate(ComingAuction::new(client))
+		ComingAuctionApi::to_delegate(ComingAuction::new(client.clone()))
+	);
+
+	io.extend_with(
+		ThresholdSignatureApi::to_delegate(ThresholdSignature::new(client))
 	);
 
 	// Extend this RPC with a custom API by using the following syntax.

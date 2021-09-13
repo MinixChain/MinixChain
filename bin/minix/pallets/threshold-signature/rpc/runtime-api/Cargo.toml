@@ -1,0 +1,25 @@
+[package]
+authors = ['The ChainX Authors']
+name = "pallet-threshold-signature-rpc-runtime-api"
+edition = "2018"
+version = '3.0.0'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[dependencies]
+sp-api = { version = "3.0.0", default-features = false, path = "../../../../../../primitives/api" }
+sp-std = { version = "3.0.0", default-features = false, path = "../../../../../../primitives/std" }
+sp-runtime = { version = "3.0.0", default-features = false, path = "../../../../../../primitives/runtime" }
+pallet-threshold-signature = { default-features = false, path = "../../../threshold-signature" }
+
+
+[features]
+default = ["std"]
+std = [
+    # Substrate primitives
+    "sp-api/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "pallet-threshold-signature/std"
+]

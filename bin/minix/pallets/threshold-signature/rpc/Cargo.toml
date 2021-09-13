@@ -1,0 +1,22 @@
+[package]
+authors = ['The ChainX Authors']
+name = "pallet-threshold-signature-rpc"
+edition = "2018"
+version = '3.0.0'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[dependencies]
+jsonrpc-core = "15.1.0"
+jsonrpc-core-client = "15.1.0"
+jsonrpc-derive = "15.1.0"
+
+sp-std = { version = "3.0.0", path = "../../../../../primitives/std" }
+sp-blockchain = { version = "3.0.0", path = "../../../../../primitives/blockchain" }
+sp-rpc = { version = "3.0.0", path = "../../../../../primitives/rpc" }
+sp-runtime = { version = "3.0.0", path = "../../../../../primitives/runtime" }
+sp-api = { version = "3.0.0", path = "../../../../../primitives/api" }
+
+pallet-threshold-signature-rpc-runtime-api = { path = "./runtime-api" }
+

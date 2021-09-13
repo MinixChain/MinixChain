@@ -42,6 +42,9 @@ pub use frame_support::{
 use pallet_transaction_payment::CurrencyAdapter;
 use pallet_coming_id::{Cid, CidDetails};
 use pallet_coming_auction::PalletAuctionId;
+use pallet_threshold_signature_rpc_runtime_api::{
+	Message, Script, Signature as OtherSignature
+};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -303,6 +306,12 @@ impl pallet_coming_auction::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl pallet_threshold_signature::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type WeightInfo = pallet_threshold_signature::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -322,6 +331,7 @@ construct_runtime!(
 		ComingNFT: pallet_coming_nft::{Pallet, Call},
 		Utility: pallet_utility::{Pallet, Call, Event},
 		ComingAuction: pallet_coming_auction::{Pallet, Call, Config<T>, Storage, Event<T>},
+		ThresholdSignature: pallet_threshold_signature::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -512,6 +522,22 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl pallet_threshold_signature_rpc_runtime_api::ThresholdSignatureApi<Block> for Runtime {
+		fn verify_threshold_signature(
+			addr: sp_runtime::AccountId32,
+			signature: OtherSignature,
+			script: Script,
+			message: Message,
+		) -> Result<bool, sp_runtime::DispatchError> {
+			ThresholdSignature::apply_verify_threshold_signature(
+				addr,
+				signature,
+				script,
+				message
+			)
+		}
+	}
+
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn dispatch_benchmark(
@@ -544,6 +570,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_coming_id, ComingId);
 			add_benchmark!(params, batches, pallet_coming_nft, ComingNFT);
 			add_benchmark!(params, batches, pallet_coming_auction, ComingAuction);
+			add_benchmark!(params, batches, pallet_threshold_signature, ThresholdSignature);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

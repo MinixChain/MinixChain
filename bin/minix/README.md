@@ -1,7 +1,20 @@
 # MiniX
 
 ## Intro
-`pallet-coming-id`, `pallet-coming-nft`, `pallet-coming-auction`
+`pallet-coming-id`, `pallet-coming-nft`, `pallet-coming-auction`, `threshold-signature`
+
+## run
+- dev
+```bash
+./target/release/minix --dev --tmp --port 30033 --ws-port 9944 --rpc-port 8545 --rpc-cors all --unsafe-rpc-external --unsafe-ws-external --rpc-methods=unsafe --ws-max-connections 10000 
+```
+
+- local
+```bash
+./target/release/minix -d ./data/alice --chain local --alice --port 30033 --ws-port 9944 --rpc-port 8545 --rpc-cors all --unsafe-rpc-external --unsafe-ws-external --rpc-methods=unsafe --ws-max-connections 10000 
+
+./target/release/minix -d ./data/bob --chain local --bob --port 30034 --ws-port 9955
+```
 
 ## types
 ```json

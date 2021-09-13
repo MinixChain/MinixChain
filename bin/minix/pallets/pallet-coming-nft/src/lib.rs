@@ -44,7 +44,7 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::mint((((card.len() as u32) / 1024)).max(1)))]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::mint(((card.len() as u32) / 1024).max(1)))]
         pub fn mint(origin: OriginFor<T>, cid: Cid, card: Vec<u8>) -> DispatchResult {
             let who = ensure_signed(origin)?;
 

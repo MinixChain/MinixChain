@@ -103,5 +103,6 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"pallet-coming-id/runtime-benchmarks",
 	"pallet-coming-nft/runtime-benchmarks",
-	"pallet-coming-auction/runtime-benchmarks"
+	"pallet-coming-auction/runtime-benchmarks",
+	"pallet-threshold-signature/runtime-benchmarks"
 ]

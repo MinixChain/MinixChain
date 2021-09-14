@@ -69,6 +69,7 @@ pub mod pallet {
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
         /// Max size of c-card
+        #[pallet::constant]
         type MaxCardSize: Get<u32>;
     }
 

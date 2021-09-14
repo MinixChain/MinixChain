@@ -144,8 +144,6 @@ pub mod pallet {
         Paused(T::BlockNumber),
         // unpause_at
         UnPaused(T::BlockNumber),
-        // cid, cancel_at
-        CancelWhenPause(Cid, T::BlockNumber)
     }
 
     #[pallet::error]
@@ -370,7 +368,7 @@ pub mod pallet {
                         *cancel_auctions = cancel_auctions.saturating_add(1);
                     });
 
-                    Self::deposit_event(Event::CancelWhenPause(cid, Self::now()));
+                    Self::deposit_event(Event::AuctionCanceled(cid, Self::now()));
                 }
 
                 Ok(())

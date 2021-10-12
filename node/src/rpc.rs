@@ -12,7 +12,7 @@ pub use sc_rpc_api::DenyUnsafe;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sp_transaction_pool::TransactionPool;
+use sc_transaction_pool_api::TransactionPool;
 
 // EVM
 use fc_rpc::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
@@ -131,7 +131,7 @@ where
         pending_transactions.clone(),
         signers,
         overrides.clone(),
-        backend,
+        backend.clone(),
         is_authority,
         max_past_logs,
     )));
@@ -139,6 +139,7 @@ where
     if let Some(filter_pool) = filter_pool {
         io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
             client.clone(),
+            backend,
             filter_pool.clone(),
             500 as usize, // max stored filters
             overrides.clone(),

@@ -1,6 +1,6 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingIdConfig, EthereumChainIdConfig, EthereumConfig,
-    EvmConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    EVMConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -36,6 +36,40 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
+#[cfg(feature = "runtime-benchmarks")]
+pub fn benchmarks_config() -> Result<ChainSpec, String> {
+    Ok(ChainSpec::from_genesis(
+        "Benchmarks",
+        "benchmarks",
+        ChainType::Development,
+        move || {
+            let caller: AccountId = frame_benchmarking::whitelisted_caller();
+            minix_genesis(
+                // Initial PoA authorities
+                vec![authority_keys_from_seed("Alice")],
+                // Sudo account
+                caller.clone(),
+                // Pre-funded accounts
+                vec![
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+                    caller
+                ],
+            )
+        },
+        // Bootnodes
+        vec![],
+        // Telemetry
+        None,
+        // Protocol ID
+        None,
+        // Properties
+        None,
+        // Extensions
+        None,
+    ))
+}
+
 pub fn development_config() -> Result<ChainSpec, String> {
     Ok(ChainSpec::from_genesis(
         // Name
@@ -57,7 +91,6 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
                 ],
                 vec![],
-                true,
             )
         },
         // Bootnodes
@@ -134,7 +167,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     // Frontier pre-funded account
                     H160::from(hex_literal::hex!["19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A"]),
                 ],
-                true,
             )
         },
         // Bootnodes
@@ -210,7 +242,6 @@ pub fn dev_evm_config() -> Result<ChainSpec, String> {
                     // Frontier pre-funded account
                     H160::from(hex_literal::hex!["19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A"]),
                 ],
-                true,
             )
         },
         // Bootnodes
@@ -240,7 +271,6 @@ pub fn minix_genesis(
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
     addresses: Vec<H160>,
-    _enable_println: bool,
 ) -> GenesisConfig {
     let wasm_binary = WASM_BINARY.unwrap();
     GenesisConfig {
@@ -277,7 +307,7 @@ pub fn minix_genesis(
             low_admin_key: root_key,
         },
         ethereum_chain_id: EthereumChainIdConfig { chain_id: 1500u64 },
-        evm: EvmConfig {
+        evm: EVMConfig {
             accounts: addresses
                 .into_iter()
                 .map(|addr| {

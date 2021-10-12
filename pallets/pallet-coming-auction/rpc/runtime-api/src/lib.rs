@@ -15,26 +15,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Runtime API definition for pallet-coming-id module.
+//! Runtime API definition for pallet-coming-auction module.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::all)]
 
 use codec::Codec;
-use sp_std::prelude::Vec;
-use sp_core::Bytes;
-
-pub use pallet_coming_id::{
-    Cid, CidDetails, BondData, BondType
-};
+use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeDisplay};
+pub use pallet_coming_auction::Cid;
 
 sp_api::decl_runtime_apis! {
-	pub trait ComingIdApi<AccountId> where
-	    AccountId: Codec
+	pub trait ComingAuctionApi<Balance> where
+	    Balance: Codec + AtLeast32BitUnsigned + MaybeDisplay,
 	{
-		fn get_account_id(cid: Cid) -> Option<AccountId>;
-		fn get_cids(account: AccountId) -> Vec<Cid>;
-		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>>;
-		fn get_card(cid: Cid) -> Option<Bytes>;
+		fn get_price(cid: Cid) -> Balance;
 	}
 }

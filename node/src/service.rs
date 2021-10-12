@@ -16,7 +16,7 @@ use std::{sync::Arc, time::Duration};
 
 // EVM
 use fc_consensus::FrontierBlockImport;
-use fc_mapping_sync::MappingSyncWorker;
+use fc_mapping_sync::{MappingSyncWorker, SyncStrategy::Normal};
 use fc_rpc::EthTask;
 use fc_rpc_core::types::{FilterPool, PendingTransactions};
 use futures::StreamExt;
@@ -75,7 +75,7 @@ pub fn new_partial(
         FullClient,
         FullBackend,
         FullSelectChain,
-        sp_consensus::DefaultImportQueue<Block, FullClient>,
+        sc_consensus::DefaultImportQueue<Block, FullClient>,
         sc_transaction_pool::FullPool<Block, FullClient>,
         (
             ConsensusResult,
@@ -238,6 +238,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
             import_queue,
             on_demand: None,
             block_announce_validator_builder: None,
+            warp_sync: None,
         })?;
 
     if config.offchain_worker.enabled {
@@ -283,7 +284,10 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
                 max_past_logs,
             };
 
-            crate::rpc::create_full(deps, subscription_task_executor.clone())
+            Ok(crate::rpc::create_full(
+                deps,
+                subscription_task_executor.clone()
+            ))
         })
     };
 
@@ -295,6 +299,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
             client.clone(),
             backend.clone(),
             frontier_backend.clone(),
+            Normal
         )
         .for_each(|()| futures::future::ready(())),
     );
@@ -519,6 +524,7 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
             import_queue,
             on_demand: Some(on_demand.clone()),
             block_announce_validator_builder: None,
+            warp_sync: None,
         })?;
 
     if config.offchain_worker.enabled {
@@ -555,7 +561,7 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
         transaction_pool,
         task_manager: &mut task_manager,
         on_demand: Some(on_demand),
-        rpc_extensions_builder: Box::new(|_, _| ()),
+        rpc_extensions_builder: Box::new(|_, _| Ok(())),
         config,
         client,
         keystore: keystore_container.sync_keystore(),

@@ -1,7 +1,9 @@
-pub use migration_mainnet_1_1_0::migrate_to_new_cid_details;
+
 pub use migration_testnet::{
-    high_key, low_key, medium_key, migrate_to_new_admin_keys, OldAdminKey,
+    OldAdminKey, migrate_to_new_admin_keys, high_key, medium_key, low_key
 };
+pub use migration_mainnet_1_1_0::migrate_to_new_cid_details;
+pub use migration_mainnet_1_2_0::migrate_to_set_stats;
 
 pub mod migration_testnet {
     use crate::*;
@@ -16,7 +18,7 @@ pub mod migration_testnet {
     }
 
     pub type OldAdminKey<T> =
-        StorageValue<__OldAdminKey<T>, <T as frame_system::Config>::AccountId, ValueQuery>;
+    StorageValue<__OldAdminKey<T>, <T as frame_system::Config>::AccountId, ValueQuery>;
 
     /// A storage migration that remove old admin key and set new admin keys
     pub fn migrate_to_new_admin_keys<T: Config>(
@@ -52,32 +54,33 @@ pub mod migration_testnet {
     pub fn high_key<AccountId: Decode + Default>() -> AccountId {
         AccountId::decode(
             &mut &[
-                252, 78, 161, 70, 191, 31, 25, 188, 123, 130, 140, 25, 190, 31, 125, 118, 76, 85,
-                16, 140, 138, 175, 96, 117, 208, 12, 159, 167, 218, 30, 202, 117,
+                252, 78, 161, 70, 191, 31, 25, 188, 123, 130, 140, 25, 190, 31, 125, 118, 76, 85, 16,
+                140, 138, 175, 96, 117, 208, 12, 159, 167, 218, 30, 202, 117,
             ][..],
         )
-        .unwrap_or_default()
+            .unwrap_or_default()
     }
 
     pub fn medium_key<AccountId: Decode + Default>() -> AccountId {
         AccountId::decode(
             &mut &[
-                116, 9, 45, 229, 24, 198, 57, 77, 94, 194, 216, 145, 92, 34, 130, 45, 13, 98, 204,
-                105, 156, 232, 217, 23, 124, 56, 232, 18, 163, 237, 53, 101,
+                116, 9, 45, 229, 24, 198, 57, 77, 94, 194, 216, 145, 92, 34, 130, 45, 13, 98, 204, 105,
+                156, 232, 217, 23, 124, 56, 232, 18, 163, 237, 53, 101,
             ][..],
         )
-        .unwrap_or_default()
+            .unwrap_or_default()
     }
 
     pub fn low_key<AccountId: Decode + Default>() -> AccountId {
         AccountId::decode(
             &mut &[
-                244, 18, 253, 40, 226, 131, 86, 145, 4, 122, 73, 216, 54, 8, 193, 146, 73, 113, 27,
-                54, 208, 156, 97, 198, 52, 86, 108, 0, 59, 59, 198, 96,
+                244, 18, 253, 40, 226, 131, 86, 145, 4, 122, 73, 216, 54, 8, 193, 146, 73, 113, 27, 54,
+                208, 156, 97, 198, 52, 86, 108, 0, 59, 59, 198, 96,
             ][..],
         )
-        .unwrap_or_default()
+            .unwrap_or_default()
     }
+
 }
 
 pub mod migration_mainnet_1_1_0 {
@@ -104,7 +107,7 @@ pub mod migration_mainnet_1_1_0 {
             OldCidDetails<T::AccountId>,
             Blake2_128Concat,
         >(b"ComingId", b"Distributed")
-        .drain()
+            .drain()
         {
             let new_bonds = old_cid_details
                 .bonds
@@ -132,5 +135,25 @@ pub mod migration_mainnet_1_1_0 {
         } else {
             0
         }
+    }
+}
+
+pub mod migration_mainnet_1_2_0 {
+    use crate::*;
+
+    pub fn migrate_to_set_stats<T: Config>() -> Weight {
+        let (mut nominal_holders, mut real_holders, mut cid_total) = (0u64, 0u64, 0u64);
+        for (_, cids ) in AccountIdCids::<T>::iter() {
+            nominal_holders = nominal_holders.saturating_add(1);
+
+            if !cids.is_empty() {
+                real_holders = real_holders.saturating_add(1);
+                cid_total = cid_total.saturating_add(cids.len() as u64);
+            }
+        }
+
+        Stats::<T>::put((nominal_holders, real_holders, cid_total));
+
+        T::BlockWeights::get().max_block
     }
 }

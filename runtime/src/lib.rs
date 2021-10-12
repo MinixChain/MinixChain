@@ -50,6 +50,7 @@ use pallet_evm::{
     Account as EVMAccount, EnsureAddressNever, EnsureAddressRoot, FeeCalculator,
     HashedAddressMapping, Runner,
 };
+use pallet_ethereum::Transaction as EthereumTransaction;
 use sp_core::{H160, H256, U256};
 use sp_runtime::transaction_validity::TransactionPriority;
 
@@ -217,6 +218,7 @@ impl frame_system::Config for Runtime {
 
 impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
+    type DisabledValidators = ();
 }
 
 impl pallet_grandpa::Config for Runtime {
@@ -350,6 +352,7 @@ impl pallet_ethereum_chain_id::Config for Runtime {}
 impl pallet_evm::Config for Runtime {
     type FeeCalculator = FixedGasPrice;
     type GasWeightMapping = MinixGasWeightMapping;
+    type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
     type CallOrigin = EnsureAddressRoot<AccountId>;
     type WithdrawOrigin = EnsureAddressNever<AccountId>;
     type AddressMapping = HashedAddressMapping<BlakeTwo256>;
@@ -360,23 +363,16 @@ impl pallet_evm::Config for Runtime {
     type ChainId = EthereumChainId;
     type OnChargeTransaction = ();
     type BlockGasLimit = BlockGasLimit;
+    type FindAuthor = ();
 }
 
 impl pallet_ethereum::Config for Runtime {
     type Event = Event;
-    type FindAuthor = (); // todo: AuthorInherent
     type StateRoot = pallet_ethereum::IntermediateStateRoot;
 }
 
 parameter_types! {
     pub const EcdsaUnsignedPriority: TransactionPriority = TransactionPriority::max_value() / 2;
-}
-impl pallet_custom_signatures::Config for Runtime {
-    type Event = Event;
-    type Call = Call;
-    type Signature = pallet_custom_signatures::ethereum::EthereumSignature;
-    type Signer = <Signature as Verify>::Signer;
-    type UnsignedPriority = EcdsaUnsignedPriority;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -398,10 +394,9 @@ construct_runtime!(
         Utility: pallet_utility::{Pallet, Call, Event},
 
         // Ethereum compatibility
-        EthereumChainId: pallet_ethereum_chain_id::{Pallet, Storage, Config} = 50,
-        Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 51,
-        Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 52,
-        EthCall: pallet_custom_signatures::{Pallet, Call, Event<T>, ValidateUnsigned} = 53,
+        EthereumChainId: pallet_ethereum_chain_id::{Pallet, Storage, Config},
+        EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
+        Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned},
     }
 );
 
@@ -559,6 +554,10 @@ impl_runtime_apis! {
             Grandpa::grandpa_authorities()
         }
 
+        fn current_set_id() -> fg_primitives::SetId {
+            Grandpa::current_set_id()
+        }
+
         fn submit_report_equivocation_unsigned_extrinsic(
             _equivocation_proof: fg_primitives::EquivocationProof<
                 <Block as BlockT>::Hash,
@@ -625,7 +624,7 @@ impl_runtime_apis! {
         }
 
         fn account_basic(address: H160) -> EVMAccount {
-            Evm::account_basic(&address)
+            EVM::account_basic(&address)
         }
 
         fn gas_price() -> U256 {
@@ -633,17 +632,17 @@ impl_runtime_apis! {
         }
 
         fn account_code_at(address: H160) -> Vec<u8> {
-            Evm::account_codes(address)
+            EVM::account_codes(address)
         }
 
         fn author() -> H160 {
-            Ethereum::find_author()
+            <pallet_evm::Pallet<Runtime>>::find_author()
         }
 
         fn storage_at(address: H160, index: U256) -> H256 {
             let mut tmp = [0u8; 32];
             index.to_big_endian(&mut tmp);
-            Evm::account_storages(address, H256::from_slice(&tmp[..]))
+            EVM::account_storages(address, H256::from_slice(&tmp[..]))
         }
 
         fn call(
@@ -733,6 +732,15 @@ impl_runtime_apis! {
                 Ethereum::current_receipts(),
                 Ethereum::current_transaction_statuses(),
             )
+        }
+
+        fn extrinsic_filter(
+            xts: Vec<<Block as BlockT>::Extrinsic>,
+        ) -> Vec<EthereumTransaction> {
+            xts.into_iter().filter_map(|xt| match xt.function {
+                Call::Ethereum(pallet_ethereum::Call::transact(t)) => Some(t),
+                _ => None
+            }).collect::<Vec<EthereumTransaction>>()
         }
     }
 

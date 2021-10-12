@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(exclusive_range_pattern)]
-#![allow(clippy::unnecessary_cast)]
+#![allow(clippy::unused_unit)]
 
 pub use nft::ComingNFT;
 pub use pallet::*;
@@ -11,6 +11,7 @@ use frame_support::inherent::Vec;
 use frame_support::pallet_prelude::*;
 use sp_core::Bytes;
 use sp_runtime::traits::StaticLookup;
+use sp_std::vec;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -24,7 +25,7 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-pub mod migration;
+//pub mod migration;
 pub mod nft;
 pub mod weights;
 
@@ -68,12 +69,18 @@ pub mod pallet {
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
         /// Max size of c-card
+        #[pallet::constant]
         type MaxCardSize: Get<u32>;
     }
 
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
+
+    /// (nominal_holders, real_holders, cid_total)
+    #[pallet::storage]
+    #[pallet::getter(fn stats)]
+    pub type Stats<T: Config> = StorageValue<_, (u64, u64, u64), ValueQuery>;
 
     #[pallet::storage]
     #[pallet::getter(fn distributed)]
@@ -87,12 +94,13 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn cid_to_approval)]
-    pub type CidToApproval<T: Config> = StorageMap<_, Identity, Cid, T::AccountId>;
+    pub type CidToApproval<T: Config> =
+    StorageMap<_, Identity, Cid, T::AccountId>;
 
     #[pallet::storage]
     #[pallet::getter(fn cid_to_approval_all)]
     pub type OwnerToApprovalAll<T: Config> =
-        StorageMap<_, Identity, (T::AccountId, T::AccountId), bool, ValueQuery>;
+    StorageMap<_, Identity, (T::AccountId, T::AccountId), bool, ValueQuery>;
 
     /// The `AccountId` of the sudo key.
     #[pallet::storage]
@@ -158,7 +166,7 @@ pub mod pallet {
         // owner, operator, cid
         Approval(T::AccountId, T::AccountId, Cid),
         // owner, operator, approved
-        ApprovalForAll(T::AccountId, T::AccountId, bool),
+        ApprovalForAll(T::AccountId, T::AccountId, bool)
     }
 
     #[pallet::error]
@@ -177,23 +185,6 @@ pub mod pallet {
         InvalidCidEnd,
         NotFoundBondType,
         TooBigCardSize,
-    }
-
-    #[pallet::hooks]
-    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-        fn on_runtime_upgrade() -> Weight {
-            use frame_support::traits::{GetPalletVersion, PalletVersion};
-
-            let storage_version =
-                Self::storage_version().unwrap_or_else(|| PalletVersion::new(0, 0, 0));
-
-            // todo!(Remove me after upgrade minix mainnet)
-            if storage_version < Self::current_version() {
-                migration::migrate_to_new_cid_details::<T>()
-            } else {
-                0
-            }
-        }
     }
 
     #[pallet::call]
@@ -239,7 +230,7 @@ pub mod pallet {
             })
         }
 
-        #[pallet::weight(T::WeightInfo::bond(bond_data.length()))]
+        #[pallet::weight(T::WeightInfo::bond((bond_data.length() / 1024).max(1)))]
         pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
@@ -335,7 +326,7 @@ impl<T: Config> Pallet<T> {
         match Self::get_account_id(cid) {
             Some(owner) if owner == operator.clone() => true,
             Some(owner) => Self::cid_to_approval_all((owner, operator.clone())),
-            None => false,
+            None => false
         }
     }
 
@@ -351,14 +342,18 @@ impl<T: Config> Pallet<T> {
 
     fn can_approve(operator: &T::AccountId, approved: &T::AccountId, cid: Cid) -> bool {
         match cid {
-            100_000..1_000_000_000_000 => {}
-            _ => return false,
+            100_000..1_000_000_000_000 => {},
+            _ => return false
         }
 
         match Self::get_account_id(cid) {
-            Some(owner) if owner == operator.clone() => owner != approved.clone(),
-            Some(owner) => Self::cid_to_approval_all((owner, operator.clone())),
-            None => false,
+            Some(owner) if owner == operator.clone() => {
+                owner != approved.clone()
+            },
+            Some(owner) => {
+                Self::cid_to_approval_all((owner, operator.clone()))
+            },
+            None => false
         }
     }
 
@@ -376,27 +371,71 @@ impl<T: Config> Pallet<T> {
 
     fn account_cids_add(account: T::AccountId, cid: Cid) {
         AccountIdCids::<T>::try_mutate_exists::<_, _, Error<T>, _>(account, |cids| {
+            let (mut update_nominal, mut update_real) = (false, false);
+
             if let Some(cids) = cids {
                 cids.push(cid)
             } else {
-                let new_cids: Vec<Cid> = sp_std::vec![cid];
-                *cids = Some(new_cids);
+                *cids = Some(vec![cid]);
+
+                update_nominal = true
             }
+
+            if let Some(cids) = cids {
+                if cids.len() == 1 {
+                    update_real = true
+                }
+            }
+
+            Self::stats_mutate(|nominal_holders, real_holders, nft_total|{
+                // cid_total++
+                *nft_total = nft_total.saturating_add(1);
+
+                // nominal_holder++
+                if update_nominal {
+                    *nominal_holders = nominal_holders.saturating_add(1);
+                }
+
+                // real_holder++
+                if update_real {
+                    *real_holders = real_holders.saturating_add(1);
+                }
+            });
 
             Ok(())
         })
-        .unwrap_or_default();
+            .unwrap_or_default();
     }
 
     fn account_cids_remove(account: T::AccountId, cid: Cid) {
         AccountIdCids::<T>::try_mutate_exists::<_, _, Error<T>, _>(account, |cids| {
             if let Some(cids) = cids {
-                cids.retain(|&in_cid| in_cid != cid)
+                let len_before = cids.len();
+                cids.retain(|&in_cid| in_cid != cid);
+                let len_after = cids.len();
+
+                if len_after < len_before {
+                    Self::stats_mutate(|_nominal_holders, real_holders, nft_total|{
+                        // cid_total--
+                        *nft_total = nft_total.saturating_sub(1);
+
+                        // real_holder--
+                        if len_after == 0 {
+                            *real_holders = real_holders.saturating_sub(1);
+                        }
+                    });
+                }
             }
 
             Ok(())
         })
-        .unwrap_or_default();
+            .unwrap_or_default();
+    }
+
+    fn stats_mutate<F: FnMut(&mut u64, &mut u64, &mut u64)>(mut f: F) {
+        <Stats<T>>::mutate(|stats|{
+            f(&mut stats.0, &mut stats.1, &mut stats.2)
+        })
     }
 
     pub fn get_account_id(cid: Cid) -> Option<T::AccountId> {
@@ -510,10 +549,7 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         to: &T::AccountId,
         cid: Cid,
     ) -> DispatchResult {
-        ensure!(
-            Self::can_transfer_from(operator, cid),
-            Error::<T>::BanTransfer
-        );
+        ensure!(Self::can_transfer_from(operator, cid), Error::<T>::BanTransfer);
 
         Self::transfer(from, cid, to)?;
 
@@ -521,11 +557,9 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
     }
 
     fn approve(who: &T::AccountId, approved: &T::AccountId, cid: Cid) -> DispatchResult {
-        ensure!(
-            Self::can_approve(who, approved, cid),
-            Error::<T>::BanApprove
-        );
-        let owner = Self::get_account_id(cid).expect("cid owner is exists; qed");
+        ensure!(Self::can_approve(who, approved, cid), Error::<T>::BanApprove);
+        let owner = Self::get_account_id(cid)
+            .expect("cid owner is exists; qed");
 
         CidToApproval::<T>::insert(cid, approved.clone());
 
@@ -534,18 +568,10 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         Ok(())
     }
 
-    fn set_approval_for_all(
-        owner: &T::AccountId,
-        operator: &T::AccountId,
-        approved: bool,
-    ) -> DispatchResult {
+    fn set_approval_for_all(owner: &T::AccountId, operator: &T::AccountId, approved: bool) -> DispatchResult {
         OwnerToApprovalAll::<T>::insert((owner.clone(), operator.clone()), approved);
 
-        Self::deposit_event(Event::ApprovalForAll(
-            owner.clone(),
-            operator.clone(),
-            approved,
-        ));
+        Self::deposit_event(Event::ApprovalForAll(owner.clone(), operator.clone(), approved));
 
         Ok(())
     }

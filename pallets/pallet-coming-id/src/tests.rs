@@ -1,6 +1,6 @@
 use super::Event as ComingIdEvent;
 use crate::{
-    mock::*, BondData, BondType, Cid, CidDetails, Distributed, Error, HighKey, LowKey, MediumKey,
+    mock::*, BondData, BondType, Cid, CidDetails, Distributed, AccountIdCids, Error, HighKey, LowKey, MediumKey,
     StorageMap,
 };
 use frame_support::{assert_noop, assert_ok};
@@ -36,10 +36,10 @@ fn it_works_for_regular_value() {
         ));
 
         let events = vec![
-            Event::ComingId(ComingIdEvent::Registered(RESERVE2, 1)),
-            Event::ComingId(ComingIdEvent::Registered(COMMON_CHARLIE, 1000000)),
-            Event::ComingId(ComingIdEvent::Bonded(COMMON_CHARLIE, 1000000, 1)),
-            Event::ComingId(ComingIdEvent::UnBonded(COMMON_CHARLIE, 1000000, 1)),
+            Event::pallet_coming_id(ComingIdEvent::Registered(RESERVE2, 1)),
+            Event::pallet_coming_id(ComingIdEvent::Registered(COMMON_CHARLIE, 1000000)),
+            Event::pallet_coming_id(ComingIdEvent::Bonded(COMMON_CHARLIE, 1000000, 1)),
+            Event::pallet_coming_id(ComingIdEvent::UnBonded(COMMON_CHARLIE, 1000000, 1)),
         ];
 
         expect_events(events);
@@ -437,7 +437,9 @@ fn migrate_to_new_cid_details_should_work() {
 
 fn set_pallet_version() {
     use codec::Encode;
-    use frame_support::traits::{PalletVersion, PALLET_VERSION_STORAGE_KEY_POSTFIX};
+    use frame_support::traits::{
+        PALLET_VERSION_STORAGE_KEY_POSTFIX, PalletVersion
+    };
     fn get_pallet_version_storage_key_for_pallet(pallet: &str) -> [u8; 32] {
         let pallet_name = sp_io::hashing::twox_128(pallet.as_bytes());
         let postfix = sp_io::hashing::twox_128(PALLET_VERSION_STORAGE_KEY_POSTFIX);
@@ -449,11 +451,7 @@ fn set_pallet_version() {
         final_key
     }
     /// A version that we will check for in the tests
-    const SOME_TEST_VERSION: PalletVersion = PalletVersion {
-        major: 1,
-        minor: 0,
-        patch: 0,
-    };
+    const SOME_TEST_VERSION: PalletVersion = PalletVersion { major: 1, minor: 0, patch: 0 };
     let key = get_pallet_version_storage_key_for_pallet("ComingId");
     sp_io::storage::set(&key, &SOME_TEST_VERSION.encode());
 }
@@ -463,9 +461,7 @@ fn crate_to_pallet_version() {
     use codec::Decode;
     use frame_support::traits::{
         // GetPalletVersion,
-        OnRuntimeUpgrade,
-        PalletVersion,
-        PALLET_VERSION_STORAGE_KEY_POSTFIX,
+        OnRuntimeUpgrade, PALLET_VERSION_STORAGE_KEY_POSTFIX, PalletVersion
     };
     use hex_literal::hex;
     use sp_core::hexdisplay::HexDisplay;
@@ -495,7 +491,7 @@ fn crate_to_pallet_version() {
         // println!("{:?}", HexDisplay::from(&key));
         assert_eq!(
             "5b70a1d7cc1cf466409b2ff6b213f6af878d434d6125b40443fe11fd292d13a4",
-            format!("{}", HexDisplay::from(&key))
+            format!("{}",HexDisplay::from(&key))
         );
 
         let value = hex!["01000000"];
@@ -504,4 +500,43 @@ fn crate_to_pallet_version() {
 
         assert_eq!(PalletVersion::new(1, 0, 0), version);
     });
+
+}
+
+
+#[test]
+fn account_cid_stats() {
+    new_test_ext(ADMIN).execute_with(|| {
+        type AccountOf<T> = <T as frame_system::Config>::AccountId;
+
+        let mut amount = 0;
+
+        let start = std::time::Instant::now();
+        while amount < 1_100_000u32 {
+            let account: AccountOf<Test> = frame_benchmarking::account("test",amount,0);
+            AccountIdCids::<Test>::insert(account, vec![amount as u64]);
+
+            amount += 1;
+        }
+        let end = std::time::Instant::now();
+
+        println!("start={:?},end={:?},duration={:?}",start.clone(),end,end.duration_since(start));
+
+        let (mut nominal_holders, mut real_holders, mut cid_total) = (0u64, 0u64, 0u64);
+
+        let start = std::time::Instant::now();
+        for (_, cids ) in AccountIdCids::<Test>::iter() {
+            nominal_holders = nominal_holders.saturating_add(1);
+
+            if !cids.is_empty() {
+                real_holders = real_holders.saturating_add(1);
+                cid_total = cid_total.saturating_add(cids.len() as u64);
+            }
+        }
+        let end = std::time::Instant::now();
+
+        println!("start={:?},end={:?},duration={:?}",start.clone(),end,end.duration_since(start));
+
+        println!("nominal_holders={}, real_holders={}, cid_total={}", nominal_holders, real_holders, cid_total)
+    })
 }

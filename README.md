@@ -66,12 +66,12 @@ Private Key: 0x99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342
 ```bash
 cargo build --release
 
-./target/release/minix --tmp --chain=local --alice --rpc-port=8545 --rpc-cors=all -levm=trace
+./target/release/minix --tmp --chain=local --alice --rpc-port=8545 --rpc-cors=all -levm=trace,coming-nft=debug
 ./target/release/minix --tmp --chain=local --bob 
 
 or
 
-./target/release/minix --tmp --chain=dev-evm --alice --rpc-port=8545 --rpc-cors=all -levm=trace
+./target/release/minix --tmp --chain=dev-evm --alice --rpc-port=8545 --rpc-cors=all -levm=trace,coming-nft=debug
 
 ```
 ## 2. metamask (for account)
@@ -89,3 +89,115 @@ Refer [Connect MetaMask to Moonbase Alpha](https://docs.moonbeam.network/getting
 ## 3. Remix (for contract)
 
 Refer [Interacting with Moonbeam Using Remix](https://docs.moonbeam.network/getting-started/local-node/using-remix/)
+
+## 4. types
+```json
+{
+  "Address": "MultiAddress",
+  "LookupSource": "MultiAddress",
+  "Cid": "u64",
+  "BondType": "u16",
+  "BondData": {
+    "bond_type": "BondType",
+    "data": "Bytes"
+  },
+  "CidDetails": {
+    "owner": "AccountId",
+    "bonds": "Vec<BondData>",
+    "card":  "Bytes"
+  },
+  "PalletAuctionId": "[u8;4]",
+  "Auction": {
+    "seller": "AccountId",
+    "start_price": "Balance",
+    "end_price": "Balance",
+    "duration": "BlockNumber",
+    "start": "BlockNumber"
+  }
+}
+```
+
+## 5. rpc types
+```json
+{
+  "comingId": {
+    "getAccountId": {
+      "description": "comingId getAccountId",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Option<AccountId>"
+    },
+    "getCids": {
+      "description": "comingId getCids",
+      "params": [
+        {
+          "name": "account",
+          "type": "AccountID"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Vec<Cid>"
+    },
+    "getBondData": {
+      "description": "comingId getBondData",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Option<CidDetails>"
+    },
+    "getCard": {
+      "description": "comingId getCard",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Option<Bytes>"
+    }
+  },
+  "comingAuction": {
+      "getPrice": {
+        "description": "comingAuction getPrice",
+        "params": [
+          {
+            "name": "cid",
+            "type": "Cid"
+          },
+          {
+            "name": "at",
+            "type": "Hash",
+            "isOptional": true
+          }
+        ],
+        "type": "string"
+      }
+    }
+}
+```

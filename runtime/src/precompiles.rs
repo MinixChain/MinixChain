@@ -35,10 +35,10 @@ use sp_std::marker::PhantomData;
 pub struct MinixPrecompiles<R>(PhantomData<R>);
 
 impl<R> PrecompileSet for MinixPrecompiles<R>
-where
-    R: pallet_evm::Config,
-    R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
-    <R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
+    where
+        R: pallet_evm::Config + pallet_coming_nft::Config,
+        R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
+        <R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
 {
     fn execute(
         address: H160,
@@ -58,6 +58,7 @@ where
             a if a == hash(8) => Some(Bn128Pairing::execute(input, target_gas, context)),
             // Non Ethereum precompiles
             a if a == hash(1024) => Some(Dispatch::<R>::execute(input, target_gas, context)),
+            a if a == hash(1025) => Some(crate::nft::NFT::<R>::execute(input, target_gas, context)),
             _ => None,
         }
     }

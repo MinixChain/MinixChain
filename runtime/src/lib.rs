@@ -56,6 +56,7 @@ use pallet_ethereum::Transaction as EthereumTransaction;
 use sp_core::{H160, H256, U256};
 use sp_runtime::transaction_validity::TransactionPriority;
 
+mod nft;
 mod precompiles;
 use precompiles::MinixPrecompiles;
 
@@ -169,7 +170,7 @@ parameter_types! {
 
 impl frame_system::Config for Runtime {
     /// The basic call filter to use in dispatchable.
-    type BaseCallFilter = ();
+    type BaseCallFilter = frame_support::traits::Everything;
     /// Block & extrinsics weights: base values and limits.
     type BlockWeights = BlockWeights;
     /// The maximum length of a block (in bytes).

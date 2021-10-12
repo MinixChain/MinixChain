@@ -285,7 +285,7 @@ pub fn minix_genesis(
             balances: endowed_accounts
                 .iter()
                 .cloned()
-                .map(|k| (k, 1_00_000_000_000u128))
+                .map(|k| (k, 100_000_000_000_u128))
                 .collect(),
         },
         aura: AuraConfig {
@@ -318,7 +318,7 @@ pub fn minix_genesis(
                     (
                         addr,
                         pallet_evm::GenesisAccount {
-                            balance: U256::from(1_00_000_000_000u128),
+                            balance: U256::from(100_000_000_000_u128),
                             nonce: Default::default(),
                             code: Default::default(),
                             storage: Default::default(),

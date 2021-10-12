@@ -11,12 +11,12 @@ use frame_support::log;
 use pallet_coming_id::ComingNFT;
 use sp_std::vec;
 
-pub struct NFT<T: pallet_evm::Config + pallet_coming_nft::Config> {
+pub struct Nft<T: pallet_evm::Config + pallet_coming_nft::Config> {
     _marker: PhantomData<T>,
 }
 
 
-impl<T: pallet_evm::Config + pallet_coming_nft::Config> NFT<T>
+impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
 {
     fn process(
         input: &[u8]
@@ -317,7 +317,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> NFT<T>
     }
 }
 
-impl<T> Precompile for NFT<T>
+impl<T> Precompile for Nft<T>
     where
         T: pallet_evm::Config + pallet_coming_nft::Config,
         T::AccountId: Decode,

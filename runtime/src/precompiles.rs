@@ -58,7 +58,7 @@ impl<R> PrecompileSet for MinixPrecompiles<R>
             a if a == hash(8) => Some(Bn128Pairing::execute(input, target_gas, context)),
             // Non Ethereum precompiles
             a if a == hash(1024) => Some(Dispatch::<R>::execute(input, target_gas, context)),
-            a if a == hash(1025) => Some(crate::nft::NFT::<R>::execute(input, target_gas, context)),
+            a if a == hash(1025) => Some(crate::nft::Nft::<R>::execute(input, target_gas, context)),
             _ => None,
         }
     }

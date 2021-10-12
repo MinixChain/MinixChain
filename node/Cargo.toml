@@ -1,6 +1,6 @@
 [package]
 name = "minix"
-version = "1.1.0"
+version = "1.2.0"
 authors = ["ChainNet"]
 edition = "2018"
 build = "build.rs"
@@ -52,8 +52,10 @@ frame-benchmarking = { git = 'https://github.com/paritytech/substrate', branch =
 frame-benchmarking-cli = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.9" }
 
 # Minix
-pallet-coming-id = { version = "1.1.0", path = "../pallets/pallet-coming-id" }
-pallet-coming-id-rpc = { version = "1.1.0", path = "../pallets/pallet-coming-id/rpc" }
+pallet-coming-id = { version = "1.2.0", path = "../pallets/pallet-coming-id" }
+pallet-coming-id-rpc = { version = "1.2.0", path = "../pallets/pallet-coming-id/rpc" }
+pallet-coming-auction = { version = "1.2.0", path = "../pallets/pallet-coming-auction" }
+pallet-coming-auction-rpc = { version = "1.2.0", path = "../pallets/pallet-coming-auction/rpc" }
 minix-runtime = { version = "3.0.0", path = "../runtime" }
 # EVM
 futures = "0.3.4"

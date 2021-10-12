@@ -1,6 +1,7 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingIdConfig, EthereumChainIdConfig, EthereumConfig,
     EVMConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    ComingAuctionConfig
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -304,7 +305,10 @@ pub fn minix_genesis(
             // Assign network admin rights.
             high_admin_key: root_key.clone(),
             medium_admin_key: root_key.clone(),
-            low_admin_key: root_key,
+            low_admin_key: root_key.clone(),
+        },
+        coming_auction: ComingAuctionConfig {
+            admin_key: Some(root_key)
         },
         ethereum_chain_id: EthereumChainIdConfig { chain_id: 1500u64 },
         evm: EVMConfig {

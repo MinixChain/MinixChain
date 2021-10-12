@@ -70,6 +70,7 @@ where
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: BlockBuilder<Block>,
     C::Api: pallet_coming_id_rpc::ComingIdRuntimeApi<Block, AccountId>,
+    C::Api: pallet_coming_auction_rpc::ComingAuctionRuntimeApi<Block, Balance>,
     P: TransactionPool<Block = Block> + 'static,
 {
     use fc_rpc::{
@@ -80,6 +81,7 @@ where
     use pallet_coming_id_rpc::{ComingId, ComingIdApi};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
     use substrate_frame_rpc_system::{FullSystem, SystemApi};
+    use pallet_coming_auction_rpc::{ComingAuction, ComingAuctionApi};
 
     let mut io = jsonrpc_core::IoHandler::default();
     let FullDeps {
@@ -106,6 +108,8 @@ where
     )));
 
     io.extend_with(ComingIdApi::to_delegate(ComingId::new(client.clone())));
+
+    io.extend_with(ComingAuctionApi::to_delegate(ComingAuction::new(client.clone())));
 
     let mut signers = Vec::new();
     if enable_dev_signer {

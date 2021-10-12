@@ -35,12 +35,14 @@ pub use frame_support::{
     StorageValue,
 };
 pub use pallet_balances::Call as BalancesCall;
-use pallet_coming_id::{Cid, CidDetails};
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+
+use pallet_coming_id::{Cid, CidDetails};
+use pallet_coming_auction::PalletAuctionId;
+use pallet_transaction_payment::CurrencyAdapter;
 
 // evm
 use codec::{Decode, Encode};
@@ -118,7 +120,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     //   `spec_version`, and `authoring_version` are the same between Wasm and native.
     // This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
     //   the compatible custom types.
-    spec_version: 106,
+    spec_version: 110,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -292,6 +294,7 @@ parameter_types! {
     pub const ClaimValidatePeriod: BlockNumber = 600;
     pub const CidsLimit: u32 = 500;
     pub const MaxCardSize: u32 = 1024 * 1024;
+    pub const AuctionId: PalletAuctionId = PalletAuctionId(*b"/auc");
 }
 
 /// Configure the pallet-coming-id in pallets/coming-id.
@@ -309,6 +312,14 @@ impl pallet_utility::Config for Runtime {
 
 impl pallet_coming_nft::Config for Runtime {
     type ComingNFT = ComingId;
+    type WeightInfo = ();
+}
+
+impl pallet_coming_auction::Config for Runtime {
+    type ComingNFT = ComingId;
+    type Event = Event;
+    type Currency = Balances;
+    type PalletId = AuctionId;
     type WeightInfo = ();
 }
 
@@ -382,21 +393,31 @@ construct_runtime!(
         NodeBlock = opaque::Block,
         UncheckedExtrinsic = UncheckedExtrinsic
     {
-        System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-        Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-        Aura: pallet_aura::{Pallet, Config<T>},
-        Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
-        Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-        TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
-        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-        ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
-        ComingNFT: pallet_coming_nft::{Pallet, Call},
-        Utility: pallet_utility::{Pallet, Call, Event},
+        // System support stuff.
+        System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 0,
+        Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 1,
+        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
+
+        // Monetary stuff.
+        Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
+        TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+
+        // Consensus stuff
+        Aura: pallet_aura::{Pallet, Config<T>} = 20,
+        Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 21,
+
+        // Handy utilities.
+        Utility: pallet_utility::{Pallet, Call, Event} = 30,
+
+        // Coming stuff
+        ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>} = 40,
+        ComingNFT: pallet_coming_nft::{Pallet, Call} = 41,
+        ComingAuction: pallet_coming_auction::{Pallet, Call, Config<T>, Storage, Event<T>} = 42,
 
         // Ethereum compatibility
-        EthereumChainId: pallet_ethereum_chain_id::{Pallet, Storage, Config},
-        EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
-        Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned},
+        EthereumChainId: pallet_ethereum_chain_id::{Pallet, Storage, Config} = 50,
+        EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 51,
+        Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 52,
     }
 );
 
@@ -615,6 +636,12 @@ impl_runtime_apis! {
 
         fn get_card(cid: Cid) -> Option<Bytes> {
             ComingId::get_card(cid)
+        }
+    }
+
+    impl pallet_coming_auction_rpc_runtime_api::ComingAuctionApi<Block, Balance> for Runtime {
+        fn get_price(cid: Cid) -> Balance {
+            ComingAuction::get_current_price(cid)
         }
     }
 

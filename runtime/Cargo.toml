@@ -43,9 +43,11 @@ pallet-transaction-payment-rpc-runtime-api = { git = 'https://github.com/parityt
 pallet-utility = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.9", default-features = false }
 
 # Minix
-pallet-coming-id = { version = "1.1.0", default-features = false, path = "../pallets/pallet-coming-id" }
-pallet-coming-id-rpc-runtime-api = { version = "1.1.0", default-features = false, path = "../pallets/pallet-coming-id/rpc/runtime-api" }
-pallet-coming-nft = { version = "1.1.0", default-features = false, path = "../pallets/pallet-coming-nft" }
+pallet-coming-id = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-id" }
+pallet-coming-id-rpc-runtime-api = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-id/rpc/runtime-api" }
+pallet-coming-nft = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-nft" }
+pallet-coming-auction = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-auction" }
+pallet-coming-auction-rpc-runtime-api = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-auction/rpc/runtime-api" }
 
 # EVM
 pallet-ethereum-chain-id = { version = "1.0.0", default-features = false, path = "../pallets/ethereum-chain-id"}
@@ -100,6 +102,8 @@ std = [
     "pallet-coming-id/std",
     "pallet-coming-id-rpc-runtime-api/std",
     "pallet-coming-nft/std",
+    "pallet-coming-auction/std",
+    "pallet-coming-auction-rpc-runtime-api/std",
 
     "pallet-ethereum-chain-id/std",
     "pallet-evm/std",

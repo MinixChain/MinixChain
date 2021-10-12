@@ -324,6 +324,12 @@ impl pallet_coming_auction::Config for Runtime {
     type WeightInfo = ();
 }
 
+impl pallet_deposit::Config for Runtime {
+    type Currency = Balances;
+    type ComingNFT = ComingId;
+    type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+}
+
 /// Current approximation of the gas/s consumption considering
 /// EVM execution over compiled WASM (on 4.4Ghz CPU).
 /// Given the 500ms Weight, from which 75% only are used for transactions,
@@ -419,6 +425,9 @@ construct_runtime!(
         EthereumChainId: pallet_ethereum_chain_id::{Pallet, Storage, Config} = 50,
         EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 51,
         Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned} = 52,
+
+        // Deposit balance and cid from substrate account to ethereum address
+        Deposit: pallet_deposit::{Pallet, Call} = 60
     }
 );
 

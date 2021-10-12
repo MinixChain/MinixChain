@@ -43,6 +43,7 @@ pallet-transaction-payment-rpc-runtime-api = { git = 'https://github.com/parityt
 pallet-utility = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.9", default-features = false }
 
 # Minix
+pallet-deposit = { default-features = false, path = "../pallets/deposit" }
 pallet-coming-id = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-id" }
 pallet-coming-id-rpc-runtime-api = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-id/rpc/runtime-api" }
 pallet-coming-nft = { version = "1.2.0", default-features = false, path = "../pallets/pallet-coming-nft" }
@@ -99,6 +100,7 @@ std = [
     "pallet-transaction-payment/std",
     "pallet-utility/std",
 
+    "pallet-deposit/std",
     "pallet-coming-id/std",
     "pallet-coming-id-rpc-runtime-api/std",
     "pallet-coming-nft/std",

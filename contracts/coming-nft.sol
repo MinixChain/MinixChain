@@ -134,7 +134,6 @@ library Coming {
         uint256 cid
     ) public view returns (bool) {
         require(100_000 <= cid && cid < 1_000_000_000_000, "Require 100_000 <= cid < 1_000_000_000_000.");
-        require(isOperatorOfCid(operator, cid), "Mismatch Cid Operator");
 
         uint64 valid_cid = uint64(cid);
 

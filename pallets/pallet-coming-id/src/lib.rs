@@ -543,6 +543,13 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         Self::get_card(cid)
     }
 
+    fn can_transfer_from(
+        operator: &T::AccountId,
+        cid: Cid
+    ) -> bool {
+        Self::can_transfer(cid).is_ok() && Self::can_transfer_from(operator, cid)
+    }
+
     fn transfer_from(
         operator: &T::AccountId,
         from: &T::AccountId,

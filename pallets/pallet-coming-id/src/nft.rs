@@ -13,6 +13,11 @@ pub trait ComingNFT<AccountId> {
 
     fn card_of_cid(cid: Cid) -> Option<Bytes>;
 
+    fn can_transfer_from(
+        operator: &AccountId,
+        cid: Cid
+    ) -> bool;
+
     fn transfer_from(
         operator: &AccountId,
         from: &AccountId,

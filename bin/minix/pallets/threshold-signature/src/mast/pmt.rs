@@ -1,5 +1,6 @@
 // Refer from https://github.com/rust-bitcoin/rust-bitcoin/blob/master/src/util/merkleblock.rs
 #![allow(dead_code)]
+
 use super::{
     error::{MastError, Result},
     hash_types::*,
@@ -19,13 +20,13 @@ use alloc::{
 
 /// Data structure that represents a partial merkle tree.
 ///
-/// It represents a subset of the script_id's of a known script, in a way that
-/// allows recovery of the list of script_id's and the merkle root, in an
+/// It represents a subset of the leaf node's of a known node, in a way that
+/// allows recovery of the list of leaf node's and the merkle root, in an
 /// authenticated way.
 ///
 /// The encoding works as follows: we traverse the tree in depth-first order,
 /// storing a bit for each traversed node, signifying whether the node is the
-/// parent of at least one matched leaf script_id (or a matched script_id itself). In
+/// parent of at least one matched leaf node (or a matched leaf node itself). In
 /// case we are at the leaf level, or this bit is 0, its merkle node hash is
 /// stored, and its children are not explored further. Otherwise, no hash is
 /// stored, but we recurse into both (or the only) child branch. During
@@ -40,11 +41,11 @@ use alloc::{
 /// Where N represents the number of leaf nodes of the partial tree. N itself
 /// is bounded by:
 ///
-///   N <= total_scripts
-///   N <= 1 + matched_scripts*tree_height
+///   N <= total_leaf_nodes
+///   N <= 1 + matched_leaf_nodes*tree_height
 ///
 /// The serialization format:
-///  - uint32     total_scripts (4 bytes)
+///  - uint32     total_leaf_nodes (4 bytes)
 ///  - varint     number of hashes   (1-3 bytes)
 ///  - uint256[]  hashes in depth-first order (<= 32*N bytes)
 ///  - varint     number of bytes of flag bits (1-3 bytes)
@@ -54,31 +55,31 @@ use alloc::{
 /// The size constraints follow from this.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct PartialMerkleTree {
-    /// The total number of scripts in the tree
-    num_scripts: u32,
-    /// node-is-parent-of-matched-script_id bits
+    /// The total number of leaf nodes in the tree
+    num_leaf_nodes: u32,
+    /// node-is-parent-of-matched-leaf_node bits
     bits: Vec<bool>,
-    /// Transaction ids and internal hashes
-    hashes: Vec<ScriptMerkleNode>,
+    /// pubkey hash and internal hashes
+    hashes: Vec<MerkleNode>,
     /// The height of hashes
     heights: Vec<u32>,
 }
 
 impl PartialMerkleTree {
     /// Construct a partial merkle tree
-    /// The `script_ids` are the script hashes of the script and the `matches` is the contains flags
-    /// wherever a script_id hash should be included in the proof.
+    /// The `leaf_nodes` are the pubkey hashes and the `matches` is the contains flags
+    /// wherever a leaf_node hash should be included in the proof.
     ///
-    /// Panics when `script_ids` is empty or when `matches` has a different length
+    /// Panics when `leaf_nodes` is empty or when `matches` has a different length
     /// ```
-    pub fn from_script_ids(script_ids: &[ScriptId], matches: &[bool]) -> Result<Self> {
-        // We can never have zero scripts in a merkle script
-        assert_ne!(script_ids.len(), 0);
-        assert_eq!(script_ids.len(), matches.len());
+    pub fn from_leaf_nodes(leaf_nodes: &[LeafNode], matches: &[bool]) -> Result<Self> {
+        // We can never have zero leaf_nodes in a merkle node
+        assert_ne!(leaf_nodes.len(), 0);
+        assert_eq!(leaf_nodes.len(), matches.len());
 
         let mut pmt = PartialMerkleTree {
-            num_scripts: script_ids.len() as u32,
-            bits: Vec::with_capacity(script_ids.len()),
+            num_leaf_nodes: leaf_nodes.len() as u32,
+            bits: Vec::with_capacity(leaf_nodes.len()),
             hashes: vec![],
             heights: vec![],
         };
@@ -86,35 +87,35 @@ impl PartialMerkleTree {
         let height = pmt.calc_tree_height();
 
         // traverse the partial tree
-        if let Ok(()) = pmt.traverse_and_build(height, 0, script_ids, matches) {
+        if let Ok(()) = pmt.traverse_and_build(height, 0, leaf_nodes, matches) {
             Ok(pmt)
         } else {
             Err(MastError::MastBuildError)
         }
     }
 
-    /// Extract the matching script_id's represented by this partial merkle tree
+    /// Extract the matching leaf_node's represented by this partial merkle tree
     /// and their respective indices within the partial tree.
     /// returns the merkle root, or error in case of failure
     pub fn extract_matches(
         &self,
-        matches: &mut Vec<ScriptId>,
+        matches: &mut Vec<LeafNode>,
         indexes: &mut Vec<u32>,
-    ) -> Result<ScriptMerkleNode> {
+    ) -> Result<MerkleNode> {
         matches.clear();
         indexes.clear();
         // An empty set will not work
-        if self.num_scripts == 0 {
-            return Err(MastError::InvalidMast("No Scripts in MAST".to_owned()));
+        if self.num_leaf_nodes == 0 {
+            return Err(MastError::InvalidMast("No Pubkeys in MAST".to_owned()));
         };
-        // check for excessively high numbers of scripts
-        // if self.num_scripts > MAX_BLOCK_WEIGHT / MIN_TRANSACTION_WEIGHT {
+        // check for excessively high numbers of leaf_nodes
+        // if self.num_leaf_nodes > MAX_BLOCK_WEIGHT / MIN_TRANSACTION_WEIGHT {
         //     return Err(TooManyTransactions);
         // }
-        // there can never be more hashes provided than one for every script_id
-        if self.hashes.len() as u32 > self.num_scripts {
+        // there can never be more hashes provided than one for every leaf_node
+        if self.hashes.len() as u32 > self.num_leaf_nodes {
             return Err(MastError::InvalidMast(
-                "Proof contains more hashes than scripts".to_owned(),
+                "Proof contains more hashes than leaf_nodes".to_owned(),
             ));
         };
         // there must be at least one bit per node in the partial tree, and at least one node per hash
@@ -144,14 +145,14 @@ impl PartialMerkleTree {
                 "Not all hashes were consumed".to_owned(),
             ));
         }
-        Ok(ScriptMerkleNode::from_inner(hash_merkle_root.into_inner()))
+        Ok(MerkleNode::from_inner(hash_merkle_root.into_inner()))
     }
 
     /// Helper function to efficiently calculate the number of nodes at given height
     /// in the merkle tree
     #[inline]
     fn calc_tree_width(&self, height: u32) -> u32 {
-        (self.num_scripts + (1 << height) - 1) >> height
+        (self.num_leaf_nodes + (1 << height) - 1) >> height
     }
 
     /// Helper function to efficiently calculate the height of merkle tree
@@ -163,24 +164,19 @@ impl PartialMerkleTree {
         height
     }
 
-    /// Calculate the hash of a node in the merkle tree (at leaf level: the script_id's themselves)
-    fn calc_hash(
-        &self,
-        height: u32,
-        pos: u32,
-        script_ids: &[ScriptId],
-    ) -> Result<ScriptMerkleNode> {
+    /// Calculate the hash of a node in the merkle tree (at leaf level: the leaf_node's themselves)
+    fn calc_hash(&self, height: u32, pos: u32, leaf_nodes: &[LeafNode]) -> Result<MerkleNode> {
         if height == 0 {
-            // Hash at height 0 is the script_id itself
-            Ok(ScriptMerkleNode::from_inner(
-                script_ids[pos as usize].into_inner(),
+            // Hash at height 0 is the leaf_node itself
+            Ok(MerkleNode::from_inner(
+                leaf_nodes[pos as usize].into_inner(),
             ))
         } else {
             // Calculate left hash
-            let left = self.calc_hash(height - 1, pos * 2, script_ids)?;
+            let left = self.calc_hash(height - 1, pos * 2, leaf_nodes)?;
             // Calculate right hash if not beyond the end of the array - copy left hash otherwise
             let right = if pos * 2 + 1 < self.calc_tree_width(height - 1) {
-                self.calc_hash(height - 1, pos * 2 + 1, script_ids)?
+                self.calc_hash(height - 1, pos * 2 + 1, leaf_nodes)?
             } else {
                 left
             };
@@ -195,13 +191,13 @@ impl PartialMerkleTree {
         &mut self,
         height: u32,
         pos: u32,
-        script_ids: &[ScriptId],
+        leaf_nodes: &[LeafNode],
         matches: &[bool],
     ) -> Result<()> {
-        // Determine whether this node is the parent of at least one matched script_id
+        // Determine whether this node is the parent of at least one matched leaf_node
         let mut parent_of_match = false;
         let mut p = pos << height;
-        while p < (pos + 1) << height && p < self.num_scripts {
+        while p < (pos + 1) << height && p < self.num_leaf_nodes {
             parent_of_match |= matches[p as usize];
             p += 1;
         }
@@ -210,14 +206,14 @@ impl PartialMerkleTree {
 
         if height == 0 || !parent_of_match {
             // If at height 0, or nothing interesting below, store hash and stop
-            let hash = self.calc_hash(height, pos, script_ids)?;
+            let hash = self.calc_hash(height, pos, leaf_nodes)?;
             self.hashes.push(hash);
             self.heights.push(height);
         } else {
             // Otherwise, don't store any hash, but descend into the subtrees
-            self.traverse_and_build(height - 1, pos * 2, script_ids, matches)?;
+            self.traverse_and_build(height - 1, pos * 2, leaf_nodes, matches)?;
             if pos * 2 + 1 < self.calc_tree_width(height - 1) {
-                self.traverse_and_build(height - 1, pos * 2 + 1, script_ids, matches)?;
+                self.traverse_and_build(height - 1, pos * 2 + 1, leaf_nodes, matches)?;
             }
         }
 
@@ -232,9 +228,9 @@ impl PartialMerkleTree {
         pos: u32,
         bits_used: &mut u32,
         hash_used: &mut u32,
-        matches: &mut Vec<ScriptId>,
+        matches: &mut Vec<LeafNode>,
         indexes: &mut Vec<u32>,
-    ) -> Result<ScriptMerkleNode> {
+    ) -> Result<MerkleNode> {
         if *bits_used as usize >= self.bits.len() {
             return Err(MastError::InvalidMast(
                 "Overflowed the bits array".to_owned(),
@@ -252,13 +248,13 @@ impl PartialMerkleTree {
             let hash = self.hashes[*hash_used as usize];
             *hash_used += 1;
             if height == 0 && parent_of_match {
-                // in case of height 0, we have a matched script_id
-                matches.push(ScriptId::from_inner(hash.into_inner()));
+                // in case of height 0, we have a matched leaf_node
+                matches.push(LeafNode::from_inner(hash.into_inner()));
                 indexes.push(pos);
             }
             Ok(hash)
         } else {
-            // otherwise, descend into the subtrees to extract matched script_ids and hashes
+            // otherwise, descend into the subtrees to extract matched leaf_nodes and hashes
             let left = self.traverse_and_extract(
                 height - 1,
                 pos * 2,
@@ -278,10 +274,10 @@ impl PartialMerkleTree {
                     indexes,
                 )?;
                 if right == left {
-                    // The left and right branches should never be identical, as the script
+                    // The left and right branches should never be identical, as the node
                     // hashes covered by them must each be unique.
                     return Err(MastError::InvalidMast(
-                        "Found identical script hashes".to_owned(),
+                        "Found identical node hashes".to_owned(),
                     ));
                 }
             } else {
@@ -293,8 +289,13 @@ impl PartialMerkleTree {
         }
     }
 
-    pub fn collected_hashes(&self) -> Vec<ScriptMerkleNode> {
-        let mut zipped = self.hashes.iter().zip(&self.heights).collect::<Vec<_>>();
+    pub fn collected_hashes(&self, filter_proof: MerkleNode) -> Vec<MerkleNode> {
+        let mut zipped = self
+            .hashes
+            .iter()
+            .zip(&self.heights)
+            .filter(|(p, _)| **p != filter_proof)
+            .collect::<Vec<_>>();
         zipped.sort_unstable_by_key(|(_, h)| **h);
         zipped.into_iter().map(|(a, _)| *a).collect::<Vec<_>>()
     }
@@ -310,24 +311,25 @@ mod tests {
 
     #[test]
     fn pmt_proof_generate_correct_order() {
-        let txids: Vec<ScriptId> = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        let leaf_nodes: Vec<LeafNode> = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
             .iter()
-            .map(|i| ScriptId::from_hex(&format!("{:064x}", i)).unwrap())
+            .map(|i| LeafNode::from_hex(&format!("{:064x}", i)).unwrap())
             .collect();
 
         let matches = vec![
             false, false, false, false, false, false, false, false, false, false, false, true,
         ];
-        let tree = PartialMerkleTree::from_script_ids(&txids, &matches).unwrap();
+        let tree = PartialMerkleTree::from_leaf_nodes(&leaf_nodes, &matches).unwrap();
         let mut matches_vec = vec![];
         let mut indexes = vec![];
         let root = tree
             .extract_matches(&mut matches_vec, &mut indexes)
             .unwrap();
 
-        let proofs = tree.collected_hashes();
-        let mut root1 = proofs[0];
-        for i in proofs.iter().skip(1) {
+        let filter_proof = MerkleNode::from_inner(leaf_nodes[11].into_inner());
+        let proofs = tree.collected_hashes(filter_proof);
+        let mut root1 = filter_proof;
+        for i in proofs.iter() {
             root1 = tagged_branch(root1, *i).unwrap();
         }
         assert_eq!(root, root1)

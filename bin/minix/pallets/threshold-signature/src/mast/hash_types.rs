@@ -66,7 +66,7 @@ sha256t_hash_newtype!(
     TapLeafTag,
     MIDSTATE_TAPLEAF,
     64,
-    doc = "Taproot-tagged hash for tapscript Merkle tree leafs",
+    doc = "Tagged hash for Merkle tree leafs",
     true
 );
 sha256t_hash_newtype!(
@@ -74,7 +74,7 @@ sha256t_hash_newtype!(
     TapBranchTag,
     MIDSTATE_TAPBRANCH,
     64,
-    doc = "Taproot-tagged hash for tapscript Merkle tree branches",
+    doc = "Tagged hash for Merkle tree branches",
     true
 );
 sha256t_hash_newtype!(
@@ -82,7 +82,7 @@ sha256t_hash_newtype!(
     TapTweakTag,
     MIDSTATE_TAPTWEAK,
     64,
-    doc = "Taproot-tagged hash for public key tweaks",
+    doc = "Tagged hash for public key tweaks",
     true
 );
 sha256t_hash_newtype!(
@@ -90,21 +90,21 @@ sha256t_hash_newtype!(
     TapSighashTag,
     MIDSTATE_TAPSIGHASH,
     64,
-    doc = "Taproot-tagged hash for the taproot signature hash",
+    doc = "Tagged hash for the taproot signature hash",
     true
 );
 
 hash_newtype!(
-    ScriptId,
+    LeafNode,
     sha256d::Hash,
     32,
-    doc = "A bitcoin transaction hash/transaction ID."
+    doc = "The leaf node of Merkle tree."
 );
 hash_newtype!(
-    ScriptMerkleNode,
+    MerkleNode,
     sha256d::Hash,
     32,
-    doc = "A hash of the Merkle tree branch or root for transactions"
+    doc = "The node of Merkle tree, include leaf node."
 );
 
 #[cfg(test)]

@@ -11,7 +11,6 @@ impl<T: Config> From<MastError> for Error<T> {
             MastError::MastGenProofError => Error::<T>::MastGenProofError,
             MastError::MastGenAddrError => Error::<T>::MastGenAddrError,
             MastError::FromHexError(_) => Error::<T>::InvalidEncoding,
-            MastError::EncodeToBech32Error(_) => Error::<T>::InvalidEncoding,
             MastError::IoError(_) => Error::<T>::InvalidEncoding,
             MastError::KeyPairError(_) => Error::<T>::InvalidEncoding,
         }
@@ -21,5 +20,11 @@ impl<T: Config> From<MastError> for Error<T> {
 impl<T: Config> From<SignatureError> for Error<T> {
     fn from(_: SignatureError) -> Self {
         Error::<T>::InvalidSignature
+    }
+}
+
+impl<T: Config> From<bitcoin_hashes::Error> for Error<T> {
+    fn from(_: bitcoin_hashes::Error) -> Self {
+        Error::<T>::InvalidProof
     }
 }

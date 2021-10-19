@@ -2,7 +2,7 @@
 
 //! Weights for pallet_threshold_signature
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
-//! DATE: 2021-09-03, STEPS: [50, ], REPEAT: 20, LOW RANGE: [], HIGH RANGE: []
+//! DATE: 2021-09-15, STEPS: [50, ], REPEAT: 20, LOW RANGE: [], HIGH RANGE: []
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dev"), DB CACHE: 128
 
 // Executed Command:
@@ -31,26 +31,41 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_threshold_signature.
 pub trait WeightInfo {
     fn generate_address() -> Weight;
-    fn verify_threshold_signature() -> Weight;
+    fn pass_script() -> Weight;
+    fn exec_script() -> Weight;
 }
 
 /// Weights for pallet_threshold_signature using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
     fn generate_address() -> Weight {
-        (474_714_000_u64).saturating_add(T::DbWeight::get().writes(1_u64))
+        (467_254_000_u64).saturating_add(T::DbWeight::get().writes(1_u64))
     }
-    fn verify_threshold_signature() -> Weight {
-        (886_249_000_u64).saturating_add(T::DbWeight::get().reads(1_u64))
+    fn pass_script() -> Weight {
+        (886_901_000_u64)
+            .saturating_add(T::DbWeight::get().reads(1_u64))
+            .saturating_add(T::DbWeight::get().writes(1_u64))
+    }
+    fn exec_script() -> Weight {
+        (77_574_000_u64)
+            .saturating_add(T::DbWeight::get().reads(2_u64))
+            .saturating_add(T::DbWeight::get().writes(2_u64))
     }
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
     fn generate_address() -> Weight {
-        (474_714_000_u64).saturating_add(RocksDbWeight::get().writes(1_u64))
+        (467_254_000_u64).saturating_add(RocksDbWeight::get().writes(1_u64))
     }
-    fn verify_threshold_signature() -> Weight {
-        (886_249_000_u64).saturating_add(RocksDbWeight::get().reads(1_u64))
+    fn pass_script() -> Weight {
+        (886_901_000_u64)
+            .saturating_add(RocksDbWeight::get().reads(1_u64))
+            .saturating_add(RocksDbWeight::get().writes(1_u64))
+    }
+    fn exec_script() -> Weight {
+        (77_574_000_u64)
+            .saturating_add(RocksDbWeight::get().reads(2_u64))
+            .saturating_add(RocksDbWeight::get().writes(2_u64))
     }
 }

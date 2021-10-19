@@ -17,6 +17,8 @@ frame-system = { version = "3.0.0", default-features = false, path = "../../../.
 frame-support = { version = "3.0.0", default-features = false, path = "../../../../frame/support" }
 frame-benchmarking = { version = "3.1.0", default-features = false, path = "../../../../frame/benchmarking", optional = true }
 
+pallet-balances = { version = "3.0.0", default-features = false, path = "../../../../frame/balances" }
+
 libsecp256k1 = { version = "0.6", default-features = false, features = ["hmac", "static-context"] }
 arrayref = { version = "0.3.6" }
 core2 = { version = "0.3.0", default-features = false, features = ["alloc"] }
@@ -35,9 +37,6 @@ bitcoin_hashes = { version = "0.10.0", default-features = false, features = ["al
 schnorrkel = { version = "0.10.1", default-features = false, features = ["u64_backend"] }
 curve25519-dalek = { package = "curve25519-dalek-ng", version = "4.0", default-features = false }
 
-[dev-dependencies]
-pallet-balances = { version = "3.0.0", default-features = false, path = "../../../../frame/balances" }
-
 [features]
 default = ['std', 'getrandom']
 runtime-benchmarks = ['frame-benchmarking']
@@ -48,6 +47,7 @@ std = [
     'frame-support/std',
     'frame-system/std',
     'frame-benchmarking/std',
+    'pallet-balances/std',
     "bitcoin_hashes/std",
     "hex/std",
     "schnorrkel/std",

@@ -1,6 +1,6 @@
 use super::Event as ComingIdEvent;
 use crate::{
-    mock::*, BondData, BondType, Cid, CidDetails, Distributed, AccountIdCids, Error, HighKey, LowKey, MediumKey,
+    mock::*, BondData, BondType, Cid, CidDetails, Distributed, Error, HighKey, LowKey, MediumKey,
     StorageMap,
 };
 use frame_support::{assert_noop, assert_ok};
@@ -501,42 +501,4 @@ fn crate_to_pallet_version() {
         assert_eq!(PalletVersion::new(1, 0, 0), version);
     });
 
-}
-
-
-#[test]
-fn account_cid_stats() {
-    new_test_ext(ADMIN).execute_with(|| {
-        type AccountOf<T> = <T as frame_system::Config>::AccountId;
-
-        let mut amount = 0;
-
-        let start = std::time::Instant::now();
-        while amount < 1_100_000u32 {
-            let account: AccountOf<Test> = frame_benchmarking::account("test",amount,0);
-            AccountIdCids::<Test>::insert(account, vec![amount as u64]);
-
-            amount += 1;
-        }
-        let end = std::time::Instant::now();
-
-        println!("start={:?},end={:?},duration={:?}",start.clone(),end,end.duration_since(start));
-
-        let (mut nominal_holders, mut real_holders, mut cid_total) = (0u64, 0u64, 0u64);
-
-        let start = std::time::Instant::now();
-        for (_, cids ) in AccountIdCids::<Test>::iter() {
-            nominal_holders = nominal_holders.saturating_add(1);
-
-            if !cids.is_empty() {
-                real_holders = real_holders.saturating_add(1);
-                cid_total = cid_total.saturating_add(cids.len() as u64);
-            }
-        }
-        let end = std::time::Instant::now();
-
-        println!("start={:?},end={:?},duration={:?}",start.clone(),end,end.duration_since(start));
-
-        println!("nominal_holders={}, real_holders={}, cid_total={}", nominal_holders, real_holders, cid_total)
-    })
 }

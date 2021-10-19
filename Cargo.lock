@@ -3533,7 +3533,7 @@ dependencies = [
 
 [[package]]
 name = "minix"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",

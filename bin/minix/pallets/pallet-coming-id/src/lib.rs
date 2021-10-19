@@ -77,11 +77,6 @@ pub mod pallet {
     #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
-    /// (nominal_holders, real_holders, cid_total)
-    #[pallet::storage]
-    #[pallet::getter(fn stats)]
-    pub type Stats<T: Config> = StorageValue<_, (u64, u64, u64), ValueQuery>;
-
     #[pallet::storage]
     #[pallet::getter(fn distributed)]
     pub type Distributed<T: Config> =
@@ -189,18 +184,7 @@ pub mod pallet {
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-        fn on_runtime_upgrade() -> Weight {
-            use frame_support::traits::{GetPalletVersion, PalletVersion};
 
-            let storage_version = Self::storage_version().unwrap_or_else(|| PalletVersion::new(0, 0, 0));
-
-            // todo!(Remove me after upgrade minix mainnet)
-            if storage_version < Self::current_version() {
-                migration::migrate_to_set_stats::<T>()
-            } else {
-                0
-            }
-        }
     }
 
     #[pallet::call]
@@ -387,36 +371,11 @@ impl<T: Config> Pallet<T> {
 
     fn account_cids_add(account: T::AccountId, cid: Cid) {
         AccountIdCids::<T>::try_mutate_exists::<_, _, Error<T>, _>(account, |cids| {
-            let (mut update_nominal, mut update_real) = (false, false);
-
             if let Some(cids) = cids {
                 cids.push(cid)
             } else {
                 *cids = Some(vec![cid]);
-
-                update_nominal = true
             }
-
-            if let Some(cids) = cids {
-                if cids.len() == 1 {
-                    update_real = true
-                }
-            }
-
-            Self::stats_mutate(|nominal_holders, real_holders, nft_total|{
-                // cid_total++
-                *nft_total = nft_total.saturating_add(1);
-
-                // nominal_holder++
-                if update_nominal {
-                    *nominal_holders = nominal_holders.saturating_add(1);
-                }
-
-                // real_holder++
-                if update_real {
-                    *real_holders = real_holders.saturating_add(1);
-                }
-            });
 
             Ok(())
         })
@@ -426,32 +385,12 @@ impl<T: Config> Pallet<T> {
     fn account_cids_remove(account: T::AccountId, cid: Cid) {
         AccountIdCids::<T>::try_mutate_exists::<_, _, Error<T>, _>(account, |cids| {
             if let Some(cids) = cids {
-                let len_before = cids.len();
-                cids.retain(|&in_cid| in_cid != cid);
-                let len_after = cids.len();
-
-                if len_after < len_before {
-                    Self::stats_mutate(|_nominal_holders, real_holders, nft_total|{
-                        // cid_total--
-                        *nft_total = nft_total.saturating_sub(1);
-
-                        // real_holder--
-                        if len_after == 0 {
-                            *real_holders = real_holders.saturating_sub(1);
-                        }
-                    });
-                }
+                cids.retain(|&in_cid| in_cid != cid)
             }
 
             Ok(())
         })
             .unwrap_or_default();
-    }
-
-    fn stats_mutate<F: FnMut(&mut u64, &mut u64, &mut u64)>(mut f: F) {
-        <Stats<T>>::mutate(|stats|{
-            f(&mut stats.0, &mut stats.1, &mut stats.2)
-        })
     }
 
     pub fn get_account_id(cid: Cid) -> Option<T::AccountId> {

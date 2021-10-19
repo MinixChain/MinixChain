@@ -1,6 +1,6 @@
 [package]
 name = "minix"
-version = "1.1.0"
+version = "1.2.0"
 authors = ["ChainNet"]
 description = "A fresh FRAME-based Substrate node, ready for hacking."
 edition = "2018"

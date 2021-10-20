@@ -42,8 +42,8 @@ pub use frame_support::{
 use pallet_transaction_payment::CurrencyAdapter;
 use pallet_coming_id::{Cid, CidDetails};
 use pallet_coming_auction::PalletAuctionId;
-use pallet_threshold_signature_rpc_runtime_api::{
-	Message, Script, Signature as OtherSignature
+pub use pallet_threshold_signature::primitive::{
+    Message, OpCode, Pubkey, ScriptHash, Signature as TSignature,
 };
 
 /// An index to a block.
@@ -522,21 +522,16 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_threshold_signature_rpc_runtime_api::ThresholdSignatureApi<Block> for Runtime {
-		fn verify_threshold_signature(
-			addr: sp_runtime::AccountId32,
-			signature: OtherSignature,
-			script: Script,
-			message: Message,
-		) -> Result<bool, sp_runtime::DispatchError> {
-			ThresholdSignature::apply_verify_threshold_signature(
-				addr,
-				signature,
-				script,
-				message
-			)
-		}
-	}
+    impl pallet_threshold_signature_rpc_runtime_api::ThresholdSignatureApi<Block> for Runtime {
+        fn compute_script_hash(
+            account: AccountId,
+            call: OpCode,
+            amount: Balance,
+            time_lock: (BlockNumber, BlockNumber),
+        ) -> ScriptHash {
+            ThresholdSignature::compute_script_hash(account, call, amount, time_lock)
+        }
+    }
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {

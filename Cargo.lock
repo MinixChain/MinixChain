@@ -4219,6 +4219,7 @@ dependencies = [
 name = "pallet-threshold-signature-rpc"
 version = "3.0.0"
 dependencies = [
+ "hex",
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",

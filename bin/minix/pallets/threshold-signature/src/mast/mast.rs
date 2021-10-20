@@ -6,7 +6,7 @@ use core::ops::AddAssign;
 use super::error::MastError;
 use super::XOnly;
 use super::{
-    error::Result, pmt::PartialMerkleTree, serialize, ScriptId, ScriptMerkleNode, TapBranchHash,
+    error::Result, pmt::PartialMerkleTree, serialize, LeafNode, MerkleNode, TapBranchHash,
     TapLeafHash, TapTweakHash, VarInt,
 };
 #[cfg(not(feature = "std"))]
@@ -26,53 +26,57 @@ use sp_core::sp_std::ops::Deref;
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Mast {
     /// All leaf nodes of the mast tree
-    pub scripts: Vec<XOnly>,
+    pub pubkeys: Vec<XOnly>,
 }
 
 impl Mast {
     /// Create a mast instance
-    pub fn new(scripts: Vec<XOnly>) -> Self {
-        Mast { scripts }
+    pub fn new(pubkeys: Vec<XOnly>) -> Self {
+        Mast { pubkeys }
     }
 
     /// calculate merkle root
-    pub fn calc_root(&self) -> Result<ScriptMerkleNode> {
-        let script_ids = self
-            .scripts
+    pub fn calc_root(&self) -> Result<MerkleNode> {
+        let leaf_nodes = self
+            .pubkeys
             .iter()
             .map(|s| tagged_leaf(s))
             .collect::<Result<Vec<_>>>()?;
 
         let mut matches = vec![true];
 
-        if self.scripts.len() < 2 {
+        if self.pubkeys.len() < 2 {
             return Err(MastError::MastBuildError);
         }
-        matches.extend(&vec![false; self.scripts.len() - 1]);
-        let pmt = PartialMerkleTree::from_script_ids(&script_ids, &matches)?;
-        let mut matches_vec: Vec<ScriptId> = vec![];
+        matches.extend(&vec![false; self.pubkeys.len() - 1]);
+        let pmt = PartialMerkleTree::from_leaf_nodes(&leaf_nodes, &matches)?;
+        let mut matches_vec: Vec<LeafNode> = vec![];
         let mut indexes_vec: Vec<u32> = vec![];
         pmt.extract_matches(&mut matches_vec, &mut indexes_vec)
     }
 
     /// generate merkle proof
-    pub fn generate_merkle_proof(&self, script: &XOnly) -> Result<Vec<ScriptMerkleNode>> {
+    pub fn generate_merkle_proof(&self, pubkey: &XOnly) -> Result<Vec<MerkleNode>> {
         let proof = {
-            assert!(self.scripts.iter().any(|s| *s == *script));
+            assert!(self.pubkeys.iter().any(|s| *s == *pubkey));
             let mut matches = vec![];
-            for s in self.scripts.iter() {
-                if *s == *script {
-                    matches.push(true)
+            let mut index = 9999;
+            for (i, s) in self.pubkeys.iter().enumerate() {
+                if *s == *pubkey {
+                    matches.push(true);
+                    index = i;
                 } else {
                     matches.push(false)
                 }
             }
-            let script_ids = self
-                .scripts
+            let leaf_nodes = self
+                .pubkeys
                 .iter()
                 .map(|s| tagged_leaf(s))
                 .collect::<Result<Vec<_>>>()?;
-            Ok(PartialMerkleTree::from_script_ids(&script_ids, &matches)?.collected_hashes())
+            let filter_proof = MerkleNode::from_inner(leaf_nodes[index].into_inner());
+            Ok(PartialMerkleTree::from_leaf_nodes(&leaf_nodes, &matches)?
+                .collected_hashes(filter_proof))
         };
 
         if let Err(e) = proof {
@@ -85,63 +89,57 @@ impl Mast {
 
     /// generate threshold signature address
     pub fn generate_tweak_pubkey(&self, inner_pubkey: &XOnly) -> Result<Vec<u8>> {
-        // let addr = {
         let root = self.calc_root()?;
         tweak_pubkey(inner_pubkey, &root)
     }
 }
 
-/// Calculate the leaf nodes from the script
+/// Calculate the leaf nodes from the pubkey
 ///
-/// tagged_hash("TapLeaf", bytes([leaf_version]) + ser_script(script))
-pub fn tagged_leaf(script: &XOnly) -> Result<ScriptId> {
+/// tagged_hash("TapLeaf", bytes([leaf_version]) + ser_size(pubkey))
+pub fn tagged_leaf(pubkey: &XOnly) -> Result<LeafNode> {
     let mut x: Vec<u8> = vec![];
     x.extend(hex::decode("c0")?.iter());
     let ser_len = serialize(&VarInt(32u64))?;
     x.extend(&ser_len);
-    x.extend(script.deref());
-    Ok(ScriptId::from_hex(&TapLeafHash::hash(&x).to_hex())?)
+    x.extend(pubkey.deref());
+    Ok(LeafNode::from_hex(&TapLeafHash::hash(&x).to_hex())?)
 }
 
 /// Calculate branch nodes from left and right children
 ///
 /// tagged_hash("TapBranch", left + right)). The left and right nodes are lexicographic order
-pub fn tagged_branch(
-    script_left: ScriptMerkleNode,
-    script_right: ScriptMerkleNode,
-) -> Result<ScriptMerkleNode> {
+pub fn tagged_branch(left_node: MerkleNode, right_node: MerkleNode) -> Result<MerkleNode> {
     // If the hash of the left and right leaves is the same, it means that the total number of leaves is odd
     //
     // In this case, the parent hash is computed without copying
     // Note: `TapLeafHash` will replace the `TapBranchHash`
-    if script_left != script_right {
+    if left_node != right_node {
         let mut x: Vec<u8> = vec![];
-        let (script_left, script_right) = lexicographical_compare(script_left, script_right);
-        x.extend(script_left.to_vec().iter());
-        x.extend(script_right.to_vec().iter());
+        let (left_node, right_node) = lexicographical_compare(left_node, right_node);
+        x.extend(left_node.to_vec().iter());
+        x.extend(right_node.to_vec().iter());
 
-        Ok(ScriptMerkleNode::from_hex(
-            &TapBranchHash::hash(&x).to_hex(),
-        )?)
+        Ok(MerkleNode::from_hex(&TapBranchHash::hash(&x).to_hex())?)
     } else {
-        Ok(script_left)
+        Ok(left_node)
     }
 }
 
 /// Lexicographic order of left and right nodes
 fn lexicographical_compare(
-    script_left: ScriptMerkleNode,
-    script_right: ScriptMerkleNode,
-) -> (ScriptMerkleNode, ScriptMerkleNode) {
-    if script_right.to_vec() < script_left.to_vec() {
-        (script_right, script_left)
+    left_node: MerkleNode,
+    right_node: MerkleNode,
+) -> (MerkleNode, MerkleNode) {
+    if right_node.to_vec() < left_node.to_vec() {
+        (right_node, left_node)
     } else {
-        (script_left, script_right)
+        (left_node, right_node)
     }
 }
 
 /// Compute tweak public key
-pub fn tweak_pubkey(inner_pubkey: &[u8; 32], root: &ScriptMerkleNode) -> Result<Vec<u8>> {
+pub fn tweak_pubkey(inner_pubkey: &[u8; 32], root: &MerkleNode) -> Result<Vec<u8>> {
     // P + hash_tweak(P||root)G
     let mut x: Vec<u8> = vec![];
     x.extend(inner_pubkey);
@@ -168,23 +166,23 @@ mod tests {
 
     #[test]
     fn mast_generate_root_should_work() {
-        let script_a = XOnly::try_from(
+        let pubkey_a = XOnly::try_from(
             hex::decode("D69C3509BB99E412E68B0FE8544E72837DFA30746D8BE2AA65975F29D22DC7B9")
                 .unwrap(),
         )
         .unwrap();
-        let script_b = XOnly::try_from(
+        let pubkey_b = XOnly::try_from(
             hex::decode("EEFDEA4CDB677750A420FEE807EACF21EB9898AE79B9768766E4FAA04A2D4A34")
                 .unwrap(),
         )
         .unwrap();
-        let script_c = XOnly::try_from(
+        let pubkey_c = XOnly::try_from(
             hex::decode("DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659")
                 .unwrap(),
         )
         .unwrap();
-        let scripts = vec![script_a, script_b, script_c];
-        let mast = Mast { scripts };
+        let pubkeys = vec![pubkey_a, pubkey_b, pubkey_c];
+        let mast = Mast { pubkeys };
         let root = mast.calc_root().unwrap();
 
         assert_eq!(
@@ -195,29 +193,28 @@ mod tests {
 
     #[test]
     fn mast_generate_merkle_proof_should_work() {
-        let script_a = XOnly::try_from(
+        let pubkey_a = XOnly::try_from(
             hex::decode("D69C3509BB99E412E68B0FE8544E72837DFA30746D8BE2AA65975F29D22DC7B9")
                 .unwrap(),
         )
         .unwrap();
-        let script_b = XOnly::try_from(
+        let pubkey_b = XOnly::try_from(
             hex::decode("EEFDEA4CDB677750A420FEE807EACF21EB9898AE79B9768766E4FAA04A2D4A34")
                 .unwrap(),
         )
         .unwrap();
-        let script_c = XOnly::try_from(
+        let pubkey_c = XOnly::try_from(
             hex::decode("DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659")
                 .unwrap(),
         )
         .unwrap();
-        let scripts = vec![script_a, script_b, script_c];
-        let mast = Mast { scripts };
-        let proof = mast.generate_merkle_proof(&script_a).unwrap();
+        let pubkeys = vec![pubkey_a, pubkey_b, pubkey_c];
+        let mast = Mast { pubkeys };
+        let proof = mast.generate_merkle_proof(&pubkey_a).unwrap();
 
         assert_eq!(
             proof.iter().map(|p| p.to_hex()).collect::<Vec<_>>(),
             vec![
-                "c51bcfc34f78ae1518b7feaed7d0702d790d946aa5732cb9ad75d22fcd3917d4",
                 "f49b4c19bf53dfcdd50bc565ccca5cfc64226ef20301502f2264b25e2f0adb3a",
                 "aa4bc1ce7be6887fad68d95fcf8b0d19788640ead71837ed43a2b518e673ba2f",
             ]
@@ -225,30 +222,30 @@ mod tests {
     }
 
     #[test]
-    fn test_bech32m_addr() {
+    fn test_final_addr() {
         let internal_key = XOnly::try_from(
             hex::decode("881102cd9cf2ee389137a99a2ad88447b9e8b60c350cda71aff049233574c768")
                 .unwrap(),
         )
         .unwrap();
 
-        let script_a = XOnly::try_from(
+        let pubkey_a = XOnly::try_from(
             hex::decode("7c9a72882718402bf909b3c1693af60501c7243d79ecc8cf030fa253eb136861")
                 .unwrap(),
         )
         .unwrap();
-        let script_b = XOnly::try_from(
+        let pubkey_b = XOnly::try_from(
             hex::decode("b69af178463918a181a8549d2cfbe77884852ace9d8b299bddf69bedc33f6356")
                 .unwrap(),
         )
         .unwrap();
-        let script_c = XOnly::try_from(
+        let pubkey_c = XOnly::try_from(
             hex::decode("a20c839d955cb10e58c6cbc75812684ad3a1a8f24a503e1c07f5e4944d974d3b")
                 .unwrap(),
         )
         .unwrap();
-        let scripts = vec![script_a, script_b, script_c];
-        let mast = Mast { scripts };
+        let pubkeys = vec![pubkey_a, pubkey_b, pubkey_c];
+        let mast = Mast { pubkeys };
 
         let addr = mast.generate_tweak_pubkey(&internal_key).unwrap();
         assert_eq!(

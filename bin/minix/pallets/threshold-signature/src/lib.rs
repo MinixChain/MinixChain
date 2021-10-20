@@ -1,6 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::unused_unit)]
-
 //Exported dependencies.
 #[macro_use]
 pub extern crate bitcoin_hashes as hashes;
@@ -25,32 +23,40 @@ pub mod weights;
 
 use self::weights::WeightInfo;
 use self::{
-    mast::{tweak_pubkey, Mast, XOnly},
-    primitive::{Message, Script, Signature},
+    mast::{tweak_pubkey, XOnly},
+    primitive::{Message, Pubkey, Signature},
 };
-use codec::Decode;
+use crate::primitive::{OpCode, ScriptHash};
+use codec::{Decode, Encode};
+use frame_support::{dispatch::DispatchResult, sp_runtime::traits::StaticLookup, traits::Currency};
 use frame_support::{
     dispatch::{DispatchError, DispatchResultWithPostInfo, PostDispatchInfo},
     inherent::Vec,
 };
-use mast::{tagged_branch, ScriptMerkleNode};
+use frame_system::RawOrigin;
+use hashes::{sha256, Hash};
+use mast::{tagged_branch, tagged_leaf, MerkleNode};
 pub use pallet::*;
 use schnorrkel::{signing_context, PublicKey, Signature as SchnorrSignature};
 use sp_core::sp_std::convert::TryFrom;
 use sp_std::prelude::*;
 
+type BalanceOf<T> =
+    <pallet_balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
+    use crate::primitive::{OpCode, ScriptHash};
     use frame_support::{
-        dispatch::{DispatchResult, Dispatchable, GetDispatchInfo},
+        dispatch::{Dispatchable, GetDispatchInfo},
         pallet_prelude::*,
     };
-    use frame_system::{pallet_prelude::*, RawOrigin};
+    use frame_system::pallet_prelude::*;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
-    pub trait Config: frame_system::Config {
+    pub trait Config: frame_system::Config + pallet_balances::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// A dispatchable call.
@@ -67,18 +73,26 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
-    #[pallet::getter(fn addr_to_script)]
-    pub type AddrToScript<T: Config> =
-        StorageMap<_, Twox64Concat, T::AccountId, Vec<Script>, ValueQuery>;
+    #[pallet::getter(fn script_hash_to_addr)]
+    pub type ScriptHashToAddr<T: Config> =
+        StorageMap<_, Twox64Concat, ScriptHash, T::AccountId, ValueQuery>;
 
     #[pallet::event]
     #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub (super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Submit scripts to generate address. [addr]
+        /// Submit pubkeys to generate address. [addr]
         GenerateAddress(T::AccountId),
-        /// Verify threshold signature
-        VerifySignature,
+        /// Verify threshold signature and upload script hash. [script hash, addr]
+        PassScript(Vec<u8>, T::AccountId),
+        /// Execute script. [account, addr, opcode, amount, time lock]
+        ExecuteScript(
+            T::AccountId,
+            T::AccountId,
+            OpCode,
+            BalanceOf<T>,
+            (T::BlockNumber, T::BlockNumber),
+        ),
     }
 
     // Errors inform users that something went wrong.
@@ -99,137 +113,140 @@ pub mod pallet {
         InvalidEncoding,
         /// Signature verification failure
         InvalidSignature,
+        /// Proof is invalid
+        InvalidProof,
+        /// Mismatch time lock
+        MisMatchTimeLock,
+        /// Scripts that did not pass verification
+        NoPassScript,
     }
 
     #[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// Generate threshold signature address according to the script provided by the user.
+        /// Verify the multi-signature address and authorize to the script represented by the script
+        /// hash.
         ///
-        /// - `scripts`: The first parameter is inner pubkey. The remaining parameters are other
-        /// scripts. For example, inner pubkey can be the aggregate public
-        /// key of ABC, and other scripts can be the aggregate public key of AB, BC and AC.
-        #[pallet::weight(< T as Config >::WeightInfo::generate_address())]
-        pub fn generate_address(origin: OriginFor<T>, scripts: Vec<Vec<u8>>) -> DispatchResult {
-            ensure_signed(origin)?;
-            let addr = Self::apply_generate_address(scripts)?;
-            Self::deposit_event(Event::GenerateAddress(addr));
-            Ok(())
-        }
-
-        /// Verify the threshold signature address and then call other transactions.
-        ///
-        /// - `addr`: Represents a threshold signature address. For example, the aggregate public key
-        /// of ABC
+        /// - `addr`: Represents a threshold signature address. Calculated by merkle root and inner
+        /// pubkey.
         /// - `signature`: Usually represents the aggregate signature of m individuals. For example,
         /// the aggregate signature of AB
-        /// - `script`: Usually represents the aggregate public key of m individuals. For example,
+        /// - `pubkey`: Usually represents the aggregate public key of m individuals. For example,
         /// the aggregate public key of AB
+        /// - `control_block`: The first element is inner pubkey, and the remaining elements are
+        /// merkle proof. For example, merkle proof may be [tag_hash(pubkey_BC), tag_hash(pubkey_AC)].
         /// - `message`: Message used in the signing process.
-        /// - `call`: The call to be executed.
-        #[pallet::weight({
-			let dispatch_info = call.get_dispatch_info();
-			(
-				T::WeightInfo::verify_threshold_signature().saturating_add(dispatch_info.weight),
-				dispatch_info.class,
-			)
-		})]
-        pub fn verify_threshold_signature(
+        /// - `script_hash`: Used to represent the authorized script hash.
+        #[pallet::weight(< T as Config >::WeightInfo::pass_script())]
+        pub fn pass_script(
             origin: OriginFor<T>,
             addr: T::AccountId,
             signature: Vec<u8>,
-            script: Vec<u8>,
+            pubkey: Vec<u8>,
+            control_block: Vec<Vec<u8>>,
             message: Vec<u8>,
-            call: Box<<T as Config>::Call>,
-        ) -> DispatchResultWithPostInfo {
+            script_hash: Vec<u8>,
+        ) -> DispatchResult {
             ensure_signed(origin)?;
+            Self::apply_pass_script(addr, signature, pubkey, control_block, message, script_hash)
+        }
 
-            let executable =
-                Self::apply_verify_threshold_signature(addr.clone(), signature, script, message)?;
-            let _ = call.using_encoded(|c| c.len());
-
-            if executable {
-                let result = call.dispatch(RawOrigin::Signed(addr).into());
-                Self::compute_result_weight(result)
-            } else {
-                Ok(Some(T::WeightInfo::verify_threshold_signature()).into())
-            }
+        /// The user takes the initiative to execute the truly authorized script.
+        ///
+        /// - `origin`: Signed executor of the script. It must be pass_script to complete the script
+        /// authorized to the user before the user can execute successfully
+        /// - `call`: Action represented by the script.
+        /// - `amount`: The number represented by the script.
+        /// - `time_lock`: Time lock required for script execution. The script must meet the time
+        /// lock limit before it can be executed successfully. The format is
+        /// (BlockNumber, BlockNumber), the first parameter is the lower limit of the time lock,
+        /// the second is the upper limit
+        #[pallet::weight(< T as Config >::WeightInfo::exec_script())]
+        pub fn exec_script(
+            origin: OriginFor<T>,
+            call: OpCode,
+            amount: BalanceOf<T>,
+            time_lock: (T::BlockNumber, T::BlockNumber),
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+            let script_hash =
+                Self::compute_script_hash(who.clone(), call.clone(), amount, time_lock);
+            Self::apply_exec_script(who, call, amount, time_lock, script_hash)?;
+            Ok(Some(<T as Config>::WeightInfo::exec_script()).into())
         }
     }
 }
 
 impl<T: Config> Pallet<T> {
-    fn apply_generate_address(scripts: Vec<Script>) -> Result<T::AccountId, DispatchError> {
-        let script_nodes = scripts
-            .iter()
-            .map(|script| XOnly::try_from(script.clone()))
-            .collect::<Result<Vec<XOnly>, _>>()
-            .map_err::<Error<T>, _>(Into::into)?;
+    pub fn apply_pass_script(
+        addr: T::AccountId,
+        signature: Signature,
+        pubkey: Pubkey,
+        control_block: Vec<Vec<u8>>,
+        message: Message,
+        script_hash: ScriptHash,
+    ) -> DispatchResult {
+        let executable = Self::apply_verify_threshold_signature(
+            addr.clone(),
+            signature,
+            pubkey,
+            control_block,
+            message,
+        )?;
 
-        let mast = Mast::new(Vec::from(&script_nodes[1..]));
-        let addr = mast
-            .generate_tweak_pubkey(&script_nodes[0])
-            .map_err::<Error<T>, _>(Into::into)?;
-
-        let account = T::AccountId::decode(&mut &addr[..]).unwrap_or_default();
-        AddrToScript::<T>::insert(account.clone(), scripts);
-        Ok(account)
+        if executable {
+            // TODO What if the same script corresponds to different threshold signature addresses？
+            ScriptHashToAddr::<T>::insert(script_hash.clone(), addr.clone());
+            Self::deposit_event(Event::<T>::PassScript(script_hash, addr));
+        }
+        Ok(())
     }
 
     pub fn apply_verify_threshold_signature(
         addr: T::AccountId,
         signature: Signature,
-        full_script: Script,
+        pubkey: Pubkey,
+        control_block: Vec<Vec<u8>>,
         message: Message,
     ) -> Result<bool, DispatchError> {
-        // make sure the address has its corresponding scripts
-        if !AddrToScript::<T>::contains_key(addr.clone()) {
-            return Err(Error::<T>::NoAddressInStorage.into());
-        }
+        let inner_pubkey =
+            XOnly::try_from(control_block[0].clone()).map_err::<Error<T>, _>(Into::into)?;
 
-        let scripts = AddrToScript::<T>::get(&addr);
-
-        // convert script code into leaf nodes of MAST
-        let script_nodes = scripts
+        let proofs = control_block
             .iter()
-            .map(|script| XOnly::try_from(script.clone()))
-            .collect::<Result<Vec<XOnly>, _>>()
+            .skip(1)
+            .map(|c| MerkleNode::from_slice(c))
+            .collect::<Result<Vec<MerkleNode>, _>>()
             .map_err::<Error<T>, _>(Into::into)?;
 
-        // construct the MAST tree and skip the first one, which is actually the internal public key
-        let mast = Mast::new(Vec::from(&script_nodes[1..]));
-        let exec_script =
-            XOnly::try_from(full_script.clone()).map_err::<Error<T>, _>(Into::into)?;
-        // construct the merkel proof for the script to be executed
-        let proof = mast
-            .generate_merkle_proof(&exec_script)
-            .map_err::<Error<T>, _>(Into::into)?;
-
-        Self::verify_proof(addr, &proof, script_nodes)?;
-        Self::verify_signature(signature, full_script, message)?;
+        Self::verify_proof(addr, pubkey.clone(), inner_pubkey, &proofs)?;
+        Self::verify_signature(signature, pubkey, message)?;
 
         Ok(true)
     }
 
     /// To verify proof
     ///
-    /// if the proof contains an executing script, the merkel root is calculated from here
+    /// if the proof contains an executing pubkey hash, the merkel root is calculated from here
     fn verify_proof(
         addr: T::AccountId,
-        proof: &[ScriptMerkleNode],
-        scripts: Vec<XOnly>,
+        pubkey: Pubkey,
+        inner_pubkey: XOnly,
+        proofs: &[MerkleNode],
     ) -> Result<(), Error<T>> {
-        // the currently executing script
-        let mut exec_script_node = proof[0];
+        let pubkey = XOnly::try_from(pubkey).map_err::<Error<T>, _>(Into::into)?;
+        let leaf_node = tagged_leaf(&pubkey).map_err::<Error<T>, _>(Into::into)?;
+        // the first proof
+        let mut current_node = MerkleNode::from_inner(leaf_node.into_inner());
         // compute merkel root
-        for node in proof.iter().skip(1) {
-            exec_script_node = tagged_branch(exec_script_node, *node)?;
+        for node in proofs.iter() {
+            current_node = tagged_branch(current_node, *node)?;
         }
-        let merkel_root = exec_script_node;
-        // calculate the output address using the internal public key and the script root
-        let tweaked = &tweak_pubkey(&scripts[0], &merkel_root)?;
+        let merkel_root = current_node;
+        // calculate the output address using the internal public key and the merkle root
+        let tweaked = &tweak_pubkey(&inner_pubkey, &merkel_root)?;
         let output_address = T::AccountId::decode(&mut &tweaked[..]).unwrap_or_default();
 
         // ensure that the final computed public key is the same as
@@ -244,12 +261,12 @@ impl<T: Config> Pallet<T> {
     // To verify schnorr signature
     fn verify_signature(
         signature: Signature,
-        script: Script,
+        pubkey: Pubkey,
         message: Message,
     ) -> Result<(), Error<T>> {
         let sig = SchnorrSignature::from_bytes(signature.as_slice())?;
 
-        let agg_pubkey = PublicKey::from_bytes(&script)?;
+        let agg_pubkey = PublicKey::from_bytes(&pubkey)?;
         let ctx = signing_context(b"multi-sig");
 
         if agg_pubkey.verify(ctx.bytes(&message), &sig).is_err() {
@@ -259,20 +276,50 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
-    /// Calculate the sum of verify weight and call weight
-    fn compute_result_weight(mut result: DispatchResultWithPostInfo) -> DispatchResultWithPostInfo {
-        match &mut result {
-            Ok(post_info) => {
-                post_info.actual_weight = post_info.actual_weight.map(|actual_weight| {
-                    T::WeightInfo::verify_threshold_signature().saturating_add(actual_weight)
-                })
+    pub fn compute_script_hash(
+        account: T::AccountId,
+        call: OpCode,
+        amount: BalanceOf<T>,
+        time_lock: (T::BlockNumber, T::BlockNumber),
+    ) -> ScriptHash {
+        let mut input: Vec<u8> = vec![];
+        input.extend(&account.encode());
+        input.push(call.into());
+        input.extend(&amount.encode());
+        input.extend(&time_lock.0.encode());
+        input.extend(&time_lock.1.encode());
+        sha256::Hash::hash(&input).to_vec()
+    }
+
+    fn apply_exec_script(
+        account: T::AccountId,
+        call: OpCode,
+        amount: BalanceOf<T>,
+        time_lock: (T::BlockNumber, T::BlockNumber),
+        script_hash: ScriptHash,
+    ) -> DispatchResultWithPostInfo {
+        if !ScriptHashToAddr::<T>::contains_key(script_hash.clone()) {
+            return Err(Error::<T>::NoPassScript.into());
+        }
+        let current_block = frame_system::Pallet::<T>::block_number();
+        if current_block < time_lock.0 || current_block > time_lock.1 {
+            return Err(Error::<T>::MisMatchTimeLock.into());
+        }
+
+        let addr = Self::script_hash_to_addr(script_hash.clone());
+        match call {
+            OpCode::Transfer => {
+                let pos = pallet_balances::Pallet::<T>::transfer(
+                    RawOrigin::Signed(addr.clone()).into(),
+                    T::Lookup::unlookup(account.clone()),
+                    amount,
+                )?;
+                ScriptHashToAddr::<T>::remove(script_hash);
+                Self::deposit_event(Event::<T>::ExecuteScript(
+                    account, addr, call, amount, time_lock,
+                ));
+                Ok(pos)
             }
-            Err(err) => {
-                err.post_info.actual_weight = err.post_info.actual_weight.map(|actual_weight| {
-                    T::WeightInfo::verify_threshold_signature().saturating_add(actual_weight)
-                })
-            }
-        };
-        result
+        }
     }
 }

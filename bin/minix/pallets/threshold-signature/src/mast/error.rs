@@ -11,11 +11,8 @@ pub enum MastError {
     /// Mast generate address error
     MastGenAddrError,
     /// Invalid constructed mast
-    /// Example: When partial merkle tree contains no scripts
+    /// Example: When partial merkle tree contains no pubkey
     InvalidMast(String),
-
-    /// Bech32m encoding error
-    EncodeToBech32Error(String),
     /// Format error of hex
     FromHexError(String),
     // Mainly used to handle io errors of encode

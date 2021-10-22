@@ -3537,6 +3537,7 @@ version = "1.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
+ "hex-literal",
  "jsonrpc-core",
  "minix-runtime",
  "pallet-coming-auction",

@@ -5,9 +5,10 @@ pub use minix_runtime::{
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use hex_literal::hex;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -54,9 +55,9 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
                 vec![
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    caller
+                    caller.clone()
                 ],
-                true,
+                (caller.clone(), caller.clone(), caller)
             )
         },
         // Bootnodes
@@ -92,7 +93,11 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
                     get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
                 ],
-                true,
+                (
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                )
             )
         },
         // Bootnodes
@@ -109,52 +114,55 @@ pub fn development_config() -> Result<ChainSpec, String> {
 }
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
-	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "mini".into());
-	properties.insert("tokenDecimals".into(), 8.into());
+    let mut properties = Properties::new();
+    properties.insert("tokenSymbol".into(), "mini".into());
+    properties.insert("tokenDecimals".into(), 8.into());
 
-	Ok(ChainSpec::from_genesis(
-		// Name
-		"Local Testnet",
-		// ID
-		"local_testnet",
-		ChainType::Local,
-		move || minix_genesis(
-			// Initial PoA authorities
-			vec![
-				authority_keys_from_seed("Alice"),
-				authority_keys_from_seed("Bob"),
-			],
-			// Sudo account
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
-			// Pre-funded accounts
-			vec![
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie"),
-				get_account_id_from_seed::<sr25519::Public>("Dave"),
-				get_account_id_from_seed::<sr25519::Public>("Eve"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-			],
-			true,
-		),
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		// Properties
-		Some(properties),
-		// Extensions
-		None,
-	))
+    Ok(ChainSpec::from_genesis(
+        // Name
+        "MiniX",
+        // ID
+        "MiniX",
+        ChainType::Live,
+        move || minix_genesis(
+            // Initial PoA authorities
+            vec![
+                (
+                    hex!("764f3c0898c003ef987dcc1289c73e5e8e6030f29747e56c8fe0c3166b04c23e").unchecked_into(),
+                    hex!("9a6ddc5b7894ea44487878d5b4623ec04c280c10ab4b9a433dd114d55cb52998").unchecked_into(),
+                ),
+                (
+                    hex!("acc024d777338da2cc7d1eab74b4f6bb6c0f6b0119a5a60c2b2911f40c0ebc71").unchecked_into(),
+                    hex!("e2ca504a95fdd9bf8491b24acba441be739b144fd36a6a4667f0158eb1bab718").unchecked_into(),
+                ),
+            ],
+            // Sudo account
+            hex!("34eeb344c7e8176df0672e04e7a57cb2074f052cdbee7df02eec0c1c937cce52").into(),
+            // Pre-funded accounts
+            vec![
+                hex!("34eeb344c7e8176df0672e04e7a57cb2074f052cdbee7df02eec0c1c937cce52").into(),
+                hex!("fc4ea146bf1f19bc7b828c19be1f7d764c55108c8aaf6075d00c9fa7da1eca75").into(),
+                hex!("74092de518c6394d5ec2d8915c22822d0d62cc699ce8d9177c38e812a3ed3565").into(),
+                hex!("f412fd28e2835691047a49d83608c19249711b36d09c61c634566c003b3bc660").into(),
+            ],
+            // coming-keys
+            (
+                hex!("fc4ea146bf1f19bc7b828c19be1f7d764c55108c8aaf6075d00c9fa7da1eca75").into(),
+                hex!("74092de518c6394d5ec2d8915c22822d0d62cc699ce8d9177c38e812a3ed3565").into(),
+                hex!("f412fd28e2835691047a49d83608c19249711b36d09c61c634566c003b3bc660").into(),
+            )
+        ),
+        // Bootnodes
+        vec![],
+        // Telemetry
+        None,
+        // Protocol ID
+        None,
+        // Properties
+        Some(properties),
+        // Extensions
+        None,
+    ))
 }
 
 pub fn live_testnet_config() -> Result<ChainSpec, String> {
@@ -170,7 +178,7 @@ pub fn minix_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
-    _enable_println: bool,
+    coming_keys: (AccountId, AccountId, AccountId)
 ) -> GenesisConfig {
     let wasm_binary = WASM_BINARY.unwrap();
     GenesisConfig {
@@ -184,7 +192,7 @@ pub fn minix_genesis(
             balances: endowed_accounts
                 .iter()
                 .cloned()
-                .map(|k| (k, 1 << 60))
+                .map(|k| (k, 1_000_000_000_000u128))
                 .collect(),
         },
         pallet_aura: AuraConfig {
@@ -202,9 +210,9 @@ pub fn minix_genesis(
         },
         pallet_coming_id: ComingIdConfig {
             // Assign network admin rights.
-            high_admin_key: root_key.clone(),
-            medium_admin_key: root_key.clone(),
-            low_admin_key: root_key.clone(),
+            high_admin_key: coming_keys.0,
+            medium_admin_key: coming_keys.1,
+            low_admin_key: coming_keys.2,
         },
         pallet_coming_auction: ComingAuctionConfig {
             admin_key: Some(root_key)

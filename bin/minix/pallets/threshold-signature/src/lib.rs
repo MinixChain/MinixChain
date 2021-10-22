@@ -145,7 +145,7 @@ pub mod pallet {
             addr: T::AccountId,
             signature: Vec<u8>,
             pubkey: Vec<u8>,
-            control_block: Vec<Vec<u8>>,
+            control_block: Vec<u8>,
             message: Vec<u8>,
             script_hash: Vec<u8>,
         ) -> DispatchResult {
@@ -184,17 +184,24 @@ impl<T: Config> Pallet<T> {
         addr: T::AccountId,
         signature: Signature,
         pubkey: Pubkey,
-        control_block: Vec<Vec<u8>>,
+        control_block: Vec<u8>,
         message: Message,
         script_hash: ScriptHash,
     ) -> DispatchResult {
-        let executable = Self::apply_verify_threshold_signature(
-            addr.clone(),
-            signature,
-            pubkey,
-            control_block,
-            message,
-        )?;
+        let mut cb = vec![];
+        let num: usize = if control_block.len() % 32 == 0 {
+            control_block.len() / 32
+        } else {
+            return Err(Error::<T>::MastGenProofError.into());
+        };
+        for i in 0..num {
+            let mut keys = [0u8; 32];
+            keys.copy_from_slice(&control_block[i * 32..i * 32 + 32]);
+            cb.push(keys.to_vec());
+        }
+
+        let executable =
+            Self::apply_verify_threshold_signature(addr.clone(), signature, pubkey, cb, message)?;
 
         if executable {
             // TODO What if the same script corresponds to different threshold signature addresses？

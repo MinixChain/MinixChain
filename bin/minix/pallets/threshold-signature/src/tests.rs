@@ -8,7 +8,7 @@ use codec::Decode;
 use core::convert::TryFrom;
 use frame_support::{assert_noop, assert_ok};
 
-fn generate_control_block() -> Vec<Vec<u8>> {
+fn generate_control_block() -> Vec<u8> {
     let abc =
         hex::decode("881102cd9cf2ee389137a99a2ad88447b9e8b60c350cda71aff049233574c768").unwrap();
     let ab =
@@ -38,7 +38,7 @@ fn generate_control_block() -> Vec<Vec<u8>> {
         ],
         control_block.iter().map(hex::encode).collect::<Vec<_>>()
     );
-    control_block
+    control_block.concat()
 }
 
 #[test]

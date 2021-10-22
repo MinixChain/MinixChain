@@ -17,6 +17,7 @@ benchmarks! {
             hex::decode("881102cd9cf2ee389137a99a2ad88447b9e8b60c350cda71aff049233574c768").unwrap(),
             hex::decode("e17a23050f6f6db2f4218ce9f7c14edd21c5f24818157103c5a8524d7014c0dd").unwrap(),
             hex::decode("0bac21362eecf9223bc477d6dfbbe02066a911eba752faedb26d881c466ea80f").unwrap()];
+        let control_block = control_block.concat();
         let tweaked = &hex::decode("001604bef08d1fe4cefb2e75a2b786287821546f6acbe89570acc5d5a9bd5049").unwrap();
         let addr = <T as frame_system::Config>::AccountId::decode(&mut &tweaked[..]).unwrap();
         let signature_ab = hex::decode("7227f84f853853527488ba5b9939c56dd4ecd0ae96687e0d8d4d5da10cb4e6651cb2aca89236f3c3766d80e3b2ab37c74abb91ad6bb66677a0f1e3bd7e68118f").unwrap();
@@ -34,6 +35,7 @@ benchmarks! {
             hex::decode("881102cd9cf2ee389137a99a2ad88447b9e8b60c350cda71aff049233574c768").unwrap(),
             hex::decode("e17a23050f6f6db2f4218ce9f7c14edd21c5f24818157103c5a8524d7014c0dd").unwrap(),
             hex::decode("0bac21362eecf9223bc477d6dfbbe02066a911eba752faedb26d881c466ea80f").unwrap()];
+        let control_block = control_block.concat();
         let tweaked = &hex::decode("001604bef08d1fe4cefb2e75a2b786287821546f6acbe89570acc5d5a9bd5049").unwrap();
         let addr = <T as frame_system::Config>::AccountId::decode(&mut &tweaked[..]).unwrap();
         let existential_deposit = <T as pallet_balances::Config>::ExistentialDeposit::get();

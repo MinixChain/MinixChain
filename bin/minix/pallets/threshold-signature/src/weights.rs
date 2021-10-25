@@ -30,7 +30,6 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_threshold_signature.
 pub trait WeightInfo {
-    fn generate_address() -> Weight;
     fn pass_script() -> Weight;
     fn exec_script() -> Weight;
 }
@@ -38,16 +37,13 @@ pub trait WeightInfo {
 /// Weights for pallet_threshold_signature using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-    fn generate_address() -> Weight {
-        (467_254_000_u64).saturating_add(T::DbWeight::get().writes(1_u64))
-    }
     fn pass_script() -> Weight {
         (886_901_000_u64)
             .saturating_add(T::DbWeight::get().reads(1_u64))
             .saturating_add(T::DbWeight::get().writes(1_u64))
     }
     fn exec_script() -> Weight {
-        (77_574_000_u64)
+        (10_000_u64)
             .saturating_add(T::DbWeight::get().reads(2_u64))
             .saturating_add(T::DbWeight::get().writes(2_u64))
     }
@@ -55,16 +51,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-    fn generate_address() -> Weight {
-        (467_254_000_u64).saturating_add(RocksDbWeight::get().writes(1_u64))
-    }
     fn pass_script() -> Weight {
         (886_901_000_u64)
             .saturating_add(RocksDbWeight::get().reads(1_u64))
             .saturating_add(RocksDbWeight::get().writes(1_u64))
     }
     fn exec_script() -> Weight {
-        (77_574_000_u64)
+        (10_000_u64)
             .saturating_add(RocksDbWeight::get().reads(2_u64))
             .saturating_add(RocksDbWeight::get().writes(2_u64))
     }

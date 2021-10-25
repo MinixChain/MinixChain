@@ -103,7 +103,7 @@ fn exec_script_should_work() {
         assert_eq!("576520617265206c6567696f6e21", hex::encode(&message));
         let script_hash = Pallet::<Test>::compute_script_hash(who, OpCode::Transfer, 10, (0, 10));
         assert_ok!(Pallet::<Test>::pass_script(Origin::signed(who), addr, signature_ab, ab, control_block, message, script_hash));
-        assert_ok!(Pallet::<Test>::exec_script(Origin::signed(who), OpCode::Transfer, 10, (0, 10)));
+        assert_ok!(Pallet::<Test>::exec_script(Origin::signed(who), who, OpCode::Transfer, 10, (0, 10)));
         assert_eq!(pallet_balances::Pallet::<Test>::free_balance(who), 20);
     });
 }
@@ -122,7 +122,7 @@ fn exec_script_mismatch_time_lock() {
         assert_eq!("576520617265206c6567696f6e21", hex::encode(&message));
         let script_hash = Pallet::<Test>::compute_script_hash(who, OpCode::Transfer, 10, (2, 10));
         assert_ok!(Pallet::<Test>::pass_script(Origin::signed(who), addr, signature_ab, ab, control_block, message, script_hash));
-        assert_noop!(Pallet::<Test>::exec_script(Origin::signed(who), OpCode::Transfer, 10, (2, 10)), Error::<Test>::MisMatchTimeLock);
+        assert_noop!(Pallet::<Test>::exec_script(Origin::signed(who), who, OpCode::Transfer, 10, (2, 10)), Error::<Test>::MisMatchTimeLock);
         assert_eq!(pallet_balances::Pallet::<Test>::free_balance(who), 10);
     });
 }
@@ -141,9 +141,9 @@ fn exec_script_no_pass_script() {
         assert_eq!("576520617265206c6567696f6e21", hex::encode(&message));
         let script_hash = Pallet::<Test>::compute_script_hash(who, OpCode::Transfer, 10, (0, 10));
         assert_ok!(Pallet::<Test>::pass_script(Origin::signed(who), addr, signature_ab, ab, control_block, message, script_hash));
-        assert_ok!(Pallet::<Test>::exec_script(Origin::signed(who), OpCode::Transfer, 10, (0, 10)));
+        assert_ok!(Pallet::<Test>::exec_script(Origin::signed(who), who, OpCode::Transfer, 10, (0, 10)));
         assert_eq!(pallet_balances::Pallet::<Test>::free_balance(who), 20);
-        assert_noop!(Pallet::<Test>::exec_script(Origin::signed(who), OpCode::Transfer, 10, (0, 10)), Error::<Test>::NoPassScript);
+        assert_noop!(Pallet::<Test>::exec_script(Origin::signed(who), who, OpCode::Transfer, 10, (0, 10)), Error::<Test>::NoPassScript);
         assert_eq!(pallet_balances::Pallet::<Test>::free_balance(who), 20);
     });
 }

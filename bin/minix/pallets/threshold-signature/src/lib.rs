@@ -166,14 +166,15 @@ pub mod pallet {
         #[pallet::weight(< T as Config >::WeightInfo::exec_script())]
         pub fn exec_script(
             origin: OriginFor<T>,
+            target: T::AccountId,
             call: OpCode,
             amount: BalanceOf<T>,
             time_lock: (T::BlockNumber, T::BlockNumber),
         ) -> DispatchResultWithPostInfo {
-            let who = ensure_signed(origin)?;
+            ensure_signed(origin)?;
             let script_hash =
-                Self::compute_script_hash(who.clone(), call.clone(), amount, time_lock);
-            Self::apply_exec_script(who, call, amount, time_lock, script_hash)?;
+                Self::compute_script_hash(target.clone(), call.clone(), amount, time_lock);
+            Self::apply_exec_script(target, call, amount, time_lock, script_hash)?;
             Ok(Some(<T as Config>::WeightInfo::exec_script()).into())
         }
     }

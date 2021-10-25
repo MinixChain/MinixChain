@@ -44,7 +44,7 @@ benchmarks! {
         let message = b"We are legion!".to_vec();
         let script_hash = Pallet::<T>::compute_script_hash(caller.clone(), OpCode::Transfer, existential_deposit, (0u32.into(), 10u32.into()));
         let _ = Pallet::<T>::apply_pass_script(addr, signature_ab, ab, control_block, message, script_hash);
-    }: _(RawOrigin::Signed(caller.clone()), OpCode::Transfer, existential_deposit, (0u32.into(), 10u32.into()))
+    }: _(RawOrigin::Signed(caller.clone()), caller.clone(), OpCode::Transfer, existential_deposit, (0u32.into(), 10u32.into()))
     verify {
         assert_eq!(pallet_balances::Pallet::<T>::free_balance(caller), existential_deposit);
     }

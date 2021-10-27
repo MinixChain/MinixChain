@@ -42,6 +42,9 @@ pub use sp_runtime::{Perbill, Permill};
 
 use pallet_coming_id::{Cid, CidDetails};
 use pallet_transaction_payment::CurrencyAdapter;
+pub use pallet_threshold_signature::primitive::{
+    Message, OpCode, Pubkey, ScriptHash, Signature as TSignature,
+};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -298,6 +301,12 @@ impl pallet_coming_nft::Config for Runtime {
     type WeightInfo = ();
 }
 
+impl pallet_threshold_signature::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type WeightInfo = pallet_threshold_signature::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -320,6 +329,7 @@ construct_runtime!(
 
         // Handy utilities.
         Utility: pallet_utility::{Pallet, Call, Event} = 30,
+        ThresholdSignature: pallet_threshold_signature::{Pallet, Call, Storage, Event<T>} = 31,
 
         // Coming stuff
         ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>} = 40,
@@ -545,6 +555,17 @@ impl_runtime_apis! {
         }
     }
 
+    impl pallet_threshold_signature_rpc_runtime_api::ThresholdSignatureApi<Block> for Runtime {
+        fn compute_script_hash(
+            account: AccountId,
+            call: OpCode,
+            amount: Balance,
+            time_lock: (BlockNumber, BlockNumber),
+        ) -> ScriptHash {
+            ThresholdSignature::compute_script_hash(account, call, amount, time_lock)
+        }
+    }
+
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
         fn dispatch_benchmark(
@@ -576,6 +597,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, pallet_coming_id, ComingId);
             add_benchmark!(params, batches, pallet_coming_nft, ComingNFT);
+            add_benchmark!(params, batches, pallet_threshold_signature, ThresholdSignature);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

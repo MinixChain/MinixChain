@@ -7,12 +7,28 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use serde::{Deserialize, Serialize};
+use sc_chain_spec::ChainSpecExtension;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
+/// Node `ChainSpec` extensions.
+///
+/// Additional parameters for some Substrate core modules,
+/// customizable from the chain spec.
+#[derive(Default, Clone, Serialize, Deserialize, ChainSpecExtension)]
+#[serde(rename_all = "camelCase")]
+pub struct Extensions {
+    /// The light sync state.
+    ///
+    /// This value will be set by the `sync-state rpc` implementation.
+    pub light_sync_state: sc_sync_state_rpc::LightSyncStateExtension,
+}
+
+
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -67,7 +83,7 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
         // Properties
         None,
         // Extensions
-        None,
+        Default::default(),
     ))
 }
 
@@ -107,7 +123,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
         // Properties
         None,
         // Extensions
-        None,
+        Default::default(),
     ))
 }
 
@@ -162,7 +178,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         // Properties
         Some(properties),
         // Extensions
-        None,
+        Default::default(),
     ))
 }
 
@@ -205,7 +221,7 @@ pub fn dev_evm_config() -> Result<ChainSpec, String> {
         // Properties
         Some(properties),
         // Extensions
-        None,
+        Default::default(),
     ))
 }
 

@@ -5,7 +5,6 @@ members = [
     "node",
     "runtime",
 
-    "pallets/deposit",
     "pallets/pallet-coming-id",
     "pallets/pallet-coming-nft",
     "pallets/pallet-coming-auction",

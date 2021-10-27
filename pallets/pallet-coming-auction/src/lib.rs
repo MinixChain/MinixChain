@@ -26,7 +26,7 @@ use sp_arithmetic::helpers_128bit::multiply_by_rational;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Eq, PartialEq, Encode, Decode)]
+#[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct Auction<AccountId, Balance, BlockNumber> {
@@ -38,7 +38,7 @@ pub struct Auction<AccountId, Balance, BlockNumber> {
 }
 
 /// A pallet identifier. These are per pallet and should be stored in a registry somewhere.
-#[derive(Clone, Copy, Eq, PartialEq, Encode, Decode)]
+#[derive(Clone, Copy, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 pub struct PalletAuctionId(pub [u8; 4]);
 
 impl TypeId for PalletAuctionId {
@@ -132,7 +132,6 @@ pub mod pallet {
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
-    #[pallet::metadata(T::AccountId = "AccountId", BalanceOf<T> = "Balance", T::BlockNumber = "BlockNumber")]
     pub enum Event<T: Config> {
         // cid, seller, start_price, end_price, duration, start_at
         AuctionCreated(Cid, T::AccountId, BalanceOf<T>, BalanceOf<T>, T::BlockNumber, T::BlockNumber),

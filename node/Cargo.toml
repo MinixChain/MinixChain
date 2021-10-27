@@ -52,9 +52,9 @@ frame-benchmarking = { git = 'https://github.com/paritytech/substrate', branch =
 frame-benchmarking-cli = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.11" }
 
 # Minix
-pallet-coming-id = { version = "1.2.0", path = "../pallets/pallet-coming-id" }
 pallet-coming-id-rpc = { version = "1.2.0", path = "../pallets/pallet-coming-id/rpc" }
 pallet-threshold-signature-rpc = { version = "3.0.0", path = "../pallets/threshold-signature/rpc"}
+pallet-coming-auction-rpc = { version = "1.2.0", path = "../pallets/pallet-coming-auction/rpc" }
 
 minix-runtime = { version = "3.0.0", path = "../runtime" }
 

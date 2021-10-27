@@ -100,5 +100,6 @@ runtime-benchmarks = [
     "pallet-timestamp/runtime-benchmarks",
 
     "pallet-coming-id/runtime-benchmarks",
-    "pallet-coming-nft/runtime-benchmarks"
+    "pallet-coming-nft/runtime-benchmarks",
+    "pallet-threshold-signature/runtime-benchmarks",
 ]

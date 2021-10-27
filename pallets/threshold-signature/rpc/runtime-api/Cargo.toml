@@ -1,0 +1,25 @@
+[package]
+authors = ['The ChainX Authors']
+name = "pallet-threshold-signature-rpc-runtime-api"
+edition = "2018"
+version = '3.0.0'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[dependencies]
+sp-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+pallet-threshold-signature = { default-features = false, path = "../../../threshold-signature" }
+
+
+[features]
+default = ["std"]
+std = [
+    # Substrate primitives
+    "sp-api/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "pallet-threshold-signature/std"
+]

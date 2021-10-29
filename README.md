@@ -196,7 +196,7 @@ Refer [Interacting with Moonbeam Using Remix](https://docs.moonbeam.network/gett
             "isOptional": true
           }
         ],
-        "type": "string"
+        "type": "Balance"
       }
     }
 }

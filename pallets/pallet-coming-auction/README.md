@@ -72,7 +72,7 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
         &self,
         cid: Cid,
         at: Option<BlockHash>
-    ) -> Result<NumberOrHex>;
+    ) -> Result<Balance>;
 ```
 输入：
 ```json
@@ -87,7 +87,7 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
 ```json
 {
   "jsonrpc": "2.0",
-  "result": "0x594ff81df000",
+  "result": "17083000000000000000000000",
   "id": 1
 }
 ```

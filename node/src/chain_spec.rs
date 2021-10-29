@@ -54,6 +54,10 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 
 #[cfg(feature = "runtime-benchmarks")]
 pub fn benchmarks_config() -> Result<ChainSpec, String> {
+    let mut properties = Properties::new();
+    properties.insert("tokenSymbol".into(), "mini".into());
+    properties.insert("tokenDecimals".into(), 8.into());
+
     Ok(ChainSpec::from_genesis(
         "Benchmarks",
         "benchmarks",
@@ -81,13 +85,17 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
         // Protocol ID
         None,
         // Properties
-        None,
+        Some(properties),
         // Extensions
         Default::default(),
     ))
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
+    let mut properties = Properties::new();
+    properties.insert("tokenSymbol".into(), "mini".into());
+    properties.insert("tokenDecimals".into(), 8.into());
+
     Ok(ChainSpec::from_genesis(
         // Name
         "Development",
@@ -121,7 +129,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
         // Protocol ID
         None,
         // Properties
-        None,
+        Some(properties),
         // Extensions
         Default::default(),
     ))

@@ -13,7 +13,7 @@ name = "minix"
 
 [dependencies]
 structopt = "0.3.8"
-jsonrpc-core = "18.0.0"
+jsonrpc-core = { version = "18.0.0", features = ["arbitrary_precision"] }
 hex-literal = "0.3.3"
 serde = { version = "1.0.119", features = ["derive"] }
 

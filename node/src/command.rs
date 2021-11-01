@@ -81,10 +81,22 @@ impl SubstrateCli for Cli {
             }
             "" | "local" => Box::new(chain_spec::local_testnet_config()?),
             path => {
+                use std::fs::File;
+                use std::io::Read;
+
                 set_default_ss58_version(Ss58AddressFormat::ChainXAccount);
 
-                Box::new(chain_spec::ChainSpec::from_json_file(
-                    std::path::PathBuf::from(path),
+                let mut bytes: Vec<u8> = Vec::new();
+                let mut file = File::open(&std::path::PathBuf::from(path))
+                    .map_err(|e| format!("Error opening spec file: {}", e))?;
+
+                // We read the entire file into memory first, as this is *a lot* faster than using
+                // `serde_json::from_reader`. See https://github.com/serde-rs/json/issues/160
+                file.read_to_end(&mut bytes)
+                    .map_err(|e| format!("Error read spec file: {}", e))?;
+
+                Box::new(chain_spec::ChainSpec::from_json_bytes(
+                    std::borrow::Cow::Owned(bytes),
                 )?)
             }
         })

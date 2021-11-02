@@ -113,6 +113,11 @@ Refer [Interacting with Moonbeam Using Remix](https://docs.moonbeam.network/gett
     "end_price": "Balance",
     "duration": "BlockNumber",
     "start": "BlockNumber"
+  },
+  "OpCode": {
+    "_enum": [
+      "Transfer"
+    ]
   }
 }
 ```
@@ -183,21 +188,50 @@ Refer [Interacting with Moonbeam Using Remix](https://docs.moonbeam.network/gett
     }
   },
   "comingAuction": {
-      "getPrice": {
-        "description": "comingAuction getPrice",
-        "params": [
-          {
-            "name": "cid",
-            "type": "Cid"
-          },
-          {
-            "name": "at",
-            "type": "Hash",
-            "isOptional": true
-          }
-        ],
-        "type": "Balance"
-      }
+    "getPrice": {
+      "description": "comingAuction getPrice",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "string"
     }
+  },
+  "ts": {
+    "computeScriptHash": {
+      "description": "threshold signature computeScriptHash",
+      "params": [
+        {
+          "name": "account",
+          "type": "AccountID"
+        },
+        {
+          "name": "call",
+          "type": "OpCode"
+        },
+        {
+          "name": "amount",
+          "type": "u128"
+        },
+        {
+          "name": "time_lock",
+          "type": "(u32, u32)"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "string"
+    }
+  }
 }
 ```

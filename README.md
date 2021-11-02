@@ -232,6 +232,5 @@ Refer [Interacting with Moonbeam Using Remix](https://docs.moonbeam.network/gett
       ],
       "type": "string"
     }
-  }
 }
 ```

@@ -3741,6 +3741,7 @@ version = "3.0.0"
 dependencies = [
  "fp-evm",
  "fp-rpc",
+ "fp-self-contained",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",

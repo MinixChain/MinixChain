@@ -2,7 +2,7 @@
 
 use frame_support::traits::{Currency, ExistenceRequirement};
 use core::marker::PhantomData;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
+use fp_evm::{PrecompileOutput, Context, ExitError, ExitSucceed};
 use pallet_evm::{Precompile, AddressMapping};
 use sp_core::{H160, U256, hexdisplay::HexDisplay};
 use sp_runtime::{traits::UniqueSaturatedInto, AccountId32};
@@ -61,7 +61,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "match owner: err = {:?}", err);
                         err
-                })?;
+                    })?;
 
                 log::debug!(target: "coming-nft", "match owner: {:?}", is_match);
 
@@ -102,15 +102,15 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
             68 => {
                 log::debug!(target: "coming-nft", "transfer from: call");
 
-                let can_transfer = Self::process_transfer_from(input)
+                Self::process_transfer_from(input)
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "transfer from: err = {:?}", err);
                         err
                     })?;
 
-                log::debug!(target: "coming-nft", "can_transfer: {:?}", can_transfer);
+                log::debug!(target: "coming-nft", "transfer from: success");
 
-                Ok(can_transfer)
+                Ok(true)
             },
             // approve
             // input = owner(evm address, 20 bytes) + operator(evm address, 20 bytes) + cid(8 bytes)
@@ -268,26 +268,20 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
 
     fn process_transfer_from(
         input: &[u8]
-    ) -> Result<bool, ExitError> {
+    ) -> Result<(), ExitError> {
         let operator = Self::account_from_address(&input[0..20])?;
         let from = Self::account_from_address(&input[20..40])?;
         let to = Self::account_from_address(&input[40..60])?;
         let cid = Self::parse_cid(&input[60..68])?;
-
-        if !T::ComingNFT::can_transfer_from(&operator, cid) {
-            return Ok(false)
-        }
 
         T::ComingNFT::transfer_from(
             &operator,
             &from,
             &to,
             cid
-        )
-            .map(|_| true)
-            .map_err(|err| {
-                ExitError::Other(sp_std::borrow::Cow::Borrowed(err.into()))
-            })
+        ).map_err(|err| {
+            ExitError::Other(sp_std::borrow::Cow::Borrowed(err.into()))
+        })
     }
 
     fn process_approve(
@@ -311,7 +305,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
     ) -> Result<(), ExitError> {
         let owner = Self::account_from_address(&input[0..20])?;
         let operator = Self::account_from_address(&input[20..40])?;
-        let approved = Self::parse_approved(&input[40])?;
+        let approved = Self::parse_approved(&input[41])?;
 
         T::ComingNFT::set_approval_for_all(
             &owner,

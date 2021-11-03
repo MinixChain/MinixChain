@@ -324,7 +324,7 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
 
         // Consensus stuff
-        Aura: pallet_aura::{Pallet, Config<T>} = 20,
+        Aura: pallet_aura::{Pallet, Storage, Config<T>} = 20,
         Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 21,
 
         // Handy utilities.

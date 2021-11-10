@@ -17,7 +17,7 @@ benchmarks! {
         let tweaked = &hex::decode("3ee8244d248f1e06f72ab7d38ee7f25024d33f555eb585e167816f03c7cde719").unwrap();
         let addr = <T as frame_system::Config>::AccountId::decode(&mut &tweaked[..]).unwrap();
         let signature_ab = hex::decode("98d683074a37ac9bf3d08d81899071109d099ad4a006bb84662db241e507806f253c515d5f02216ec88ef91f322b583c49ea4c0e88eebc3bab32663df8019f88").unwrap();
-        let message = 666666;
+        let message = 666666u32.to_be_bytes().to_vec();
         let script_hash = Pallet::<T>::compute_script_hash(caller.clone(), OpCode::Transfer, 10u32.into(), (0u32.into(), 10u32.into()));
     }: _(RawOrigin::Signed(caller), addr.clone(), signature_ab, ab, control_block, message, script_hash.clone())
     verify {
@@ -33,7 +33,7 @@ benchmarks! {
         let existential_deposit = <T as pallet_balances::Config>::ExistentialDeposit::get();
         let _ = pallet_balances::Pallet::<T>::deposit_creating(&addr, existential_deposit.saturating_mul(10u32.into()));
         let signature_ab = hex::decode("98d683074a37ac9bf3d08d81899071109d099ad4a006bb84662db241e507806f253c515d5f02216ec88ef91f322b583c49ea4c0e88eebc3bab32663df8019f88").unwrap();
-        let message = 666666;
+        let message = 666666u32.to_be_bytes().to_vec();
         let script_hash = Pallet::<T>::compute_script_hash(caller.clone(), OpCode::Transfer, existential_deposit, (0u32.into(), 10u32.into()));
         let _ = Pallet::<T>::apply_pass_script(addr, signature_ab, ab, control_block, message, script_hash);
     }: _(RawOrigin::Signed(caller.clone()), caller.clone(), OpCode::Transfer, existential_deposit, (0u32.into(), 10u32.into()))

@@ -28,7 +28,7 @@ use self::{
 };
 use crate::primitive::{OpCode, ScriptHash};
 use codec::{Decode, Encode};
-use frame_support::{dispatch::DispatchResult, sp_runtime::{traits::StaticLookup, SaturatedConversion}, traits::Currency};
+use frame_support::{dispatch::DispatchResult, sp_runtime::traits::StaticLookup, traits::Currency};
 use frame_support::{
     dispatch::{DispatchError, DispatchResultWithPostInfo, PostDispatchInfo},
     inherent::Vec,
@@ -156,7 +156,8 @@ pub mod pallet {
             signature: Vec<u8>,
             pubkey: Vec<u8>,
             control_block: Vec<u8>,
-            message: u32,
+            // message: u32,
+            message: Vec<u8>,
             script_hash: Vec<u8>,
         ) -> DispatchResult {
             ensure_signed(origin)?;
@@ -165,9 +166,9 @@ pub mod pallet {
                 return Err(Error::<T>::ExistedSignature.into());
             }
             // check if signature has expired
-            if message < frame_system::Pallet::<T>::block_number().saturated_into::<u32>() {
-                return Err(Error::<T>::ExpiredSignature.into());
-            }
+            // if message < frame_system::Pallet::<T>::block_number().saturated_into::<u32>() {
+            //     return Err(Error::<T>::ExpiredSignature.into());
+            // }
             // approve the transaction script
             Self::apply_pass_script(addr, signature, pubkey, control_block, message, script_hash)
         }
@@ -192,9 +193,9 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             ensure_signed(origin)?;
             // remove expired signature
-            Self::remove_expired_signature(
-                frame_system::Pallet::<T>::block_number().saturated_into::<u32>(),
-            );
+            // Self::remove_expired_signature(
+            //     frame_system::Pallet::<T>::block_number().saturated_into::<u32>(),
+            // );
             // execute script
             let script_hash =
                 Self::compute_script_hash(target.clone(), call.clone(), amount, time_lock);
@@ -210,11 +211,13 @@ impl<T: Config> Pallet<T> {
         signature: Signature,
         pubkey: Pubkey,
         control_block: Vec<u8>,
-        height: u32,
+        // height: u32,
+        message: Vec<u8>,
         script_hash: ScriptHash,
     ) -> DispatchResult {
         let mut cb = vec![];
-        let message = height.to_be_bytes().to_vec();
+        // let message = height.to_be_bytes().to_vec();
+        let height = 10000;
         let num: usize = if control_block.len() % 32 == 0 {
             control_block.len() / 32
         } else {
@@ -328,14 +331,14 @@ impl<T: Config> Pallet<T> {
         sha256::Hash::hash(&input).to_vec()
     }
 
-    fn remove_expired_signature(height: u32) {
-        let signatures = SignatureSurvivalHeight::<T>::iter();
-        for (signature, survival_height) in signatures {
-            if survival_height < height {
-                SignatureSurvivalHeight::<T>::remove(signature);
-            }
-        }
-    }
+    // fn remove_expired_signature(height: u32) {
+    //     let signatures = SignatureSurvivalHeight::<T>::iter();
+    //     for (signature, survival_height) in signatures {
+    //         if survival_height < height {
+    //             SignatureSurvivalHeight::<T>::remove(signature);
+    //         }
+    //     }
+    // }
 
     fn apply_exec_script(
         account: T::AccountId,

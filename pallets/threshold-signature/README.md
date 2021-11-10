@@ -47,7 +47,7 @@
   
   `control_block`: The first element is inner pubkey, and the remaining elements are merkle proof. For example, merkle proof may be `[tag_hash(pubkey_BC), tag_hash(pubkey_AC)]`.         
   
-  `message`: Message used in the signing process.       
+  `message`: Message used in the signing process, it is also the block height where the signature exists.       
   
   `call`: The transaction that needs to be called after the threshold signature verification is passed.   
 
@@ -76,43 +76,37 @@ To test the availability of the above two Calls, you need to use [musig](https:/
 
 #### Basic data
 
-1. Aggregate public key of A, B, C
+1. Aggregate public key of A, B
 
 ~~~
-0x881102cd9cf2ee389137a99a2ad88447b9e8b60c350cda71aff049233574c768
+0x744ffca9bc5f2fa2373823c5510cf757fbbcda8e257eb0c7142edfda693b2f7b
 ~~~
 
-2. Aggregate public key of A, B
+2. Threshold address
 
 ~~~
-0x7c9a72882718402bf909b3c1693af60501c7243d79ecc8cf030fa253eb136861
+0x3ee8244d248f1e06f72ab7d38ee7f25024d33f555eb585e167816f03c7cde719
 ~~~
 
-3. Aggregate public key of A, C
+3. Message used to generate signature
 
 ~~~
-0xb69af178463918a181a8549d2cfbe77884852ace9d8b299bddf69bedc33f6356
+666666
 ~~~
 
-4. Aggregate public key of B, C
+4. A, B's aggregate signature of the above message
 
 ~~~
-0xa20c839d955cb10e58c6cbc75812684ad3a1a8f24a503e1c07f5e4944d974d3b
+0x98d683074a37ac9bf3d08d81899071109d099ad4a006bb84662db241e507806f253c515d5f02216ec88ef91f322b583c49ea4c0e88eebc3bab32663df8019f88
 ~~~
 
-5. Message used to generate signature
+5. Control block
 
 ~~~
-0x576520617265206c6567696f6e21
+0xfa87fe21ee5bd74aa18a83b3c182f021f3154f93dbb41f238b8c4e540c626140461222205b7b12a3ab413e75d91d4c385c1f018c9fb77c342409a85f50b27634
 ~~~
 
-6. A, B's aggregate signature of the above message
-
-~~~
-0x7227f84f853853527488ba5b9939c56dd4ecd0ae96687e0d8d4d5da10cb4e6651cb2aca89236f3c3766d80e3b2ab37c74abb91ad6bb66677a0f1e3bd7e68118f
-~~~
-
-7. Alice's pubkey
+6. Alice's pubkey
 
 ~~~
 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
@@ -156,11 +150,11 @@ pubkey_abc    +     root
 
 ### Pass Script
 
-![](https://cdn.jsdelivr.net/gh/AAweidai/PictureBed@master/taproot/1631799315572-1631799315504.png)
+![](https://cdn.jsdelivr.net/gh/hacpy/PictureBed@master/Document/16365112850891636511285080.png)
 
 Pass Script is the transaction call is to verify the threshold signature address and authorize the script. As shown in the figure above:
 
-- Fill in `addr` with **`5Pe8v2KPm5dfdgRPDjAWdBSmWva7aeEH5nbZpYsHBX3mAVPK`**. 
+- Fill in `addr` with **`0x3ee8244d248f1e06f72ab7d38ee7f25024d33f555eb585e167816f03c7cde719`**. 
 - Fill in `signature` with `A, B's aggregate signature of the above message`. 
 - Fill in the `pubkey` with `Aggregate public key of A, B`. 
 - Fill in `control_block` in order: [`Aggregate public key of A, B, C`,   `tag_hash(BC)`, `tag_hash(AC)`]
@@ -171,11 +165,11 @@ After the submission is successful, the five parameters of `addr`, `signature`, 
 
 ### Exec Script
 
-The above-mentioned authorized script is the operation of transferring money from a  threshold signature address `5Pe8v2KPm5dfdgRPDjAWdBSmWva7aeEH5nbZpYsHBX3mAVPK` to Alice. Therefore, the balance needs to be transferred to the threshold signature address first, and then the transfer can be performed after the address has a balance.
+The above-mentioned authorized script is the operation of transferring money from a  threshold signature address `0x3ee8244d248f1e06f72ab7d38ee7f25024d33f555eb585e167816f03c7cde719` to Alice. Therefore, the balance needs to be transferred to the threshold signature address first, and then the transfer can be performed after the address has a balance.
 
 ![](https://cdn.jsdelivr.net/gh/AAweidai/PictureBed@master/taproot/1631104610241-1631104610236.png)
 
-The picture above is the transfer to the threshold signature address **`5Pe8v2KPm5dfdgRPDjAWdBSmWva7aeEH5nbZpYsHBX3mAVPK`**
+The picture above is the transfer to the threshold signature address **`0x3ee8244d248f1e06f72ab7d38ee7f25024d33f555eb585e167816f03c7cde719`**
 
 ![](https://cdn.jsdelivr.net/gh/hacpy/PictureBed@master/Document/1635133723155-1635133723152.png)
 

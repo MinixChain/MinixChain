@@ -107,7 +107,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     //   `spec_version`, and `authoring_version` are the same between Wasm and native.
     // This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
     //   the compatible custom types.
-    spec_version: 110,
+    spec_version: 113,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -368,43 +368,8 @@ pub type Executive = frame_executive::Executive<
     frame_system::ChainContext<Runtime>,
     Runtime,
     AllPallets,
-    (
-        RemoveCollectiveFlip,
-        MigratePalletVersionToStorageVersion,
-        GrandpaStoragePrefixMigration
-    )
+    ()
 >;
-
-// todo: remove me after upgrade minix mainnet to 110
-pub struct RemoveCollectiveFlip;
-impl frame_support::traits::OnRuntimeUpgrade for RemoveCollectiveFlip {
-    fn on_runtime_upgrade() -> Weight {
-        use frame_support::storage::migration;
-        // Remove the storage value `RandomMaterial` from removed pallet `RandomnessCollectiveFlip`
-        migration::remove_storage_prefix(b"RandomnessCollectiveFlip", b"RandomMaterial", b"");
-        <Runtime as frame_system::Config>::DbWeight::get().writes(1)
-    }
-}
-
-/// Migrate from `PalletVersion` to the new `StorageVersion`
-pub struct MigratePalletVersionToStorageVersion;
-impl frame_support::traits::OnRuntimeUpgrade for MigratePalletVersionToStorageVersion {
-    fn on_runtime_upgrade() -> frame_support::weights::Weight {
-        frame_support::migrations::migrate_from_pallet_version_to_storage_version::<AllPalletsWithSystem>(
-            &RocksDbWeight::get()
-        )
-    }
-}
-
-pub struct GrandpaStoragePrefixMigration;
-impl frame_support::traits::OnRuntimeUpgrade for GrandpaStoragePrefixMigration {
-    fn on_runtime_upgrade() -> frame_support::weights::Weight {
-        use frame_support::traits::PalletInfo;
-        let name = <Runtime as frame_system::Config>::PalletInfo::name::<Grandpa>()
-            .expect("grandpa is part of pallets in construct_runtime, so it has a name; qed");
-        pallet_grandpa::migrations::v4::migrate::<Runtime, &str>(name)
-    }
-}
 
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {

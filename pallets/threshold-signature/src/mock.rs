@@ -58,14 +58,14 @@ parameter_types! {
 }
 impl pallet_balances::Config for Test {
     type MaxLocks = ();
+    type MaxReserves = ();
+    type ReserveIdentifier = [u8; 8];
     type Balance = u64;
     type Event = Event;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
     type WeightInfo = ();
-    type MaxReserves = ();
-    type ReserveIdentifier = [u8; 8];
 }
 impl pallet_threshold_signature::Config for Test {
     type Event = Event;
@@ -79,13 +79,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .build_storage::<Test>()
         .unwrap();
     pallet_balances::GenesisConfig::<Test> {
-        balances: vec![
-            (1, 10),
-            (2, 20),
-            (3, 30),
-            (4, 40),
-            (16438013230045206016, 50),
-        ],
+        balances: vec![(1, 10), (2, 20), (3, 30), (4, 40), (440947199604746302, 50)],
     }
     .assimilate_storage(&mut t)
     .unwrap();

@@ -1,6 +1,6 @@
 use super::Event as ComingIdEvent;
 use crate::{
-    mock::*, BondData, CidDetails, AccountIdCids, Error,
+    mock::*, BondData, CidDetails, Error,
 };
 use frame_support::{assert_noop, assert_ok};
 

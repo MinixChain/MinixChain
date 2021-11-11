@@ -108,7 +108,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     //   `spec_version`, and `authoring_version` are the same between Wasm and native.
     // This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
     //   the compatible custom types.
-    spec_version: 113,
+    spec_version: 114,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -381,6 +381,17 @@ pub type Executive = frame_executive::Executive<
     AllPallets,
     ()
 >;
+
+// todo: remove me after upgrade minix mainnet from 113
+pub struct RemoveCidStats;
+impl frame_support::traits::OnRuntimeUpgrade for RemoveCidStats {
+    fn on_runtime_upgrade() -> Weight {
+        use frame_support::storage::migration;
+        // Remove the storage value `Stats` from  pallet `ComingId`
+        migration::remove_storage_prefix(b"ComingId", b"Stats", b"");
+        <Runtime as frame_system::Config>::DbWeight::get().writes(1)
+    }
+}
 
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {

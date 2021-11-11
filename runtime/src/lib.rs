@@ -45,6 +45,7 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use pallet_threshold_signature::primitive::{
     Message, OpCode, Pubkey, ScriptHash, Signature as TSignature,
 };
+use pallet_coming_auction::PalletAuctionId;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -281,6 +282,7 @@ parameter_types! {
     pub const ClaimValidatePeriod: BlockNumber = 600;
     pub const CidsLimit: u32 = 500;
     pub const MaxCardSize: u32 = 1024 * 1024;
+    pub const AuctionId: PalletAuctionId = PalletAuctionId(*b"/auc");
 }
 
 /// Configure the pallet-coming-id in pallets/coming-id.
@@ -305,6 +307,14 @@ impl pallet_threshold_signature::Config for Runtime {
     type Event = Event;
     type Call = Call;
     type WeightInfo = pallet_threshold_signature::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_coming_auction::Config for Runtime {
+    type ComingNFT = ComingId;
+    type Event = Event;
+    type Currency = Balances;
+    type PalletId = AuctionId;
+    type WeightInfo = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -334,6 +344,7 @@ construct_runtime!(
         // Coming stuff
         ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>} = 40,
         ComingNFT: pallet_coming_nft::{Pallet, Call} = 41,
+        ComingAuction: pallet_coming_auction::{Pallet, Call, Config<T>, Storage, Event<T>} = 42,
     }
 );
 
@@ -531,6 +542,12 @@ impl_runtime_apis! {
         }
     }
 
+    impl pallet_coming_auction_rpc_runtime_api::ComingAuctionApi<Block, Balance> for Runtime {
+        fn get_price(cid: Cid) -> Balance {
+            ComingAuction::get_current_price(cid)
+        }
+    }
+
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
         fn dispatch_benchmark(
@@ -563,6 +580,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_coming_id, ComingId);
             add_benchmark!(params, batches, pallet_coming_nft, ComingNFT);
             add_benchmark!(params, batches, pallet_threshold_signature, ThresholdSignature);
+            add_benchmark!(params, batches, pallet_coming_auction, ComingAuction);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

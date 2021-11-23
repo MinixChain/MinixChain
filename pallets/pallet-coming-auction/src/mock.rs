@@ -124,6 +124,8 @@ pub fn new_test_ext(
     pallet_coming_id::GenesisConfig::<Test> {
         high_admin_key: admin_key,
         medium_admin_key: admin_key,
+        medium_admin_key2: admin_key,
+        medium_admin_key3: admin_key,
         low_admin_key: admin_key,
     }
         .assimilate_storage(&mut t)

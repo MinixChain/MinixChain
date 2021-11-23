@@ -19,6 +19,7 @@ frame_support::construct_runtime!(
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
+        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     }
 );
 
@@ -60,6 +61,11 @@ impl pallet_coming_id::Config for Test {
     type MaxCardSize = MaxCardSize;
 }
 
+impl pallet_sudo::Config for Test {
+    type Event = Event;
+    type Call = Call;
+}
+
 // Build test environment by setting the admin `key` for the Genesis.
 pub fn new_test_ext(
     admin_key: <Test as frame_system::Config>::AccountId,
@@ -70,10 +76,12 @@ pub fn new_test_ext(
     pallet_coming_id::GenesisConfig::<Test> {
         high_admin_key: admin_key,
         medium_admin_key: admin_key,
+        medium_admin_key2: admin_key,
+        medium_admin_key3: admin_key,
         low_admin_key: admin_key,
     }
-    .assimilate_storage(&mut t)
-    .unwrap();
+        .assimilate_storage(&mut t)
+        .unwrap();
     let mut ext = sp_io::TestExternalities::new(t);
     ext.execute_with(|| System::set_block_number(1));
     ext
@@ -102,4 +110,32 @@ pub(crate) fn last_events(n: usize) -> Vec<Event> {
 
 pub(crate) fn expect_events(e: Vec<Event>) {
     assert_eq!(last_events(e.len()), e);
+}
+
+
+// Build test environment by setting the admin `key` for the Genesis.
+pub fn new_test_ext2(
+    admin_keys: [<Test as frame_system::Config>::AccountId;5],
+    root_key: <Test as frame_system::Config>::AccountId,
+) -> sp_io::TestExternalities {
+    let mut t = frame_system::GenesisConfig::default()
+        .build_storage::<Test>()
+        .unwrap();
+    pallet_coming_id::GenesisConfig::<Test> {
+        high_admin_key: admin_keys[0],
+        medium_admin_key: admin_keys[1],
+        medium_admin_key2: admin_keys[2],
+        medium_admin_key3: admin_keys[3],
+        low_admin_key: admin_keys[4],
+    }
+        .assimilate_storage(&mut t)
+        .unwrap();
+
+    pallet_sudo::GenesisConfig::<Test> { key: root_key }
+        .assimilate_storage(&mut t)
+        .unwrap();
+
+    let mut ext = sp_io::TestExternalities::new(t);
+    ext.execute_with(|| System::set_block_number(1));
+    ext
 }

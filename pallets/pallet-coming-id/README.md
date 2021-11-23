@@ -33,9 +33,11 @@
 
     highAdmin 权限, 分配 1-12位 cid.
 
-    mediaAdmin 权限, 分配 6-12位 cid.
+    mediumAdmin 权限, 分配 6位 cid.
+    mediumAdmin2 权限, 分配 7位 cid.
+    mediumAdmin3 权限, 分配 8位 cid.
 
-    lowAdmin 权限, 分配 7-12位 cid.
+    lowAdmin 权限, 分配 9-12位 cid.
   
   - bond(cid, bond_data)
   
@@ -201,7 +203,16 @@ fn get_card(
     "owner": "AccountId",
     "bonds": "Vec<BondData>",
     "card":  "Bytes"
-  }
+  },
+  "AdminType": {
+    "_enum": [
+      "High",
+      "Medium",
+      "Medium2",
+      "Medium3",
+      "Low"
+    ] 
+  }    
 }
 ```
 ## rpc custom 

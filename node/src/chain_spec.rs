@@ -279,7 +279,9 @@ pub fn minix_genesis(
         coming_id: ComingIdConfig {
             // Assign network admin rights.
             high_admin_key: coming_keys.0,
-            medium_admin_key: coming_keys.1,
+            medium_admin_key: coming_keys.1.clone(),
+            medium_admin_key2: coming_keys.1.clone(),
+            medium_admin_key3: coming_keys.1,
             low_admin_key: coming_keys.2,
         },
         coming_auction: ComingAuctionConfig {

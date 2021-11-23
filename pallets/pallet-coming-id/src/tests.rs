@@ -316,19 +316,19 @@ fn register_more_tests() {
         // 1. all admins test
         assert_ok!(ComingId::register(Origin::signed(high), reserve, high));
         expect_event(ComingIdEvent::Registered(high, reserve));
-        assert_ok!(ComingId::register(Origin::signed(medium), community, medium));
-        expect_event(ComingIdEvent::Registered(medium, community));
+        assert_ok!(ComingId::register(Origin::signed(medium3), community, medium3));
+        expect_event(ComingIdEvent::Registered(medium3, community));
         assert_ok!(ComingId::register(Origin::signed(medium2), common7, medium2));
         expect_event(ComingIdEvent::Registered(medium2, common7));
-        assert_ok!(ComingId::register(Origin::signed(medium3), common8, medium3));
-        expect_event(ComingIdEvent::Registered(medium3, common8));
+        assert_ok!(ComingId::register(Origin::signed(medium), common8, medium));
+        expect_event(ComingIdEvent::Registered(medium, common8));
         assert_ok!(ComingId::register(Origin::signed(low), common9, low));
         expect_event(ComingIdEvent::Registered(low, common9));
 
         assert_ok!(ComingId::check_admin(&high, reserve));
-        assert_ok!(ComingId::check_admin(&medium, community));
+        assert_ok!(ComingId::check_admin(&medium3, community));
         assert_ok!(ComingId::check_admin(&medium2, common7));
-        assert_ok!(ComingId::check_admin(&medium3, common8));
+        assert_ok!(ComingId::check_admin(&medium, common8));
         assert_ok!(ComingId::check_admin(&low, common9));
 
         clear_cids(&[reserve, community, common7, common8, common9]);
@@ -336,12 +336,12 @@ fn register_more_tests() {
         // 2. high admin test
         assert_ok!(ComingId::register(Origin::signed(high), reserve, high));
         expect_event(ComingIdEvent::Registered(high, reserve));
-        assert_ok!(ComingId::register(Origin::signed(high), community, medium));
-        expect_event(ComingIdEvent::Registered(medium, community));
+        assert_ok!(ComingId::register(Origin::signed(high), community, medium3));
+        expect_event(ComingIdEvent::Registered(medium3, community));
         assert_ok!(ComingId::register(Origin::signed(high), common7, medium2));
         expect_event(ComingIdEvent::Registered(medium2, common7));
-        assert_ok!(ComingId::register(Origin::signed(high), common8, medium3));
-        expect_event(ComingIdEvent::Registered(medium3, common8));
+        assert_ok!(ComingId::register(Origin::signed(high), common8, medium));
+        expect_event(ComingIdEvent::Registered(medium, common8));
         assert_ok!(ComingId::register(Origin::signed(high), common9, low));
         expect_event(ComingIdEvent::Registered(low, common9));
 
@@ -351,72 +351,72 @@ fn register_more_tests() {
         );
 
         assert_ok!(ComingId::check_admin(&high, reserve));
-        assert_ok!(ComingId::check_admin(&medium, community));
+        assert_ok!(ComingId::check_admin(&medium3, community));
         assert_ok!(ComingId::check_admin(&medium2, common7));
-        assert_ok!(ComingId::check_admin(&medium3, common8));
+        assert_ok!(ComingId::check_admin(&medium, common8));
         assert_ok!(ComingId::check_admin(&low, common9));
 
         clear_cids(&[reserve, community, common7, common8, common9]);
 
-        // 2. medium admin test
+        // 2. medium3 admin test
         assert_noop!(
-            ComingId::register(Origin::signed(medium), reserve, high),
+            ComingId::register(Origin::signed(medium3), reserve, high),
             Error::<Test>::RequireHighAuthority
         );
-        assert_ok!(ComingId::register(Origin::signed(medium), community, medium));
-        assert_noop!(
-            ComingId::register(Origin::signed(medium), common7, medium2),
-            Error::<Test>::RequireMediumAuthority2
-        );
-        assert_noop!(
-            ComingId::register(Origin::signed(medium), common8, medium3),
-            Error::<Test>::RequireMediumAuthority3
-        );
-        assert_noop!(
-            ComingId::register(Origin::signed(medium), common9, low),
-            Error::<Test>::RequireLowAuthority
-        );
-        assert_noop!(
-            ComingId::register(Origin::signed(medium), invalid, medium),
-            Error::<Test>::InvalidCid
-        );
-
-        assert_ok!(ComingId::check_admin(&medium, community));
-
-        clear_cids(&[reserve, community, common7, common8, common9]);
-
-        // 3. medium2 admin test
-        assert_noop!(
-            ComingId::register(Origin::signed(medium2), community, medium),
-            Error::<Test>::RequireMediumAuthority
-        );
-        assert_ok!(ComingId::register(Origin::signed(medium2), common7, medium2));
-        assert_noop!(
-            ComingId::register(Origin::signed(medium2), common8, medium3),
-            Error::<Test>::RequireMediumAuthority3
-        );
-
-        assert_ok!(ComingId::check_admin(&medium2, common7));
-
-        clear_cids(&[reserve, community, common7, common8, common9]);
-
-
-        // 4. medium3 admin test
-        assert_noop!(
-            ComingId::register(Origin::signed(medium3), community, medium),
-            Error::<Test>::RequireMediumAuthority
-        );
+        assert_ok!(ComingId::register(Origin::signed(medium3), community, medium3));
         assert_noop!(
             ComingId::register(Origin::signed(medium3), common7, medium2),
             Error::<Test>::RequireMediumAuthority2
         );
-        assert_ok!(ComingId::register(Origin::signed(medium3), common8, medium3));
+        assert_noop!(
+            ComingId::register(Origin::signed(medium3), common8, medium),
+            Error::<Test>::RequireMediumAuthority
+        );
+        assert_noop!(
+            ComingId::register(Origin::signed(medium3), common9, low),
+            Error::<Test>::RequireLowAuthority
+        );
         assert_noop!(
             ComingId::register(Origin::signed(medium3), invalid, medium3),
             Error::<Test>::InvalidCid
         );
 
-        assert_ok!(ComingId::check_admin(&medium3, common8));
+        assert_ok!(ComingId::check_admin(&medium3, community));
+
+        clear_cids(&[reserve, community, common7, common8, common9]);
+
+        // 3. medium2 admin test
+        assert_noop!(
+            ComingId::register(Origin::signed(medium2), community, medium3),
+            Error::<Test>::RequireMediumAuthority3
+        );
+        assert_ok!(ComingId::register(Origin::signed(medium2), common7, medium2));
+        assert_noop!(
+            ComingId::register(Origin::signed(medium2), common8, medium),
+            Error::<Test>::RequireMediumAuthority
+        );
+
+        assert_ok!(ComingId::check_admin(&medium2, common7));
+
+        clear_cids(&[reserve, community, common7, common8, common9]);
+
+
+        // 4. medium admin test
+        assert_noop!(
+            ComingId::register(Origin::signed(medium), community, medium3),
+            Error::<Test>::RequireMediumAuthority3
+        );
+        assert_noop!(
+            ComingId::register(Origin::signed(medium), common7, medium2),
+            Error::<Test>::RequireMediumAuthority2
+        );
+        assert_ok!(ComingId::register(Origin::signed(medium), common8, medium));
+        assert_noop!(
+            ComingId::register(Origin::signed(medium), invalid, medium),
+            Error::<Test>::InvalidCid
+        );
+
+        assert_ok!(ComingId::check_admin(&medium, common8));
 
         clear_cids(&[reserve, community, common7, common8, common9]);
 
@@ -426,16 +426,16 @@ fn register_more_tests() {
             Error::<Test>::RequireHighAuthority
         );
         assert_noop!(
-            ComingId::register(Origin::signed(low), community, medium),
-            Error::<Test>::RequireMediumAuthority
+            ComingId::register(Origin::signed(low), community, medium3),
+            Error::<Test>::RequireMediumAuthority3
         );
         assert_noop!(
             ComingId::register(Origin::signed(low), common7, medium2),
             Error::<Test>::RequireMediumAuthority2
         );
         assert_noop!(
-            ComingId::register(Origin::signed(low), common8, medium3),
-            Error::<Test>::RequireMediumAuthority3
+            ComingId::register(Origin::signed(low), common8, medium),
+            Error::<Test>::RequireMediumAuthority
         );
         assert_ok!(ComingId::register(Origin::signed(low), common9, low));
         assert_noop!(

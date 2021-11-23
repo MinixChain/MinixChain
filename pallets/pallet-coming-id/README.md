@@ -33,9 +33,9 @@
 
     highAdmin 权限, 分配 1-12位 cid.
 
-    mediumAdmin 权限, 分配 6位 cid.
+    mediumAdmin3 权限, 分配 6位 cid.
     mediumAdmin2 权限, 分配 7位 cid.
-    mediumAdmin3 权限, 分配 8位 cid.
+    mediumAdmin 权限, 分配 8位 cid.
 
     lowAdmin 权限, 分配 9-12位 cid.
   

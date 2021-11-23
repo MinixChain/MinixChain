@@ -112,17 +112,17 @@ pub mod pallet {
     #[pallet::getter(fn high_admin_key)]
     pub(super) type HighKey<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-    /// The `AccountId` of the sudo key. Register 6 digital cid.
+    /// The `AccountId` of the sudo key. Register 8 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn medium_admin_key)]
     pub(super) type MediumKey<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-    /// The `AccountId` of the sudo key. Register 7 digital cid.
+    /// The `AccountId` of the sudo key. Register 6 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn medium_admin_key2)]
     pub(super) type MediumKey2<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-    /// The `AccountId` of the sudo key. Register 8 digital cid.
+    /// The `AccountId` of the sudo key. Register 7 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn medium_admin_key3)]
     pub(super) type MediumKey3<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
@@ -224,8 +224,8 @@ pub mod pallet {
                 ),
                 100_000..1_000_000 => ensure!(
                     ensure_signed(origin.clone())? == Self::high_admin_key()
-                        || ensure_signed(origin)? == Self::medium_admin_key(),
-                    Error::<T>::RequireMediumAuthority
+                        || ensure_signed(origin)? == Self::medium_admin_key3(),
+                    Error::<T>::RequireMediumAuthority3
                 ),
                 1_000_000..10_000_000 => ensure!(
                     ensure_signed(origin.clone())? == Self::high_admin_key()
@@ -234,8 +234,8 @@ pub mod pallet {
                 ),
                 10_000_000..100_000_000 => ensure!(
                     ensure_signed(origin.clone())? == Self::high_admin_key()
-                        || ensure_signed(origin)? == Self::medium_admin_key3(),
-                    Error::<T>::RequireMediumAuthority3
+                        || ensure_signed(origin)? == Self::medium_admin_key(),
+                    Error::<T>::RequireMediumAuthority
                 ),
                 100_000_000..1_000_000_000_000 => ensure!(
                     ensure_signed(origin.clone())? == Self::high_admin_key()
@@ -343,16 +343,16 @@ impl<T: Config> Pallet<T> {
                 Error::<T>::RequireHighAuthority
             ),
             100_000..1_000_000 => ensure!(
-                *origin == Self::high_admin_key() || *origin == Self::medium_admin_key(),
-                Error::<T>::RequireMediumAuthority
+                *origin == Self::high_admin_key() || *origin == Self::medium_admin_key3(),
+                Error::<T>::RequireMediumAuthority3
             ),
             1_000_000..10_000_000 => ensure!(
                 *origin == Self::high_admin_key() || *origin == Self::medium_admin_key2(),
                 Error::<T>::RequireMediumAuthority2
             ),
             10_000_000..100_000_000 => ensure!(
-                *origin == Self::high_admin_key() || *origin == Self::medium_admin_key3(),
-                Error::<T>::RequireMediumAuthority3
+                *origin == Self::high_admin_key() || *origin == Self::medium_admin_key(),
+                Error::<T>::RequireMediumAuthority
             ),
             100_000_000..1_000_000_000_000 => ensure!(
                 *origin == Self::high_admin_key() || *origin == Self::low_admin_key(),

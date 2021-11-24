@@ -435,9 +435,28 @@ impl<T: Config> Pallet<T> {
     }
 
     /// The account ID of an auction account
-	/// "modl" + "/auc" is 8 bytes
-	/// for AccountId16(u128) which used for tests, 8 bytes remaining for Cid, just ok.
-	/// for AccountId32, 20 bytes remaining for Cid, it's enough.
+    /// "modl" + "/auc" is 8 bytes
+    /// for AccountId16(u128) which used for tests, 8 bytes remaining for Cid, just ok.
+    /// for AccountId32, 24 bytes remaining for Cid, it's enough.
+    /// ```golang
+    /// func auction_account(cid uint64) []byte {
+    ///     // TYPE_ID = "modl"
+    ///     var type_id = []byte{109, 111, 100, 108}
+    ///     // PalletAuction_ID = "/auc"
+    ///     var auction_id = []byte{47, 97, 117, 99}
+    ///
+    ///     var encode_cid = make([]byte, 8)
+    ///     binary.LittleEndian.PutUint64(encode_cid, cid)
+    ///
+    ///     var account_id = make([]byte, 32)
+    ///     copy(account_id[:4], type_id)
+    ///     copy(account_id[4:8], auction_id)
+    ///     copy(account_id[8:16], encode_cid)
+    ///
+    ///     return account_id
+    /// }
+    /// ```
+    ///
     pub fn auction_account_id(cid: Cid) -> T::AccountId {
         T::PalletId::get().into_sub_account(cid)
     }

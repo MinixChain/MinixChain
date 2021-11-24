@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=1.2.0
+VERSION=$(./target/release/minix --version | awk '{print $2}' | awk -F'-' '{print $1}')
 
 print_txt () {
 	echo  "md5sum:"

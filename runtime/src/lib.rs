@@ -423,7 +423,7 @@ pub type Executive = frame_executive::Executive<
     frame_system::ChainContext<Runtime>,
     Runtime,
     AllPallets,
-    ()
+    RemoveCidStats
 >;
 
 // todo: remove me after upgrade minix mainnet from 113

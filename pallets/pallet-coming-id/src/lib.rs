@@ -25,7 +25,6 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-//pub mod migration;
 pub mod nft;
 pub mod weights;
 
@@ -55,6 +54,17 @@ pub struct CidDetails<AccountId> {
     pub card: Vec<u8>,
 }
 
+#[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub enum AdminType {
+    High,
+    Medium,
+    Medium2,
+    Medium3,
+    Low
+}
+
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
@@ -77,11 +87,6 @@ pub mod pallet {
     #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
-    /// (nominal_holders, real_holders, cid_total)
-    #[pallet::storage]
-    #[pallet::getter(fn stats)]
-    pub type Stats<T: Config> = StorageValue<_, (u64, u64, u64), ValueQuery>;
-
     #[pallet::storage]
     #[pallet::getter(fn distributed)]
     pub type Distributed<T: Config> =
@@ -102,17 +107,27 @@ pub mod pallet {
     pub type OwnerToApprovalAll<T: Config> =
     StorageMap<_, Identity, (T::AccountId, T::AccountId), bool, ValueQuery>;
 
-    /// The `AccountId` of the sudo key.
+    /// The `AccountId` of the sudo key. Register 1~12 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn high_admin_key)]
     pub(super) type HighKey<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-    /// The `AccountId` of the sudo key.
+    /// The `AccountId` of the sudo key. Register 8 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn medium_admin_key)]
     pub(super) type MediumKey<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-    /// The `AccountId` of the sudo key.
+    /// The `AccountId` of the sudo key. Register 6 digital cid.
+    #[pallet::storage]
+    #[pallet::getter(fn medium_admin_key2)]
+    pub(super) type MediumKey2<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+
+    /// The `AccountId` of the sudo key. Register 7 digital cid.
+    #[pallet::storage]
+    #[pallet::getter(fn medium_admin_key3)]
+    pub(super) type MediumKey3<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+
+    /// The `AccountId` of the sudo key. Register 9~12 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn low_admin_key)]
     pub(super) type LowKey<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
@@ -122,6 +137,8 @@ pub mod pallet {
         /// The `AccountId` of the admin key.
         pub high_admin_key: T::AccountId,
         pub medium_admin_key: T::AccountId,
+        pub medium_admin_key2: T::AccountId,
+        pub medium_admin_key3: T::AccountId,
         pub low_admin_key: T::AccountId,
     }
 
@@ -131,6 +148,8 @@ pub mod pallet {
             Self {
                 high_admin_key: Default::default(),
                 medium_admin_key: Default::default(),
+                medium_admin_key2: Default::default(),
+                medium_admin_key3: Default::default(),
                 low_admin_key: Default::default(),
             }
         }
@@ -141,6 +160,8 @@ pub mod pallet {
         fn build(&self) {
             <HighKey<T>>::put(&self.high_admin_key);
             <MediumKey<T>>::put(&self.medium_admin_key);
+            <MediumKey2<T>>::put(&self.medium_admin_key2);
+            <MediumKey3<T>>::put(&self.medium_admin_key3);
             <LowKey<T>>::put(&self.low_admin_key);
         }
     }
@@ -177,6 +198,8 @@ pub mod pallet {
         InvalidCid,
         RequireHighAuthority,
         RequireMediumAuthority,
+        RequireMediumAuthority2,
+        RequireMediumAuthority3,
         RequireLowAuthority,
         RequireOwner,
         DistributedCid,
@@ -201,12 +224,21 @@ pub mod pallet {
                 ),
                 100_000..1_000_000 => ensure!(
                     ensure_signed(origin.clone())? == Self::high_admin_key()
+                        || ensure_signed(origin)? == Self::medium_admin_key3(),
+                    Error::<T>::RequireMediumAuthority3
+                ),
+                1_000_000..10_000_000 => ensure!(
+                    ensure_signed(origin.clone())? == Self::high_admin_key()
+                        || ensure_signed(origin)? == Self::medium_admin_key2(),
+                    Error::<T>::RequireMediumAuthority2
+                ),
+                10_000_000..100_000_000 => ensure!(
+                    ensure_signed(origin.clone())? == Self::high_admin_key()
                         || ensure_signed(origin)? == Self::medium_admin_key(),
                     Error::<T>::RequireMediumAuthority
                 ),
-                1_000_000..1_000_000_000_000 => ensure!(
+                100_000_000..1_000_000_000_000 => ensure!(
                     ensure_signed(origin.clone())? == Self::high_admin_key()
-                        || ensure_signed(origin.clone())? == Self::medium_admin_key()
                         || ensure_signed(origin)? == Self::low_admin_key(),
                     Error::<T>::RequireLowAuthority
                 ),
@@ -229,7 +261,7 @@ pub mod pallet {
             })
         }
 
-        #[pallet::weight(T::WeightInfo::bond((bond_data.length() / 1024).max(1)))]
+        #[pallet::weight(T::WeightInfo::bond(bond_data.length()))]
         pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
@@ -280,24 +312,50 @@ pub mod pallet {
                 Ok(())
             })
         }
+
+        #[pallet::weight(0)]
+        pub fn set_admin(
+            origin: OriginFor<T>,
+            admin: <T::Lookup as StaticLookup>::Source,
+            admin_type: AdminType,
+        ) -> DispatchResult {
+            ensure_root(origin)?;
+            let new_admin = T::Lookup::lookup(admin)?;
+
+            match admin_type {
+                AdminType::High =>  <HighKey<T>>::put(&new_admin),
+                AdminType::Medium => <MediumKey<T>>::put(&new_admin),
+                AdminType::Medium2 => <MediumKey2<T>>::put(&new_admin),
+                AdminType::Medium3 => <MediumKey3<T>>::put(&new_admin),
+                AdminType::Low => <LowKey<T>>::put(&new_admin)
+            }
+
+            Ok(())
+        }
     }
 }
 
 impl<T: Config> Pallet<T> {
-    fn check_admin(origin: &T::AccountId, cid: Cid) -> DispatchResult {
+    pub fn check_admin(origin: &T::AccountId, cid: Cid) -> DispatchResult {
         match cid {
             0..100_000 => ensure!(
                 *origin == Self::high_admin_key(),
                 Error::<T>::RequireHighAuthority
             ),
             100_000..1_000_000 => ensure!(
+                *origin == Self::high_admin_key() || *origin == Self::medium_admin_key3(),
+                Error::<T>::RequireMediumAuthority3
+            ),
+            1_000_000..10_000_000 => ensure!(
+                *origin == Self::high_admin_key() || *origin == Self::medium_admin_key2(),
+                Error::<T>::RequireMediumAuthority2
+            ),
+            10_000_000..100_000_000 => ensure!(
                 *origin == Self::high_admin_key() || *origin == Self::medium_admin_key(),
                 Error::<T>::RequireMediumAuthority
             ),
-            1_000_000..1_000_000_000_000 => ensure!(
-                *origin == Self::high_admin_key()
-                    || *origin == Self::medium_admin_key()
-                    || *origin == Self::low_admin_key(),
+            100_000_000..1_000_000_000_000 => ensure!(
+                *origin == Self::high_admin_key() || *origin == Self::low_admin_key(),
                 Error::<T>::RequireLowAuthority
             ),
             _ => ensure!(false, Error::<T>::InvalidCid),
@@ -370,36 +428,11 @@ impl<T: Config> Pallet<T> {
 
     fn account_cids_add(account: T::AccountId, cid: Cid) {
         AccountIdCids::<T>::try_mutate_exists::<_, _, Error<T>, _>(account, |cids| {
-            let (mut update_nominal, mut update_real) = (false, false);
-
             if let Some(cids) = cids {
                 cids.push(cid)
             } else {
                 *cids = Some(vec![cid]);
-
-                update_nominal = true
             }
-
-            if let Some(cids) = cids {
-                if cids.len() == 1 {
-                    update_real = true
-                }
-            }
-
-            Self::stats_mutate(|nominal_holders, real_holders, nft_total|{
-                // cid_total++
-                *nft_total = nft_total.saturating_add(1);
-
-                // nominal_holder++
-                if update_nominal {
-                    *nominal_holders = nominal_holders.saturating_add(1);
-                }
-
-                // real_holder++
-                if update_real {
-                    *real_holders = real_holders.saturating_add(1);
-                }
-            });
 
             Ok(())
         })
@@ -409,32 +442,12 @@ impl<T: Config> Pallet<T> {
     fn account_cids_remove(account: T::AccountId, cid: Cid) {
         AccountIdCids::<T>::try_mutate_exists::<_, _, Error<T>, _>(account, |cids| {
             if let Some(cids) = cids {
-                let len_before = cids.len();
-                cids.retain(|&in_cid| in_cid != cid);
-                let len_after = cids.len();
-
-                if len_after < len_before {
-                    Self::stats_mutate(|_nominal_holders, real_holders, nft_total|{
-                        // cid_total--
-                        *nft_total = nft_total.saturating_sub(1);
-
-                        // real_holder--
-                        if len_after == 0 {
-                            *real_holders = real_holders.saturating_sub(1);
-                        }
-                    });
-                }
+                cids.retain(|&in_cid| in_cid != cid)
             }
 
             Ok(())
         })
             .unwrap_or_default();
-    }
-
-    fn stats_mutate<F: FnMut(&mut u64, &mut u64, &mut u64)>(mut f: F) {
-        <Stats<T>>::mutate(|stats|{
-            f(&mut stats.0, &mut stats.1, &mut stats.2)
-        })
     }
 
     pub fn get_account_id(cid: Cid) -> Option<T::AccountId> {

@@ -2,7 +2,7 @@
 authors = ['Minix Chain Developer']
 edition = '2018'
 name = 'pallet-coming-auction-rpc'
-version = "1.2.0"
+version = "1.3.0"
 license = "Unlicense"
 
 [package.metadata.docs.rs]
@@ -17,4 +17,4 @@ sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
-pallet-coming-auction-rpc-runtime-api = { version = "1.2.0", path = "runtime-api" }
+pallet-coming-auction-rpc-runtime-api = { path = "runtime-api" }

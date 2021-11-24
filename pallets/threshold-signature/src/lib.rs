@@ -236,7 +236,7 @@ impl<T: Config> Pallet<T> {
             // TODO What if the same script corresponds to different threshold signature addresses？
             ScriptHashToAddr::<T>::insert(script_hash.clone(), addr.clone());
             // Store signature with survival height
-            SignatureSurvivalHeight::<T>::insert(signature.clone(), height.clone());
+            SignatureSurvivalHeight::<T>::insert(signature.clone(), height);
 
             Self::deposit_event(Event::<T>::UseSignature(signature, height));
             Self::deposit_event(Event::<T>::PassScript(script_hash, addr));

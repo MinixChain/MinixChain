@@ -13,11 +13,12 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, Bytes, OpaqueMetadata};
 use sp_runtime::traits::{
     AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify,
+    Convert,
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult, MultiSignature, Perquintill, FixedU128, FixedPointNumber
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -29,8 +30,9 @@ pub use frame_support::{
     construct_runtime, parameter_types,
     traits::{KeyOwnerProofSystem, Randomness},
     weights::{
-        constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-        IdentityFee, Weight,
+        constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+        WeightToFeePolynomial, Weight, WeightToFeeCoefficients, WeightToFeeCoefficient,
+        RuntimeDbWeight
     },
     StorageValue,
 };
@@ -41,10 +43,13 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 use pallet_coming_id::{Cid, CidDetails};
-use pallet_transaction_payment::CurrencyAdapter;
+use pallet_transaction_payment::{
+    CurrencyAdapter, Multiplier, MultiplierUpdate
+};
 pub use pallet_threshold_signature::primitive::{
     Message, OpCode, Pubkey, ScriptHash, Signature as TSignature,
 };
+use pallet_coming_auction::PalletAuctionId;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -107,7 +112,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     //   `spec_version`, and `authoring_version` are the same between Wasm and native.
     // This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
     //   the compatible custom types.
-    spec_version: 113,
+    spec_version: 115,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -151,6 +156,10 @@ parameter_types! {
         ::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
     pub const SS58Prefix: u8 = 44;
     pub const MaxAuthorities: u32 = 100;
+    pub const RocksDbWeight: RuntimeDbWeight = RuntimeDbWeight {
+        read: 2_500_000,
+        write: 10_000_000,
+    };
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -264,11 +273,47 @@ parameter_types! {
     pub OperationalFeeMultiplier: u8 = 5;
 }
 
+pub struct FixedFeeMultiplierUpdate;
+impl MultiplierUpdate for FixedFeeMultiplierUpdate {
+    fn min() -> Multiplier {
+        Default::default()
+    }
+    fn target() -> Perquintill {
+        Default::default()
+    }
+    fn variability() -> Multiplier {
+        Default::default()
+    }
+}
+
+impl Convert<Multiplier, Multiplier> for FixedFeeMultiplierUpdate
+{
+    fn convert(_previous: Multiplier) -> Multiplier {
+        FixedU128::saturating_from_rational(1u64, 10u64)
+    }
+}
+
+/// Implementor of `WeightToFeePolynomial` that maps one unit of weight to one unit of fee.
+pub struct IdentityFee;
+impl WeightToFeePolynomial for IdentityFee
+{
+    type Balance = Balance;
+
+    fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+        smallvec::smallvec!(WeightToFeeCoefficient {
+            coeff_integer: 0,
+            coeff_frac: Perbill::from_rational(935u64, 1000u64),
+            negative: false,
+            degree: 1,
+        })
+    }
+}
+
 impl pallet_transaction_payment::Config for Runtime {
     type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
     type TransactionByteFee = TransactionByteFee;
-    type WeightToFee = IdentityFee<Balance>;
-    type FeeMultiplierUpdate = ();
+    type WeightToFee = IdentityFee;
+    type FeeMultiplierUpdate = FixedFeeMultiplierUpdate;
     type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
@@ -281,6 +326,7 @@ parameter_types! {
     pub const ClaimValidatePeriod: BlockNumber = 600;
     pub const CidsLimit: u32 = 500;
     pub const MaxCardSize: u32 = 1024 * 1024;
+    pub const AuctionId: PalletAuctionId = PalletAuctionId(*b"/auc");
 }
 
 /// Configure the pallet-coming-id in pallets/coming-id.
@@ -305,6 +351,14 @@ impl pallet_threshold_signature::Config for Runtime {
     type Event = Event;
     type Call = Call;
     type WeightInfo = pallet_threshold_signature::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_coming_auction::Config for Runtime {
+    type ComingNFT = ComingId;
+    type Event = Event;
+    type Currency = Balances;
+    type PalletId = AuctionId;
+    type WeightInfo = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -334,6 +388,7 @@ construct_runtime!(
         // Coming stuff
         ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>} = 40,
         ComingNFT: pallet_coming_nft::{Pallet, Call} = 41,
+        ComingAuction: pallet_coming_auction::{Pallet, Call, Config<T>, Storage, Event<T>} = 42,
     }
 );
 
@@ -368,8 +423,19 @@ pub type Executive = frame_executive::Executive<
     frame_system::ChainContext<Runtime>,
     Runtime,
     AllPallets,
-    ()
+    RemoveCidStats
 >;
+
+// todo: remove me after upgrade minix mainnet from 113
+pub struct RemoveCidStats;
+impl frame_support::traits::OnRuntimeUpgrade for RemoveCidStats {
+    fn on_runtime_upgrade() -> Weight {
+        use frame_support::storage::migration;
+        // Remove the storage value `Stats` from  pallet `ComingId`
+        migration::remove_storage_prefix(b"ComingId", b"Stats", b"");
+        <Runtime as frame_system::Config>::DbWeight::get().writes(1)
+    }
+}
 
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {
@@ -531,6 +597,12 @@ impl_runtime_apis! {
         }
     }
 
+    impl pallet_coming_auction_rpc_runtime_api::ComingAuctionApi<Block, Balance> for Runtime {
+        fn get_price(cid: Cid) -> Balance {
+            ComingAuction::get_current_price(cid)
+        }
+    }
+
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
         fn dispatch_benchmark(
@@ -563,6 +635,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_coming_id, ComingId);
             add_benchmark!(params, batches, pallet_coming_nft, ComingNFT);
             add_benchmark!(params, batches, pallet_threshold_signature, ThresholdSignature);
+            add_benchmark!(params, batches, pallet_coming_auction, ComingAuction);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

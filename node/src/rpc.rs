@@ -37,12 +37,14 @@ pub fn create_full<C, P>(
         C::Api: BlockBuilder<Block>,
         C::Api: pallet_coming_id_rpc::ComingIdRuntimeApi<Block, AccountId>,
         P: TransactionPool + 'static,
-        C::Api: pallet_threshold_signature_rpc::ThresholdSignatureRuntimeApi<Block>
+        C::Api: pallet_threshold_signature_rpc::ThresholdSignatureRuntimeApi<Block>,
+        C::Api: pallet_coming_auction_rpc::ComingAuctionRuntimeApi<Block, Balance>,
 {
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
     use substrate_frame_rpc_system::{FullSystem, SystemApi};
     use pallet_coming_id_rpc::{ComingId, ComingIdApi};
     use pallet_threshold_signature_rpc::{ThresholdSignature, ThresholdSignatureApi};
+    use pallet_coming_auction_rpc::{ComingAuction, ComingAuctionApi};
 
     let mut io = jsonrpc_core::IoHandler::default();
     let FullDeps { client, pool, deny_unsafe } = deps;
@@ -52,6 +54,8 @@ pub fn create_full<C, P>(
     io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
 
     io.extend_with(ThresholdSignatureApi::to_delegate(ThresholdSignature::new(client.clone())));
+
+    io.extend_with(ComingAuctionApi::to_delegate(ComingAuction::new(client.clone())));
 
     io.extend_with(ComingIdApi::to_delegate(ComingId::new(client)));
 

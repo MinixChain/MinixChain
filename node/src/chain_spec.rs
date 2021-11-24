@@ -1,5 +1,5 @@
 pub use minix_runtime::{
-    AccountId, AuraConfig, BalancesConfig, ComingIdConfig,
+    AccountId, AuraConfig, BalancesConfig, ComingIdConfig, ComingAuctionConfig,
     GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
@@ -279,8 +279,13 @@ pub fn minix_genesis(
         coming_id: ComingIdConfig {
             // Assign network admin rights.
             high_admin_key: coming_keys.0,
-            medium_admin_key: coming_keys.1,
+            medium_admin_key: coming_keys.1.clone(),
+            medium_admin_key2: coming_keys.1.clone(),
+            medium_admin_key3: coming_keys.1,
             low_admin_key: coming_keys.2,
+        },
+        coming_auction: ComingAuctionConfig {
+            admin_key: None
         },
     }
 }

@@ -423,19 +423,8 @@ pub type Executive = frame_executive::Executive<
     frame_system::ChainContext<Runtime>,
     Runtime,
     AllPallets,
-    RemoveCidStats
+    ()
 >;
-
-// todo: remove me after upgrade minix mainnet from 113
-pub struct RemoveCidStats;
-impl frame_support::traits::OnRuntimeUpgrade for RemoveCidStats {
-    fn on_runtime_upgrade() -> Weight {
-        use frame_support::storage::migration;
-        // Remove the storage value `Stats` from  pallet `ComingId`
-        migration::remove_storage_prefix(b"ComingId", b"Stats", b"");
-        <Runtime as frame_system::Config>::DbWeight::get().writes(1)
-    }
-}
 
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {

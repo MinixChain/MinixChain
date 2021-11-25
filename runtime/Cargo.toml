@@ -8,7 +8,7 @@ edition = "2018"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false, features = ["derive"] }
 hex-literal = { version = "0.3.1", optional = true }
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
 smallvec = "1.7.0"
@@ -52,6 +52,24 @@ pallet-threshold-signature-rpc-runtime-api = { version = "3.0.0", default-featur
 pallet-coming-auction = { default-features = false, path = "../pallets/pallet-coming-auction" }
 pallet-coming-auction-rpc-runtime-api = { default-features = false, path = "../pallets/pallet-coming-auction/rpc/runtime-api" }
 
+# Evm
+pallet-ethereum-chain-id = { default-features = false, path = "../pallets/ethereum-chain-id" }
+pallet-deposit = { default-features = false, path = "../pallets/deposit" }
+pallet-evm = { git = "https://github.com/chainx-org/frontier", branch = "new-polkadot-v0.9.11", default-features = false }
+pallet-ethereum = { git = "https://github.com/chainx-org/frontier", branch = "new-polkadot-v0.9.11", default-features = false }
+
+# EVM precompile
+pallet-evm-precompile-bn128 = { git = "https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
+pallet-evm-precompile-dispatch = { git = "https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
+pallet-evm-precompile-modexp = { git = "https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
+pallet-evm-precompile-simple = { git = "https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
+pallet-evm-precompile-sha3fips = { git = "https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
+pallet-evm-precompile-blake2 = { git = "https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
+
+# ETH API
+fp-rpc = { git="https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
+fp-self-contained  = { git="https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
+
 [build-dependencies]
 substrate-wasm-builder = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.11" }
 
@@ -92,7 +110,14 @@ std = [
     "pallet-threshold-signature/std",
     "pallet-threshold-signature-rpc-runtime-api/std",
     "pallet-coming-auction/std",
-    "pallet-coming-auction-rpc-runtime-api/std"
+    "pallet-coming-auction-rpc-runtime-api/std",
+
+    "pallet-ethereum-chain-id/std",
+    "pallet-deposit/std",
+    "pallet-evm/std",
+    "pallet-ethereum/std",
+    "fp-rpc/std",
+    "fp-self-contained/std"
 ]
 runtime-benchmarks = [
     "hex-literal",

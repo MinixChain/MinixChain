@@ -2,8 +2,10 @@
 
 use frame_support::traits::{Currency, ExistenceRequirement};
 use core::marker::PhantomData;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
-use pallet_evm::{Precompile, AddressMapping};
+use pallet_evm::{
+    Precompile, AddressMapping, Context, ExitError, ExitSucceed,
+    PrecompileFailure, PrecompileOutput, PrecompileResult,
+};
 use sp_core::{H160, U256, hexdisplay::HexDisplay};
 use sp_runtime::{traits::UniqueSaturatedInto, AccountId32};
 use codec::{Encode, Decode};
@@ -20,7 +22,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
 {
     fn process(
         input: &[u8]
-    ) -> Result<bool, ExitError>{
+    ) -> Result<bool, PrecompileFailure>{
         match input.len() {
             // withdraw balance
             // input = from(evm address, 20 bytes) + to(substrate pubkey, 32 bytes) + value(32 bytes)
@@ -30,7 +32,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
                 Self::process_withdraw_balance(input)
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "withdraw balance: err = {:?}", err);
-                        err
+                        PrecompileFailure::Error { exit_status: err}
                     })?;
 
                 log::debug!(target: "coming-nft", "withdraw balance: success");
@@ -45,7 +47,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
                 Self::process_withdraw_cid(input)
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "withdraw cid: err = {:?}", err);
-                        err
+                        PrecompileFailure::Error { exit_status: err}
                     })?;
 
                 log::debug!(target: "coming-nft", "withdraw cid: success");
@@ -60,7 +62,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
                 let is_match = Self::process_match_owner(input)
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "match owner: err = {:?}", err);
-                        err
+                        PrecompileFailure::Error { exit_status: err}
                 })?;
 
                 log::debug!(target: "coming-nft", "match owner: {:?}", is_match);
@@ -75,7 +77,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
                 let is_operator = Self::process_match_operator(input)
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "match operator: err = {:?}", err);
-                        err
+                        PrecompileFailure::Error { exit_status: err}
                     })?;
 
                 log::debug!(target: "coming-nft", "match operator: {:?}", is_operator);
@@ -90,7 +92,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
                 let approved = Self::process_get_approved(input)
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "get approved: err = {:?}", err);
-                        err
+                        PrecompileFailure::Error { exit_status: err}
                     })?;
 
                 log::debug!(target: "coming-nft", "get approved: {:?}", approved);
@@ -105,7 +107,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
                 let can_transfer = Self::process_transfer_from(input)
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "transfer from: err = {:?}", err);
-                        err
+                        PrecompileFailure::Error { exit_status: err}
                     })?;
 
                 log::debug!(target: "coming-nft", "can_transfer: {:?}", can_transfer);
@@ -120,7 +122,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
                 Self::process_approve(input)
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "approve: err = {:?}", err);
-                        err
+                        PrecompileFailure::Error { exit_status: err}
                     })?;
 
                 log::debug!(target: "coming-nft", "approve: success");
@@ -135,7 +137,7 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
                 Self::process_set_approval_all(input)
                     .map_err(|err| {
                         log::warn!(target: "coming-nft", "approve: err = {:?}", err);
-                        err
+                        PrecompileFailure::Error { exit_status: err}
                     })?;
 
                 log::debug!(target: "coming-nft", "set approval all: success");
@@ -145,7 +147,11 @@ impl<T: pallet_evm::Config + pallet_coming_nft::Config> Nft<T>
             _ => {
                 log::warn!(target: "coming-nft", "invalid input: {:?}", input);
 
-                Err(ExitError::Other("invalid input".into()))
+                Err(
+                    PrecompileFailure::Error {
+                        exit_status: ExitError::Other("invalid input".into())
+                    }
+                )
             }
         }
     }
@@ -332,7 +338,8 @@ impl<T> Precompile for Nft<T>
         input: &[u8],
         _target_gas: Option<u64>,
         context: &Context,
-    ) -> Result<PrecompileOutput, ExitError> {
+        _is_static: bool,
+    ) -> PrecompileResult {
 
         log::debug!(target: "coming-nft", "caller: {:?}", context.caller);
 

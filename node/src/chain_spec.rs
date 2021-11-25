@@ -1,10 +1,11 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingIdConfig, ComingAuctionConfig,
     GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    EthereumChainIdConfig, EthereumConfig, EvmConfig, GenesisAccount, Runtime, MinixPrecompiles
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use serde::{Deserialize, Serialize};
@@ -75,7 +76,8 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
                     caller.clone()
                 ],
-                (caller.clone(), caller.clone(), caller)
+                (caller.clone(), caller.clone(), caller),
+                vec![]
             )
         },
         // Bootnodes
@@ -120,6 +122,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice")
                 ),
+                vec![]
             )
         },
         // Bootnodes
@@ -174,7 +177,33 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                )
+                ),
+                vec![
+                    // Alith
+                    H160::from(hex_literal::hex!["f24FF3a9CF04c71Dbc94D0b566f7A27B94566cac"]),
+                    // Baltathar
+                    H160::from(hex_literal::hex!["3Cd0A705a2DC65e5b1E1205896BaA2be8A07c6e0"]),
+                    // Charleth
+                    H160::from(hex_literal::hex!["798d4Ba9baf0064Ec19eB4F0a1a45785ae9D6DFc"]),
+                    // Dorothy
+                    H160::from(hex_literal::hex!["773539d4Ac0e786233D90A233654ccEE26a613D9"]),
+                    // Ethan
+                    H160::from(hex_literal::hex!["Ff64d3F6efE2317EE2807d223a0Bdc4c0c49dfDB"]),
+                    // Faith
+                    H160::from(hex_literal::hex!["C0F0f4ab324C46e55D02D0033343B4Be8A55532d"]),
+                    // Goliath
+                    H160::from(hex_literal::hex!["7BF369283338E12C90514468aa3868A551AB2929"]),
+                    // Heath
+                    H160::from(hex_literal::hex!["931f3600a299fd9B24cEfB3BfF79388D19804BeA"]),
+                    // Ida
+                    H160::from(hex_literal::hex!["C41C5F1123ECCd5ce233578B2e7ebd5693869d73"]),
+                    // Judith
+                    H160::from(hex_literal::hex!["2898FE7a42Be376C8BC7AF536A940F7Fd5aDd423"]),
+                    // Gerald
+                    H160::from(hex_literal::hex!["6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b"]),
+                    // Frontier pre-funded account
+                    H160::from(hex_literal::hex!["19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A"]),
+                ],
             )
         },
         // Bootnodes
@@ -217,7 +246,33 @@ pub fn dev_evm_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                )
+                ),
+                vec![
+                    // Alith
+                    H160::from(hex_literal::hex!["f24FF3a9CF04c71Dbc94D0b566f7A27B94566cac"]),
+                    // Baltathar
+                    H160::from(hex_literal::hex!["3Cd0A705a2DC65e5b1E1205896BaA2be8A07c6e0"]),
+                    // Charleth
+                    H160::from(hex_literal::hex!["798d4Ba9baf0064Ec19eB4F0a1a45785ae9D6DFc"]),
+                    // Dorothy
+                    H160::from(hex_literal::hex!["773539d4Ac0e786233D90A233654ccEE26a613D9"]),
+                    // Ethan
+                    H160::from(hex_literal::hex!["Ff64d3F6efE2317EE2807d223a0Bdc4c0c49dfDB"]),
+                    // Faith
+                    H160::from(hex_literal::hex!["C0F0f4ab324C46e55D02D0033343B4Be8A55532d"]),
+                    // Goliath
+                    H160::from(hex_literal::hex!["7BF369283338E12C90514468aa3868A551AB2929"]),
+                    // Heath
+                    H160::from(hex_literal::hex!["931f3600a299fd9B24cEfB3BfF79388D19804BeA"]),
+                    // Ida
+                    H160::from(hex_literal::hex!["C41C5F1123ECCd5ce233578B2e7ebd5693869d73"]),
+                    // Judith
+                    H160::from(hex_literal::hex!["2898FE7a42Be376C8BC7AF536A940F7Fd5aDd423"]),
+                    // Gerald
+                    H160::from(hex_literal::hex!["6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b"]),
+                    // Frontier pre-funded account
+                    H160::from(hex_literal::hex!["19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A"]),
+                ],
             )
         },
         // Bootnodes
@@ -246,8 +301,15 @@ pub fn minix_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
-    coming_keys: (AccountId, AccountId, AccountId)
+    coming_keys: (AccountId, AccountId, AccountId),
+    addresses: Vec<H160>,
 ) -> GenesisConfig {
+    // This is the simplest bytecode to revert without returning any data.
+    // We will pre-deploy it under all of our precompiles to ensure they can be called from
+    // within contracts.
+    // (PUSH1 0x00 PUSH1 0x00 REVERT)
+    let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
+
     let wasm_binary = WASM_BINARY.unwrap();
     GenesisConfig {
         system: SystemConfig {
@@ -287,5 +349,35 @@ pub fn minix_genesis(
         coming_auction: ComingAuctionConfig {
             admin_key: None
         },
+        ethereum_chain_id: EthereumChainIdConfig { chain_id: 1500u64 },
+        evm: EvmConfig {
+            accounts: addresses
+                .into_iter()
+                .map(|addr| {
+                    (
+                        addr,
+                        GenesisAccount {
+                            balance: U256::from(100_000_000_000_u128),
+                            nonce: Default::default(),
+                            code: Default::default(),
+                            storage: Default::default(),
+                        },
+                    )
+                })
+                .chain(MinixPrecompiles::<Runtime>::used_addresses()
+                    .map(|addr| {
+                        (
+                            addr,
+                            GenesisAccount {
+                                nonce: Default::default(),
+                                balance: Default::default(),
+                                storage: Default::default(),
+                                code: revert_bytecode.clone(),
+                            },
+                        )
+                    }))
+                .collect()
+        },
+        ethereum: EthereumConfig {},
     }
 }

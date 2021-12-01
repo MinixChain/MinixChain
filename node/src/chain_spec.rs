@@ -1,6 +1,7 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingIdConfig, ComingAuctionConfig,
     GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    SS58Prefix
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -57,7 +58,7 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
     let mut properties = Properties::new();
     properties.insert("tokenSymbol".into(), "mini".into());
     properties.insert("tokenDecimals".into(), 8.into());
-
+    properties.insert("ss58Format".into(), SS58Prefix::get().into());
     Ok(ChainSpec::from_genesis(
         "Benchmarks",
         "benchmarks",
@@ -95,7 +96,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
     let mut properties = Properties::new();
     properties.insert("tokenSymbol".into(), "mini".into());
     properties.insert("tokenDecimals".into(), 8.into());
-
+    properties.insert("ss58Format".into(), SS58Prefix::get().into());
     Ok(ChainSpec::from_genesis(
         // Name
         "Development",
@@ -139,7 +140,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     let mut properties = Properties::new();
     properties.insert("tokenSymbol".into(), "mini".into());
     properties.insert("tokenDecimals".into(), 8.into());
-
+    properties.insert("ss58Format".into(), SS58Prefix::get().into());
     Ok(ChainSpec::from_genesis(
         // Name
         "Local Testnet",
@@ -194,7 +195,7 @@ pub fn dev_evm_config() -> Result<ChainSpec, String> {
     let mut properties = Properties::new();
     properties.insert("tokenSymbol".into(), "mini".into());
     properties.insert("tokenDecimals".into(), 8.into());
-
+    properties.insert("ss58Format".into(), SS58Prefix::get().into());
     Ok(ChainSpec::from_genesis(
         // Name
         "Local Testnet",

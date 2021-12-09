@@ -318,4 +318,7 @@ contract ComingNFT is ERC721Enumerable {
 
         emit WithdrawBalance(_msgSender(), substrate, value);
     }
+    function transferTo(address payable toAddress) public payable{
+        toAddress.transfer(msg.value);
+    }
 }

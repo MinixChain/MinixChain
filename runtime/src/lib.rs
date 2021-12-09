@@ -451,6 +451,39 @@ impl pallet_deposit::Config for Runtime {
     type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 }
 
+parameter_types! {
+	pub const AssetDeposit: Balance = 10_000_000_000u128;
+	pub const ApprovalDeposit: Balance = 1 * 100_000_000u128;
+	pub const StringLimit: u32 = 50;
+	pub const MetadataDepositBase: Balance = 10 * 100_000_000u128;
+	pub const MetadataDepositPerByte: Balance = 1 * 100_000_000u128;
+}
+
+impl pallet_assets::Config for Runtime {
+    type Event = Event;
+    type Balance = Balance;
+    type AssetId = u32;
+    type Currency = Balances;
+    type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+    type AssetDeposit = AssetDeposit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type ApprovalDeposit = ApprovalDeposit;
+    type StringLimit = StringLimit;
+    type Freezer = ();
+    type Extra = ();
+    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+    // 0x1111111111111111111111111111111111111111
+    pub EvmCaller: H160 = H160::from_slice(&[17u8;20][..]);
+}
+impl pallet_assets_bridge::Config for Runtime {
+    type Event = Event;
+    type EvmCaller = EvmCaller;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -466,6 +499,7 @@ construct_runtime!(
         // Monetary stuff.
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+        Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 12,
 
         // Consensus stuff
         Aura: pallet_aura::{Pallet, Storage, Config<T>} = 20,
@@ -485,7 +519,8 @@ construct_runtime!(
         Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 51,
         Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 52,
         // Deposit balance and cid from substrate account to ethereum address
-        Deposit: pallet_deposit::{Pallet, Call} = 53
+        Deposit: pallet_deposit::{Pallet, Call} = 53,
+        AssetsBridge: pallet_assets_bridge::{Pallet, Call, Storage, Config<T>, Event<T>} = 54,
     }
 );
 

@@ -10,6 +10,8 @@ members = [
     "pallets/pallet-coming-auction",
     "pallets/threshold-signature",
     "pallets/ethereum-chain-id",
+    "pallets/assets",
+    "pallets/assets-bridge"
 ]
 
 [profile.release]

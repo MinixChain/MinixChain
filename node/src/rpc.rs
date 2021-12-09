@@ -28,7 +28,8 @@ use fc_rpc_core::types::FilterPool;
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use pallet_ethereum::EthereumStorageSchema;
 use fc_rpc::{
-    StorageOverride, SchemaV1Override, OverrideHandle, RuntimeApiStorageOverride, EthBlockDataCache
+    StorageOverride, SchemaV1Override, OverrideHandle, RuntimeApiStorageOverride,
+    EthBlockDataCache, SchemaV2Override
 };
 use sc_rpc::SubscriptionTaskExecutor;
 
@@ -120,6 +121,11 @@ pub fn create_full<C, P, BE, A>(
             Box::new(SchemaV1Override::new(client.clone()))
                 as Box<dyn StorageOverride<_> + Send + Sync>,
         );
+	overrides_map.insert(
+		EthereumStorageSchema::V2,
+		Box::new(SchemaV2Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
 
         let overrides = Arc::new(OverrideHandle {
             schemas: overrides_map,
@@ -140,7 +146,8 @@ pub fn create_full<C, P, BE, A>(
                 backend.clone(),
                 is_authority,
                 max_past_logs,
-                block_data_cache.clone()
+                block_data_cache.clone(),
+                fc_rpc::format::Legacy,
             ))
         );
 

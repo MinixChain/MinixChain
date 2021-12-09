@@ -333,7 +333,6 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         EthTask::ethereum_schema_cache_task(
             Arc::clone(&client),
             Arc::clone(&frontier_backend),
-            pallet_ethereum::EthereumStorageSchema::V1,
         ),
     );
 

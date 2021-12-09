@@ -1,7 +1,7 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingIdConfig, ComingAuctionConfig,
     GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
-    EthereumChainIdConfig, EthereumConfig, EvmConfig, GenesisAccount, Runtime, MinixPrecompiles
+    EthereumChainIdConfig, EthereumConfig, EvmConfig, GenesisAccount
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -304,12 +304,6 @@ pub fn minix_genesis(
     coming_keys: (AccountId, AccountId, AccountId),
     addresses: Vec<H160>,
 ) -> GenesisConfig {
-    // This is the simplest bytecode to revert without returning any data.
-    // We will pre-deploy it under all of our precompiles to ensure they can be called from
-    // within contracts.
-    // (PUSH1 0x00 PUSH1 0x00 REVERT)
-    let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
-
     let wasm_binary = WASM_BINARY.unwrap();
     GenesisConfig {
         system: SystemConfig {
@@ -364,18 +358,6 @@ pub fn minix_genesis(
                         },
                     )
                 })
-                .chain(MinixPrecompiles::<Runtime>::used_addresses()
-                    .map(|addr| {
-                        (
-                            addr,
-                            GenesisAccount {
-                                nonce: Default::default(),
-                                balance: Default::default(),
-                                storage: Default::default(),
-                                code: revert_bytecode.clone(),
-                            },
-                        )
-                    }))
                 .collect()
         },
         ethereum: EthereumConfig {},

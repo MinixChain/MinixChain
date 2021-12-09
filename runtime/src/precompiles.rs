@@ -14,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-use pallet_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
+use fp_evm::Context;
+use pallet_evm::{Precompile, PrecompileResult, PrecompileSet};
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
 use pallet_evm_precompile_dispatch::Dispatch;
@@ -51,10 +50,11 @@ where
     }
     /// Return all addresses that contain precompiles. This can be used to populate dummy code
     /// under the precompile.
-    pub fn used_addresses() -> impl Iterator<Item = H160> {
-        sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 1024, 1025, 1026, 2048, 2049]
+    pub fn used_addresses() -> sp_std::vec::Vec<H160> {
+        sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 1024, 1025, 1026, 2048]
             .into_iter()
             .map(hash)
+            .collect()
     }
 }
 
@@ -104,8 +104,7 @@ impl<R> PrecompileSet for MinixPrecompiles<R>
         }
     }
     fn is_precompile(&self, address: H160) -> bool {
-        Self::used_addresses()
-            .any(|x| x == address)
+        Self::used_addresses().contains(&address)
     }
 }
 

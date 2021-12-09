@@ -2,9 +2,11 @@
 
 use frame_support::traits::{Currency, ExistenceRequirement};
 use core::marker::PhantomData;
+use fp_evm::{
+    Context, ExitError, ExitSucceed, PrecompileOutput
+};
 use pallet_evm::{
-    Precompile, AddressMapping, Context, ExitError, ExitSucceed,
-    PrecompileFailure, PrecompileOutput, PrecompileResult,
+    Precompile, AddressMapping, PrecompileFailure, PrecompileResult
 };
 use sp_core::{H160, U256, hexdisplay::HexDisplay};
 use sp_runtime::{traits::UniqueSaturatedInto, AccountId32};
@@ -343,7 +345,7 @@ impl<T> Precompile for Nft<T>
 
         log::debug!(target: "coming-nft", "caller: {:?}", context.caller);
 
-        const BASE_GAS_COST: u64 = 45_000;
+        const BASE_GAS_COST: u64 = 450_000;
 
         // Refer: https://github.com/rust-ethereum/ethabi/blob/master/ethabi/src/encoder.rs#L144
         let mut out = vec![0u8;32];

@@ -59,6 +59,7 @@ pallet-evm = { git = "https://github.com/chainx-org/frontier", branch = "new-pol
 pallet-ethereum = { git = "https://github.com/chainx-org/frontier", branch = "new-polkadot-v0.9.11", default-features = false }
 
 # EVM precompile
+fp-evm = { git="https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
 pallet-evm-precompile-bn128 = { git = "https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
 pallet-evm-precompile-dispatch = { git = "https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
 pallet-evm-precompile-modexp = { git = "https://github.com/chainx-org/frontier", default-features=false, branch="new-polkadot-v0.9.11" }
@@ -116,6 +117,7 @@ std = [
     "pallet-deposit/std",
     "pallet-evm/std",
     "pallet-ethereum/std",
+    "fp-evm/std",
     "fp-rpc/std",
     "fp-self-contained/std"
 ]

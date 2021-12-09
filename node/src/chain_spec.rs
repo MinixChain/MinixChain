@@ -1,7 +1,7 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingIdConfig, ComingAuctionConfig,
     GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
-    EthereumChainIdConfig, EthereumConfig, EvmConfig, GenesisAccount
+    EthereumChainIdConfig, EthereumConfig, EvmConfig, GenesisAccount, AssetsBridgeConfig
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -359,5 +359,8 @@ pub fn minix_genesis(
                 .collect()
         },
         ethereum: EthereumConfig {},
+        assets_bridge: AssetsBridgeConfig {
+            admin_key: None
+        },
     }
 }

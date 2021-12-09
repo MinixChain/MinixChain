@@ -53,6 +53,8 @@ pallet-coming-auction-rpc-runtime-api = { version = "1.2.0", default-features = 
 pallet-deposit = { default-features = false, path = "../pallets/deposit" }
 
 # EVM
+pallet-assets = { default-features = false, path = "../pallets/assets" }
+pallet-assets-bridge = { default-features = false, path = "../pallets/assets-bridge" }
 pallet-ethereum-chain-id = { version = "1.0.0", default-features = false, path = "../pallets/ethereum-chain-id"}
 pallet-evm = { git = "https://github.com/chainx-org/frontier", branch = "polkadot-v0.9.11", default-features = false }
 pallet-ethereum = { git = "https://github.com/chainx-org/frontier", branch = "polkadot-v0.9.11", default-features = false }
@@ -111,6 +113,8 @@ std = [
     "pallet-coming-auction/std",
     "pallet-coming-auction-rpc-runtime-api/std",
     "pallet-deposit/std",
+    "pallet-assets/std",
+    "pallet-assets-bridge/std",
 
     "fp-evm/std",
     "pallet-ethereum-chain-id/std",

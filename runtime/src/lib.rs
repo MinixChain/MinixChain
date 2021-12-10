@@ -432,8 +432,8 @@ impl pallet_evm::Config for Runtime {
     type Currency = Balances;
     type Event = Event;
     type Runner = pallet_evm::runner::stack::Runner<Self>;
-    type PrecompilesType = ();
-    type PrecompilesValue = ();
+    type PrecompilesType = MinixPrecompiles<Runtime>;
+    type PrecompilesValue = PrecompilesValue;
     type ChainId = EthereumChainId;
     type OnChargeTransaction = ();
     type BlockGasLimit = BlockGasLimit;
@@ -453,10 +453,10 @@ impl pallet_deposit::Config for Runtime {
 
 parameter_types! {
 	pub const AssetDeposit: Balance = 10_000_000_000u128;
-	pub const ApprovalDeposit: Balance = 1 * 100_000_000u128;
+	pub const ApprovalDeposit: Balance = 100_000_000u128;
 	pub const StringLimit: u32 = 50;
 	pub const MetadataDepositBase: Balance = 10 * 100_000_000u128;
-	pub const MetadataDepositPerByte: Balance = 1 * 100_000_000u128;
+	pub const MetadataDepositPerByte: Balance = 100_000_000u128;
 }
 
 impl pallet_assets::Config for Runtime {

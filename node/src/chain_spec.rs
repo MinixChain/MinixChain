@@ -370,7 +370,7 @@ pub fn minix_genesis(
         assets: AssetsConfig {
             assets: vec![
                 // id, owner, is_sufficient, min_balance
-                (1, assets_admin.clone(), true, 1),
+                (1, assets_admin, true, 1),
             ],
             metadata: vec![
                 // id, name, symbol, decimals

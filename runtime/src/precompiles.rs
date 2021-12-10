@@ -23,30 +23,20 @@ use pallet_evm_precompile_modexp::Modexp;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
 use sp_core::H160;
-use sp_std::fmt::Debug;
 use sp_std::marker::PhantomData;
 
 /// We include the nine Istanbul precompiles
 /// (https://github.com/ethereum/go-ethereum/blob/3c46f557/core/vm/contracts.go#L69)
 /// as well as a special precompile for dispatching Substrate extrinsics
-#[derive(Debug, Clone, Copy)]
 pub struct MinixPrecompiles<R>(PhantomData<R>);
-
-impl<R> Default for MinixPrecompiles<R>
-where
-    R: pallet_evm::Config
-{
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl<R> MinixPrecompiles<R>
 where
     R: pallet_evm::Config,
 {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        Default::default()
+        Self(PhantomData::<R>)
     }
     /// Return all addresses that contain precompiles. This can be used to populate dummy code
     /// under the precompile.
@@ -63,9 +53,9 @@ where
 /// 1024-2047 Precompiles that are not in Ethereum Mainnet but are neither Minix specific
 /// 2048-4095 Minix specific precompiles
 impl<R> PrecompileSet for MinixPrecompiles<R>
-    where
-        R: pallet_evm::Config + pallet_coming_nft::Config,
-        Dispatch<R>: Precompile,
+where
+    R: pallet_evm::Config + pallet_coming_nft::Config,
+    Dispatch<R>: Precompile,
 {
     fn execute(
         &self,

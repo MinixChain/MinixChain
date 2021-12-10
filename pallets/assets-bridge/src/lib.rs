@@ -215,9 +215,9 @@ pub mod pallet {
             // 3. mint erc20
             let erc20 = Self::erc20s(asset_id).ok_or(Error::<T>::ContractAddressHasNotMapped)?;
 
-            let inputs = mint_into_encode(evm_account.clone(), amount.unique_saturated_into());
+            let inputs = mint_into_encode(evm_account, amount.unique_saturated_into());
 
-            Self::call_evm(erc20.clone(), inputs)?;
+            Self::call_evm(erc20, inputs)?;
 
             Self::deposit_event(Event::DepositExecuted(
                 asset_id,
@@ -245,9 +245,9 @@ pub mod pallet {
             // 2. burn erc20
             let erc20 = Self::erc20s(asset_id).ok_or(Error::<T>::ContractAddressHasNotMapped)?;
 
-            let inputs = burn_from_encode(evm_account.clone(), amount.unique_saturated_into());
+            let inputs = burn_from_encode(evm_account, amount.unique_saturated_into());
 
-            Self::call_evm(erc20.clone(), inputs)?;
+            Self::call_evm(erc20, inputs)?;
 
             // 3. mint asset
             let _ = pallet_assets::Pallet::<T>::mint_into(asset_id, &who, amount)?;
@@ -314,8 +314,8 @@ pub mod pallet {
                 Error::<T>::ContractAddressHasMapped
             );
 
-            Erc20s::<T>::insert(asset_id, erc20.clone());
-            AssetIds::<T>::insert(erc20.clone(), asset_id);
+            Erc20s::<T>::insert(asset_id, erc20);
+            AssetIds::<T>::insert(erc20, asset_id);
 
             Self::deposit_event(Event::Register(asset_id, erc20));
 

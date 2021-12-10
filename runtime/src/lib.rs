@@ -432,8 +432,8 @@ impl pallet_evm::Config for Runtime {
     type Currency = Balances;
     type Event = Event;
     type Runner = pallet_evm::runner::stack::Runner<Self>;
-    type PrecompilesType = MinixPrecompiles<Runtime>;
-    type PrecompilesValue = PrecompilesValue;
+    type PrecompilesType = ();
+    type PrecompilesValue = ();
     type ChainId = EthereumChainId;
     type OnChargeTransaction = ();
     type BlockGasLimit = BlockGasLimit;

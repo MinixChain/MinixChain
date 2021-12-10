@@ -1,7 +1,8 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingIdConfig, ComingAuctionConfig,
     GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
-    EthereumChainIdConfig, EthereumConfig, EvmConfig, GenesisAccount, AssetsBridgeConfig
+    EthereumChainIdConfig, EthereumConfig, EvmConfig, GenesisAccount,
+    AssetsConfig, AssetsBridgeConfig
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -77,7 +78,8 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
                     caller.clone()
                 ],
                 (caller.clone(), caller.clone(), caller),
-                vec![]
+                vec![],
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
             )
         },
         // Bootnodes
@@ -122,7 +124,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice")
                 ),
-                vec![]
+                vec![],
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
             )
         },
         // Bootnodes
@@ -204,6 +207,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     // Frontier pre-funded account
                     H160::from(hex_literal::hex!["19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A"]),
                 ],
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
             )
         },
         // Bootnodes
@@ -273,6 +277,7 @@ pub fn dev_evm_config() -> Result<ChainSpec, String> {
                     // Frontier pre-funded account
                     H160::from(hex_literal::hex!["19E7E376E7C213B7E7e7e46cc70A5dD086DAff2A"]),
                 ],
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
             )
         },
         // Bootnodes
@@ -303,6 +308,7 @@ pub fn minix_genesis(
     endowed_accounts: Vec<AccountId>,
     coming_keys: (AccountId, AccountId, AccountId),
     addresses: Vec<H160>,
+    assets_admin: AccountId,
 ) -> GenesisConfig {
     let wasm_binary = WASM_BINARY.unwrap();
     GenesisConfig {
@@ -361,6 +367,17 @@ pub fn minix_genesis(
                 .collect()
         },
         ethereum: EthereumConfig {},
+        assets: AssetsConfig {
+            assets: vec![
+                // id, owner, is_sufficient, min_balance
+                (1, assets_admin.clone(), true, 1),
+            ],
+            metadata: vec![
+                // id, name, symbol, decimals
+                (1, "Kusama".into(), "KSM".into(), 12),
+            ],
+            accounts: vec![],
+        },
         assets_bridge: AssetsBridgeConfig {
             admin_key: None
         },

@@ -499,7 +499,7 @@ construct_runtime!(
         // Monetary stuff.
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
-        Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 12,
+        Assets: pallet_assets::{Pallet, Call, Storage, Config<T>, Event<T>} = 12,
 
         // Consensus stuff
         Aura: pallet_aura::{Pallet, Storage, Config<T>} = 20,

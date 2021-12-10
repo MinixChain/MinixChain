@@ -4,7 +4,7 @@ version = "4.0.0-dev"
 authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2018"
 license = "Apache-2.0"
-homepage = "https://substrate.dev"
+homepage = "https://substrate.io"
 repository = "https://github.com/paritytech/substrate/"
 description = "FRAME asset management pallet"
 readme = "README.md"
@@ -23,6 +23,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 # `system` module provides us with all sorts of useful stuff and macros depend on it being around.
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false, optional = true }
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }
@@ -38,4 +39,11 @@ std = [
 	"sp-runtime/std",
 	"frame-support/std",
 	"frame-system/std",
+	"frame-benchmarking/std",
 ]
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"sp-runtime/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+]
+try-runtime = ["frame-support/try-runtime"]

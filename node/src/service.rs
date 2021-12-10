@@ -67,7 +67,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
     Ok(Arc::new(fc_db::Backend::<Block>::new(
         &fc_db::DatabaseSettings {
             source: fc_db::DatabaseSettingsSrc::RocksDb {
-                path: frontier_database_dir(&config),
+                path: frontier_database_dir(config),
                 cache_size: 0,
             },
         },

@@ -103,7 +103,7 @@ fn burn_from_abi_encode() {
     amount.to_big_endian(&mut uint[..]);
 
     let encoded = burn_from.encode_input(
-        &[Token::Address(account.clone()),
+        &[Token::Address(account),
             Token::Uint(uint.into())]
     ).unwrap();
 

@@ -22,10 +22,12 @@ use sp_runtime::{
     traits::{AccountIdConversion, UniqueSaturatedInto, StaticLookup},
     TypeId
 };
+use sp_std::vec::Vec;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use sp_arithmetic::traits::Saturating;
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -50,6 +52,12 @@ pub const MIN_DURATION: u32 = 100;
 
 pub type BalanceOf<T> =
 <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+/// Use percentile. [0%, 255%]
+pub struct DefaultRemintPoint;
+impl Get<u8> for DefaultRemintPoint {
+    fn get() -> u8 { 50u8 }
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -98,9 +106,16 @@ pub mod pallet {
     pub(super) type Admin<T: Config> = StorageValue<_, T::AccountId>;
 
     /// The protocol fee point.
+    /// [0‱, 255‱] or [0%, 2.55%]
     #[pallet::storage]
     #[pallet::getter(fn point)]
     pub(super) type Point<T: Config> = StorageValue<_, u8, ValueQuery>;
+
+    /// The remint fee point.
+    /// [0%, 255%]
+    #[pallet::storage]
+    #[pallet::getter(fn remint_point)]
+    pub(super) type RemintPoint<T: Config> = StorageValue<_, u8, ValueQuery, DefaultRemintPoint>;
 
     /// The emergency stop.
     #[pallet::storage]
@@ -222,33 +237,51 @@ pub mod pallet {
 
                     ensure!(value >= current_price, Error::<T>::LowBidValue);
 
-                    if let Some(admin) = Admin::<T>::get() {
-                        let fee = Self::calculate_fee(value);
+                    let service_fee = match Admin::<T>::get() {
+                        Some(admin) => {
+                            let fee_point = Point::<T>::get();
+                            let service_fee = Self::calculate_fee(value, fee_point);
 
-                        // transfer `fee` to admin
-                        T::Currency::transfer(
-                            &buyer,
-                            &admin,
-                            fee,
-                            ExistenceRequirement::KeepAlive
-                        )?;
+                            // transfer `service_fee` to admin
+                            T::Currency::transfer(
+                                &buyer,
+                                &admin,
+                                service_fee,
+                                ExistenceRequirement::KeepAlive
+                            )?;
 
-                        // tranfer `value - fee` to seller
-                        T::Currency::transfer(
-                            &buyer,
-                            &inner_auction.seller,
-                            value - fee,
-                            ExistenceRequirement::KeepAlive
-                        )?;
-                    } else {
-                        // only tranfer `value` to seller
-                        T::Currency::transfer(
-                            &buyer,
-                            &inner_auction.seller,
-                            value,
-                            ExistenceRequirement::KeepAlive
-                        )?;
-                    }
+                            service_fee
+                        }
+                        None => BalanceOf::<T>::default(),
+                    };
+
+                    let tax_fee = match T::ComingNFT::card_of_meta(cid){
+                        Some(meta) => {
+                            let tax_fee = Self::calculate_fee(value, meta.tax_point);
+
+                            // transfer `tax_fee` to issuer
+                            T::Currency::transfer(
+                                &buyer,
+                                &meta.issuer,
+                                tax_fee,
+                                ExistenceRequirement::KeepAlive
+                            )?;
+
+                            tax_fee
+                        },
+                        None => BalanceOf::<T>::default(),
+                    };
+
+                    let to_seller = value
+                        .saturating_sub(service_fee)
+                        .saturating_sub(tax_fee);
+
+                    T::Currency::transfer(
+                        &buyer,
+                        &inner_auction.seller,
+                        to_seller,
+                        ExistenceRequirement::KeepAlive
+                    )?;
 
                     // transfer cid to buyer
                     T::ComingNFT::transfer(
@@ -270,6 +303,39 @@ pub mod pallet {
 
                 Ok(())
             })
+        }
+
+        #[pallet::weight(0)]
+        #[transactional]
+        pub fn remint(
+            origin: OriginFor<T>,
+            cid: Cid,
+            card: Vec<u8>,
+            tax_point: u8
+        ) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            // 1. remint fee
+            let remint = match T::ComingNFT::card_of_meta(cid) {
+                Some(meta) => meta.remint,
+                None => 0,
+            };
+            let remint_fee = Self::calculate_remint_fee(remint);
+
+            if let Some(admin) = Admin::<T>::get() {
+                // transfer `remint fee` to admin
+                T::Currency::transfer(
+                    &who,
+                    &admin,
+                    remint_fee,
+                    ExistenceRequirement::KeepAlive
+                )?;
+            }
+
+            // 2. remint
+            T::ComingNFT::remint(&who, cid, card, tax_point)?;
+
+            Ok(())
         }
 
         #[pallet::weight(<T as pallet::Config>::WeightInfo::cancel())]
@@ -511,12 +577,29 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    pub fn calculate_fee(value: BalanceOf<T>) -> BalanceOf<T> {
-        let point = BalanceOf::<T>::from(Point::<T>::get());
+    pub fn calculate_fee(value: BalanceOf<T>, fee_point: u8) -> BalanceOf<T> {
+        let point = BalanceOf::<T>::from(fee_point);
         let base_point = BalanceOf::<T>::from(10000u16);
 
         // Impossible to overflow
         value / base_point * point
+    }
+
+    pub fn calculate_remint_fee(remint: u8) -> BalanceOf<T> {
+        let remint_point = BalanceOf::<T>::from(RemintPoint::<T>::get());
+        let base_point = BalanceOf::<T>::from(100u16);
+
+        let fee_ladder = BalanceOf::<T>::from(100000000u32)
+            .saturating_mul(
+                BalanceOf::<T>::from(
+                        2u32
+                            .checked_pow(remint as u32)
+                            .unwrap_or(4294967295u32)
+                    )
+            );
+
+        // Impossible to overflow
+        fee_ladder / base_point * remint_point
     }
 
     pub fn balance_of(account: &T::AccountId) -> BalanceOf<T> {

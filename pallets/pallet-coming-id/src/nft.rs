@@ -3,6 +3,8 @@ use super::*;
 pub trait ComingNFT<AccountId> {
     fn mint(who: &AccountId, cid: Cid, card: Vec<u8>) -> DispatchResult;
 
+    fn remint(who: &AccountId, cid: Cid, card: Vec<u8>, tax_point: u8) -> DispatchResult;
+
     fn burn(who: &AccountId, cid: Cid) -> DispatchResult;
 
     fn transfer(who: &AccountId, cid: Cid, recipient: &AccountId) -> DispatchResult;
@@ -12,6 +14,8 @@ pub trait ComingNFT<AccountId> {
     fn owner_of_cid(cid: Cid) -> Option<AccountId>;
 
     fn card_of_cid(cid: Cid) -> Option<Bytes>;
+
+    fn card_of_meta(cid: Cid) -> Option<CardMeta<AccountId>>;
 
     fn can_transfer_from(
         operator: &AccountId,

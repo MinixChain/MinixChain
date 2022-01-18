@@ -151,7 +151,8 @@ fn bond_should_work() {
             Some(CidDetails {
                 owner: RESERVE2,
                 bonds: vec![new_bond1],
-                card: vec![].into()
+                card: vec![].into(),
+                card_meta: None,
             }),
             ComingId::get_bond_data(1)
         );
@@ -169,7 +170,8 @@ fn bond_should_work() {
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![bond.clone(), new_bond2],
-                card: vec![].into()
+                card: vec![].into(),
+                card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
         );
@@ -188,7 +190,8 @@ fn bond_should_work() {
             Some(CidDetails {
                 owner: COMMON_CHARLIE,
                 bonds: vec![bond, new_bond3],
-                card: vec![].into()
+                card: vec![].into(),
+                card_meta: None,
             }),
             ComingId::get_bond_data(1_000_000)
         );
@@ -259,7 +262,8 @@ fn unbond_should_work() {
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![bond.clone(), new_bond2.clone()],
-                card: vec![].into()
+                card: vec![].into(),
+                card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
         );
@@ -272,7 +276,8 @@ fn unbond_should_work() {
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![new_bond2],
-                card: vec![].into()
+                card: vec![].into(),
+                card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
         );

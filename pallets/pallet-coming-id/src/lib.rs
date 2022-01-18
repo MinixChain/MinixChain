@@ -31,6 +31,8 @@ pub mod weights;
 pub type Cid = u64;
 pub type BondType = u16;
 
+const MAX_REMINT: u8 = 32u8;
+
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
@@ -48,10 +50,20 @@ impl BondData {
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub struct CardMeta<AccountId> {
+    pub remint: u8,
+    pub issuer: AccountId,
+    pub tax_point: u8,
+}
+
+#[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct CidDetails<AccountId> {
     pub owner: AccountId,
     pub bonds: Vec<BondData>,
     pub card: Vec<u8>,
+    pub card_meta: Option<CardMeta<AccountId>>,
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
@@ -181,6 +193,8 @@ pub mod pallet {
         UnBonded(T::AccountId, Cid, BondType),
         // cid, card
         MintCard(Cid, Vec<u8>),
+        // cid, issuer
+        RemintCard(Cid, T::AccountId),
         // cid
         Burned(Cid),
         // owner, operator, cid
@@ -207,6 +221,7 @@ pub mod pallet {
         InvalidCidEnd,
         NotFoundBondType,
         TooBigCardSize,
+        RemintMax
     }
 
     #[pallet::call]
@@ -252,6 +267,7 @@ pub mod pallet {
                     owner: recipient.clone(),
                     bonds: Vec::new(),
                     card: Vec::new(),
+                    card_meta: None,
                 });
 
                 Self::account_cids_add(recipient.clone(), cid);
@@ -472,6 +488,26 @@ impl<T: Config> Pallet<T> {
             _ => None,
         }
     }
+
+    pub fn get_remint(cid: Cid) -> u8 {
+        match Self::distributed(cid) {
+            Some(cid_details) => {
+                if let Some(meta) = cid_details.card_meta {
+                    meta.remint
+                } else {
+                    0
+                }
+            },
+            _ => 0,
+        }
+    }
+
+    pub fn get_card_meta(cid: Cid) -> Option<CardMeta<T::AccountId>> {
+        match Self::distributed(cid) {
+            Some(cid_details) => cid_details.card_meta,
+            _ => None,
+        }
+    }
 }
 
 impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
@@ -490,6 +526,41 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
             detail.card = card.clone();
 
             Self::deposit_event(Event::MintCard(cid, card));
+
+            Ok(())
+        })
+    }
+
+    fn remint(who: &T::AccountId, cid: Cid, card: Vec<u8>, tax_point: u8) -> DispatchResult {
+        ensure!(
+            card.len() <= T::MaxCardSize::get() as usize,
+            Error::<T>::TooBigCardSize
+        );
+
+        ensure!(
+            Self::get_remint(cid) < MAX_REMINT,
+            Error::<T>::RemintMax,
+        );
+
+        Distributed::<T>::try_mutate_exists(cid, |details| {
+            let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
+
+            ensure!(detail.owner == *who, Error::<T>::RequireOwner);
+
+            let remint = Self::get_remint(cid);
+
+            let card_meta = Some(
+                CardMeta {
+                    remint: remint + 1,
+                    issuer: who.clone(),
+                    tax_point
+                }
+            );
+
+            detail.card = card.clone();
+            detail.card_meta = card_meta;
+
+            Self::deposit_event(Event::RemintCard(cid, who.clone()));
 
             Ok(())
         })
@@ -553,6 +624,10 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
 
     fn card_of_cid(cid: Cid) -> Option<Bytes> {
         Self::get_card(cid)
+    }
+
+    fn card_of_meta(cid: Cid) -> Option<CardMeta<T::AccountId>> {
+        Self::get_card_meta(cid)
     }
 
     fn can_transfer_from(

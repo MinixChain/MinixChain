@@ -206,7 +206,8 @@ fn transfer_to_self_should_do_nothing() {
             Some(CidDetails {
                 owner: RESERVE2,
                 bonds: vec![bond],
-                card: card.into()
+                card: card.into(),
+                card_meta: None,
             }),
             ComingId::get_bond_data(1_000_000)
         );

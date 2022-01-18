@@ -14,7 +14,7 @@ mod weights;
 pub use pallet::*;
 pub use weights::WeightInfo;
 
-use frame_support::inherent::Vec;
+use sp_std::vec::Vec;
 use frame_support::pallet_prelude::*;
 use pallet_coming_id::{Cid, ComingNFT};
 use sp_core::Bytes;

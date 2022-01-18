@@ -513,9 +513,10 @@ impl<T: Config> Pallet<T> {
 
     pub fn calculate_fee(value: BalanceOf<T>) -> BalanceOf<T> {
         let point = BalanceOf::<T>::from(Point::<T>::get());
+        let base_point = BalanceOf::<T>::from(10000u16);
 
         // Impossible to overflow
-        value / BalanceOf::<T>::from(10000u16) * point
+        value / base_point * point
     }
 
     pub fn balance_of(account: &T::AccountId) -> BalanceOf<T> {

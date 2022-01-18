@@ -313,6 +313,7 @@ pub mod pallet {
             card: Vec<u8>,
             tax_point: u8
         ) -> DispatchResult {
+            ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
             let who = ensure_signed(origin)?;
 
             // 1. remint fee
@@ -452,6 +453,20 @@ pub mod pallet {
             ensure!(Self::is_admin(who), Error::<T>::RequireAdmin);
 
             Point::<T>::mutate(|point| *point = new_point);
+
+            Ok(())
+        }
+
+        #[pallet::weight(0)]
+        pub fn set_remint_point(
+            origin: OriginFor<T>,
+            new_point: u8
+        ) -> DispatchResult {
+            ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
+            let who = ensure_signed(origin)?;
+            ensure!(Self::is_admin(who), Error::<T>::RequireAdmin);
+
+            RemintPoint::<T>::mutate(|point| *point = new_point);
 
             Ok(())
         }

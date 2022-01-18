@@ -16,6 +16,7 @@ pub mod weights;
 use frame_support::{
     pallet_prelude::*,
     traits::{Currency, ExistenceRequirement},
+    transactional
 };
 use sp_runtime::{
     traits::{AccountIdConversion, UniqueSaturatedInto, StaticLookup},
@@ -203,6 +204,7 @@ pub mod pallet {
         }
 
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bid())]
+        #[transactional]
         pub fn bid(
             origin: OriginFor<T>,
             cid: Cid,

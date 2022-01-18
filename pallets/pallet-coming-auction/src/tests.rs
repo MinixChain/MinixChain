@@ -680,3 +680,28 @@ fn dutch_auction_current_price() {
         assert_eq!(1_000_000_000, ComingAuction::get_current_price(COMMON));
     })
 }
+
+#[test]
+fn calculate_remint_fee() {
+    new_test_ext(ALICE).execute_with(|| {
+
+        let min = ComingAuction::calculate_remint_fee(0);
+        let max = ComingAuction::calculate_remint_fee(32);
+
+        for remint in 0..32u8 {
+            let multiple = 2u32.checked_pow(remint as u32).unwrap_or(4294967295u32);
+
+            assert_eq!(
+                min.saturating_mul(multiple as u128),
+                ComingAuction::calculate_remint_fee(remint)
+            )
+        }
+
+        for remint in 32..64u8 {
+            assert_eq!(
+                max,
+                ComingAuction::calculate_remint_fee(remint)
+            )
+        }
+    })
+}

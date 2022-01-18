@@ -25,7 +25,7 @@ use sp_std::prelude::Vec;
 use sp_core::Bytes;
 
 pub use pallet_coming_id::{
-    Cid, CidDetails, BondData, BondType
+    Cid, CardMeta, CidDetails, BondData, BondType
 };
 
 sp_api::decl_runtime_apis! {
@@ -36,5 +36,6 @@ sp_api::decl_runtime_apis! {
 		fn get_cids(account: AccountId) -> Vec<Cid>;
 		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>>;
 		fn get_card(cid: Cid) -> Option<Bytes>;
+		fn get_card_meta(cid: Cid) -> Option<CardMeta<AccountId>>;
 	}
 }

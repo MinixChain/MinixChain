@@ -26,7 +26,7 @@ use sp_runtime::{generic::BlockId, traits::{Block as BlockT}};
 use sp_api::ProvideRuntimeApi;
 use sp_core::Bytes;
 use pallet_coming_id_rpc_runtime_api::{
-	Cid, CidDetails
+	Cid, CardMeta, CidDetails
 };
 pub use pallet_coming_id_rpc_runtime_api::ComingIdApi as ComingIdRuntimeApi;
 
@@ -59,6 +59,13 @@ pub trait ComingIdApi<BlockHash, AccountId> {
 		cid: Cid,
 		at: Option<BlockHash>
 	) -> Result<Option<Bytes>>;
+
+	#[rpc(name = "get_card_meta")]
+	fn get_card_meta(
+		&self,
+		cid: Cid,
+		at: Option<BlockHash>
+	) -> Result<Option<CardMeta<AccountId>>>;
 
 }
 
@@ -172,6 +179,25 @@ where
 			.map_err(|e| RpcError {
 				code: ErrorCode::ServerError(Error::RuntimeError.into()),
 				message: "Unable to get card.".into(),
+				data: Some(format!("{:?}", e).into()),
+			})
+	}
+
+	fn get_card_meta(
+		&self,
+		cid: Cid,
+		at: Option<<Block as BlockT>::Hash>
+	) -> Result<Option<CardMeta<AccountId>>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash
+		));
+
+		api.get_card_meta(&at, cid)
+			.map_err(|e| RpcError {
+				code: ErrorCode::ServerError(Error::RuntimeError.into()),
+				message: "Unable to get card meta.".into(),
 				data: Some(format!("{:?}", e).into()),
 			})
 	}

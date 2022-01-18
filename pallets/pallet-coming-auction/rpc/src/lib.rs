@@ -39,6 +39,13 @@ pub trait ComingAuctionApi<BlockHash, Balance> {
 		cid: Cid,
 		at: Option<BlockHash>
 	) -> Result<NumberOrHex>;
+
+	#[rpc(name = "get_remint_fee")]
+	fn get_remint_fee(
+		&self,
+		cid: Cid,
+		at: Option<BlockHash>
+	) -> Result<NumberOrHex>;
 }
 
 /// A struct that implements the [`ComingAuctionApi`].
@@ -102,6 +109,34 @@ where
 				RpcError {
 					code: ErrorCode::ServerError(Error::RuntimeError.into()),
 					message: "Unable to get price.".into(),
+					data: Some(format!("{:?}", e).into()),
+				}
+			})?
+	}
+
+	fn get_remint_fee(
+		&self,
+		cid: Cid,
+		at: Option<<Block as BlockT>::Hash>
+	) -> Result<NumberOrHex> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash
+		));
+
+		api.get_remint_fee(&at, cid)
+			.map(|price|{
+				price.try_into().map_err(|_| RpcError {
+					code: ErrorCode::InvalidParams,
+					message: format!("{} doesn't fit in NumberOrHex representation", price),
+					data: None,
+				})
+			})
+			.map_err(|e| {
+				RpcError {
+					code: ErrorCode::ServerError(Error::RuntimeError.into()),
+					message: "Unable to get remint fee.".into(),
 					data: Some(format!("{:?}", e).into()),
 				}
 			})?

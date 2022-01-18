@@ -553,6 +553,15 @@ impl<T: Config> Pallet<T> {
         }
     }
 
+    pub fn get_current_remint_fee(cid: Cid) -> BalanceOf<T> {
+        let remint = match T::ComingNFT::card_of_meta(cid) {
+            Some(meta) => meta.remint,
+            None => 0,
+        };
+
+        Self::calculate_remint_fee(remint)
+    }
+
     pub fn calculate_price(
         start: BalanceOf<T>,
         end: BalanceOf<T>,

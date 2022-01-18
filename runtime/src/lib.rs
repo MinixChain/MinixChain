@@ -42,7 +42,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-use pallet_coming_id::{Cid, CidDetails};
+use pallet_coming_id::{Cid, CardMeta, CidDetails};
 use pallet_transaction_payment::{
     CurrencyAdapter, Multiplier, MultiplierUpdate
 };
@@ -584,6 +584,10 @@ impl_runtime_apis! {
         fn get_card(cid: Cid) -> Option<Bytes> {
             ComingId::get_card(cid)
         }
+
+        fn get_card_meta(cid: Cid) -> Option<CardMeta<AccountId>> {
+            ComingId::get_card_meta(cid)
+        }
     }
 
     impl pallet_threshold_signature_rpc_runtime_api::ThresholdSignatureApi<Block> for Runtime {
@@ -600,6 +604,10 @@ impl_runtime_apis! {
     impl pallet_coming_auction_rpc_runtime_api::ComingAuctionApi<Block, Balance> for Runtime {
         fn get_price(cid: Cid) -> Balance {
             ComingAuction::get_current_price(cid)
+        }
+
+        fn get_remint_fee(cid: Cid) -> Balance {
+            ComingAuction::get_current_remint_fee(cid)
         }
     }
 

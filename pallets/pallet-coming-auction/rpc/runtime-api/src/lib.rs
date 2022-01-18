@@ -29,5 +29,6 @@ sp_api::decl_runtime_apis! {
 	    Balance: Codec + AtLeast32BitUnsigned + MaybeDisplay,
 	{
 		fn get_price(cid: Cid) -> Balance;
+		fn get_remint_fee(cid: Cid) -> Balance;
 	}
 }

@@ -56,7 +56,7 @@ pub type BalanceOf<T> =
 /// Use percentile. [0%, 255%]
 pub struct DefaultRemintPoint;
 impl Get<u8> for DefaultRemintPoint {
-    fn get() -> u8 { 50u8 }
+    fn get() -> u8 { 25u8 }
 }
 
 #[frame_support::pallet]

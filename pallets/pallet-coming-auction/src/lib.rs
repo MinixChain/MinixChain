@@ -224,7 +224,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             cid: Cid,
             value: BalanceOf<T>,
-        ) -> DispatchResult {
+        ) -> DispatchResultWithPostInfo {
             ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
             ensure!(Self::is_on_auction(cid), Error::<T>::NotOnAuction);
 
@@ -301,7 +301,7 @@ pub mod pallet {
                     Self::deposit_event(Event::AuctionSuccessful(cid, buyer, value, Self::now()));
                 }
 
-                Ok(())
+                Ok(Pays::No.into())
             })
         }
 

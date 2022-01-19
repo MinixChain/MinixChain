@@ -17,8 +17,8 @@ benchmarks! {
         let claim_cid: Cid = 1000000;
         let recipient: T::AccountId = account("recipient", 0, 0);
         let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(recipient.clone());
-        let b in 1 .. T::MaxCardSize::get();
-        let card = vec![1; b as usize];
+        let b in 1 .. (T::MaxDataSize::get() / 1024);
+        let card = vec![0u8; (1024 * b) as usize];
 
         assert!(
             ComingId::Pallet::<T>::register(

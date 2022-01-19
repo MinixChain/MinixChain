@@ -76,7 +76,8 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
                     caller.clone()
                 ],
-                (caller.clone(), caller.clone(), caller)
+                (caller.clone(), caller.clone(), caller.clone()),
+                Some(caller)
             )
         },
         // Bootnodes
@@ -121,6 +122,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice")
                 ),
+                None
             )
         },
         // Bootnodes
@@ -175,7 +177,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                )
+                ),
+                None
             )
         },
         // Bootnodes
@@ -218,7 +221,8 @@ pub fn dev_evm_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                )
+                ),
+                None
             )
         },
         // Bootnodes
@@ -247,7 +251,8 @@ pub fn minix_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
-    coming_keys: (AccountId, AccountId, AccountId)
+    coming_keys: (AccountId, AccountId, AccountId),
+    auction_admin: Option<AccountId>,
 ) -> GenesisConfig {
     let wasm_binary = WASM_BINARY.unwrap();
     GenesisConfig {
@@ -286,7 +291,7 @@ pub fn minix_genesis(
             low_admin_key: coming_keys.2,
         },
         coming_auction: ComingAuctionConfig {
-            admin_key: None
+            admin_key: auction_admin
         },
     }
 }

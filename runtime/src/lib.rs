@@ -325,7 +325,7 @@ impl pallet_sudo::Config for Runtime {
 parameter_types! {
     pub const ClaimValidatePeriod: BlockNumber = 600;
     pub const CidsLimit: u32 = 500;
-    pub const MaxCardSize: u32 = 1024 * 1024;
+    pub const MaxDataSize: u32 = 1024 * 1024;
     pub const AuctionId: PalletAuctionId = PalletAuctionId(*b"/auc");
 }
 
@@ -333,7 +333,7 @@ parameter_types! {
 impl pallet_coming_id::Config for Runtime {
     type Event = Event;
     type WeightInfo = pallet_coming_id::weights::SubstrateWeight<Runtime>;
-    type MaxCardSize = MaxCardSize;
+    type MaxDataSize = MaxDataSize;
 }
 
 impl pallet_utility::Config for Runtime {
@@ -613,12 +613,30 @@ impl_runtime_apis! {
 
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
+        fn benchmark_metadata(extra: bool) -> (
+            Vec<frame_benchmarking::BenchmarkList>,
+            Vec<frame_support::traits::StorageInfo>,
+        ) {
+            use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+            use frame_support::traits::StorageInfoTrait;
+
+            let mut list = Vec::<BenchmarkList>::new();
+
+            list_benchmark!(list, extra, pallet_coming_id, ComingId);
+            list_benchmark!(list, extra, pallet_coming_nft, ComingNFT);
+            list_benchmark!(list, extra, pallet_threshold_signature, ThresholdSignature);
+            list_benchmark!(list, extra, pallet_coming_auction, ComingAuction);
+
+            let storage_info = AllPalletsWithSystem::storage_info();
+
+            return (list, storage_info)
+        }
+
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
             use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-            use frame_system_benchmarking::Pallet as SystemBench;
             impl frame_system_benchmarking::Config for Runtime {}
 
             let whitelist: Vec<TrackedStorageKey> = vec![
@@ -637,9 +655,6 @@ impl_runtime_apis! {
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);
 
-            add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-            add_benchmark!(params, batches, pallet_balances, Balances);
-            add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, pallet_coming_id, ComingId);
             add_benchmark!(params, batches, pallet_coming_nft, ComingNFT);
             add_benchmark!(params, batches, pallet_threshold_signature, ThresholdSignature);

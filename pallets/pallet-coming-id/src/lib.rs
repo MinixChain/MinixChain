@@ -7,11 +7,10 @@ pub use pallet::*;
 pub use weights::WeightInfo;
 
 use codec::{Decode, Encode};
-use frame_support::inherent::Vec;
 use frame_support::pallet_prelude::*;
 use sp_core::Bytes;
 use sp_runtime::traits::StaticLookup;
-use sp_std::vec;
+use sp_std::{vec, vec::Vec};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -31,7 +30,7 @@ pub mod weights;
 pub type Cid = u64;
 pub type BondType = u16;
 
-const MAX_REMINT: u8 = 32u8;
+pub const MAX_REMINT: u8 = 32u8;
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -90,9 +89,9 @@ pub mod pallet {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
-        /// Max size of c-card
+        /// Max size of c-card or bond-data
         #[pallet::constant]
-        type MaxCardSize: Get<u32>;
+        type MaxDataSize: Get<u32>;
     }
 
     #[pallet::pallet]
@@ -220,7 +219,7 @@ pub mod pallet {
         UndistributedCid,
         InvalidCidEnd,
         NotFoundBondType,
-        TooBigCardSize,
+        TooBigDataSize,
         RemintMax
     }
 
@@ -281,6 +280,7 @@ pub mod pallet {
         pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
+            ensure!(bond_data.length() < T::MaxDataSize::get(), Error::<T>::TooBigDataSize);
 
             Distributed::<T>::try_mutate_exists(cid, |details| {
                 let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
@@ -514,8 +514,8 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
     fn mint(who: &T::AccountId, cid: Cid, card: Vec<u8>) -> DispatchResult {
         Self::check_admin(who, cid)?;
         ensure!(
-            card.len() <= T::MaxCardSize::get() as usize,
-            Error::<T>::TooBigCardSize
+            card.len() <= T::MaxDataSize::get() as usize,
+            Error::<T>::TooBigDataSize
         );
 
         Distributed::<T>::try_mutate_exists(cid, |details| {
@@ -533,8 +533,8 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
 
     fn remint(who: &T::AccountId, cid: Cid, card: Vec<u8>, tax_point: u8) -> DispatchResult {
         ensure!(
-            card.len() <= T::MaxCardSize::get() as usize,
-            Error::<T>::TooBigCardSize
+            card.len() <= T::MaxDataSize::get() as usize,
+            Error::<T>::TooBigDataSize
         );
 
         ensure!(

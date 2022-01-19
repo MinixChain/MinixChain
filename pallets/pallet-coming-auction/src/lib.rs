@@ -2,7 +2,7 @@
 #![allow(clippy::unused_unit)]
 
 pub use pallet::*;
-pub use pallet_coming_id::{Cid, ComingNFT, Error as ComingIdError};
+pub use pallet_coming_id::{Cid, CardMeta, ComingNFT, MAX_REMINT, Error as ComingIdError};
 pub use weights::WeightInfo;
 
 #[cfg(test)]
@@ -305,7 +305,7 @@ pub mod pallet {
             })
         }
 
-        #[pallet::weight(0)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::remint(((card.len() as u32) / 1024).max(1)))]
         #[transactional]
         pub fn remint(
             origin: OriginFor<T>,
@@ -457,7 +457,7 @@ pub mod pallet {
             Ok(())
         }
 
-        #[pallet::weight(0)]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::set_remint_point())]
         pub fn set_remint_point(
             origin: OriginFor<T>,
             new_point: u8

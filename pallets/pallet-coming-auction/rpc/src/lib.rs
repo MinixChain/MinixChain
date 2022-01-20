@@ -7,7 +7,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// 	http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -85,8 +85,8 @@ where
     fn get_price(&self, cid: Cid, at: Option<<Block as BlockT>::Hash>) -> Result<NumberOrHex> {
         let api = self.client.runtime_api();
         let at = BlockId::hash(at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
 
         api.get_price(&at, cid)
             .map(|price| {
@@ -105,9 +105,10 @@ where
 
     fn get_remint_fee(&self, cid: Cid, at: Option<<Block as BlockT>::Hash>) -> Result<NumberOrHex> {
         let api = self.client.runtime_api();
-        let at = BlockId::hash(at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
+        let at = BlockId::hash(at.unwrap_or_else(|| {
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash
+        }));
 
         api.get_remint_fee(&at, cid)
             .map(|price| {

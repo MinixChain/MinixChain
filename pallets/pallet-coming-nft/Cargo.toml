@@ -30,21 +30,21 @@ sp-io = { git = "https://github.com/paritytech/substrate", default-features = fa
 [features]
 default = ['std']
 std = [
-	'codec/std',
-	'serde/std',
-	'scale-info/std',
-	'frame-support/std',
-	'frame-system/std',
-	'frame-benchmarking/std',
-	'sp-runtime/std',
-	'sp-std/std',
-	'sp-core/std',
-	'pallet-coming-id/std'
+    'codec/std',
+    'serde/std',
+    'scale-info/std',
+    'frame-support/std',
+    'frame-system/std',
+    'frame-benchmarking/std',
+    'sp-runtime/std',
+    'sp-std/std',
+    'sp-core/std',
+    'pallet-coming-id/std'
 ]
 
 runtime-benchmarks = [
-	"frame-benchmarking",
-	"hex-literal"
+    "frame-benchmarking",
+    "hex-literal"
 ]
 
 try-runtime = ["frame-support/try-runtime"]

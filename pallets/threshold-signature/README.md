@@ -124,7 +124,7 @@ pubkey_abc    +     root
               AB    BC
 ~~~
 
-​	As shown in the figure above, the address is generated according to the formula `P + hash_tweak(P||root)G`. The generated threshold signature address is:
+​    As shown in the figure above, the address is generated according to the formula `P + hash_tweak(P||root)G`. The generated threshold signature address is:
 
 ~~~
 5Pe8v2KPm5dfdgRPDjAWdBSmWva7aeEH5nbZpYsHBX3mAVPK

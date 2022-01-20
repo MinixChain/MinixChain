@@ -188,6 +188,40 @@ fn get_card(
 }
 ```
 
+- get_card_meta:
+  获取指定cid的c-card的元数据: remint次数, issuer, 税率.
+  税率范围[0, 2.55%]
+
+```
+#[rpc(name = "get_card_meta")]
+fn get_card_meta(
+    &self,
+    cid: Cid,
+    at: Option<BlockHash>
+) -> Result<Option<CardMeta<AccountId>>>;
+```
+输入：
+```json
+{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"get_card_meta",
+  "params": [1000000]
+}
+```
+输出：
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "issuer": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+    "remint": 1,
+    "taxPoint": 50
+  },
+  "id": 1
+}
+```
+
 ## custom types
 ```json
 {
@@ -199,10 +233,16 @@ fn get_card(
     "bond_type": "BondType",
     "data": "Bytes"
   },
+  "CardMeta": {
+    "remint": "u8",
+    "issuer": "AccountId",
+    "tax_point": "u8"
+  },
   "CidDetails": {
     "owner": "AccountId",
     "bonds": "Vec<BondData>",
-    "card":  "Bytes"
+    "card":  "Bytes",
+    "card_meta": "Option<CardMeta>"
   },
   "AdminType": {
     "_enum": [
@@ -279,6 +319,21 @@ fn get_card(
         }
       ],
       "type": "Option<Bytes>"
+    },
+    "getCardMeta": {
+      "description": "comingId getCardMeta",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Option<CardMeta>"
     }
   }
 }

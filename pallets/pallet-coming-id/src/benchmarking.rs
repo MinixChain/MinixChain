@@ -4,41 +4,39 @@
 
 use super::*;
 
-use frame_benchmarking::{whitelisted_caller, benchmarks};
-use frame_system::RawOrigin;
+use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::assert_ok;
+use frame_system::RawOrigin;
 use sp_std::vec;
 
 use crate as ComingId;
 
 fn prepare_bond<T: Config>(caller: &T::AccountId, cid: Cid) -> DispatchResult {
-    assert_ok!(
-        ComingId::Pallet::<T>::register(
-            RawOrigin::Signed(caller.clone()).into(),
-            cid,
-            T::Lookup::unlookup(caller.clone()),
-        )
-    );
+    assert_ok!(ComingId::Pallet::<T>::register(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        T::Lookup::unlookup(caller.clone()),
+    ));
 
     Ok(())
 }
 
-fn prepare_unbond<T: Config>(caller: &T::AccountId, cid: Cid, bond_data:BondData) -> DispatchResult {
-    assert_ok!(
-        ComingId::Pallet::<T>::register(
-            RawOrigin::Signed(caller.clone()).into(),
-            cid,
-            T::Lookup::unlookup(caller.clone()),
-        )
-    );
+fn prepare_unbond<T: Config>(
+    caller: &T::AccountId,
+    cid: Cid,
+    bond_data: BondData,
+) -> DispatchResult {
+    assert_ok!(ComingId::Pallet::<T>::register(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        T::Lookup::unlookup(caller.clone()),
+    ));
 
-    assert_ok!(
-        ComingId::Pallet::<T>::bond(
-            RawOrigin::Signed(caller.clone()).into(),
-            cid,
-            bond_data,
-        )
-    );
+    assert_ok!(ComingId::Pallet::<T>::bond(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        bond_data,
+    ));
 
     Ok(())
 }

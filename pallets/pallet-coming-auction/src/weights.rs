@@ -40,14 +40,17 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{
+    traits::Get,
+    weights::{constants::RocksDbWeight, Weight},
+};
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_coming_auction.
 pub trait WeightInfo {
     fn create() -> Weight;
     fn bid() -> Weight;
-    fn remint(b: u32, ) -> Weight;
+    fn remint(b: u32) -> Weight;
     fn cancel() -> Weight;
     fn pause() -> Weight;
     fn unpause() -> Weight;
@@ -70,7 +73,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
             .saturating_add(T::DbWeight::get().reads(8 as Weight))
             .saturating_add(T::DbWeight::get().writes(6 as Weight))
     }
-    fn remint(b: u32, ) -> Weight {
+    fn remint(b: u32) -> Weight {
         (41_496_000 as Weight)
             // Standard Error: 9_000
             .saturating_add((4_255_000 as Weight).saturating_mul(b as Weight))
@@ -126,7 +129,7 @@ impl WeightInfo for () {
             .saturating_add(RocksDbWeight::get().reads(8 as Weight))
             .saturating_add(RocksDbWeight::get().writes(6 as Weight))
     }
-    fn remint(b: u32, ) -> Weight {
+    fn remint(b: u32) -> Weight {
         (41_496_000 as Weight)
             // Standard Error: 9_000
             .saturating_add((4_255_000 as Weight).saturating_mul(b as Weight))

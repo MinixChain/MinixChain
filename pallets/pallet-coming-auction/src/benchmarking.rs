@@ -5,11 +5,9 @@
 use super::*;
 
 use crate::Pallet as ComingAuction;
-use frame_benchmarking::{whitelisted_caller, benchmarks};
+use frame_benchmarking::{benchmarks, whitelisted_caller};
+use frame_support::{assert_ok, dispatch::DispatchResult};
 use frame_system::RawOrigin;
-use frame_support::{
-    assert_ok, dispatch::DispatchResult
-};
 use pallet_coming_id as ComingId;
 use sp_runtime::traits::StaticLookup;
 use sp_std::convert::From;
@@ -21,32 +19,25 @@ fn create_auction<T: Config>() -> DispatchResult {
     let caller = whitelisted_caller();
     let cid: Cid = 1_000_000;
     let start_price = BalanceOf::<T>::from(1_000_000_000u32);
-    let end_price  = BalanceOf::<T>::from(100_000_000u32);
+    let end_price = BalanceOf::<T>::from(100_000_000u32);
     let duration = T::BlockNumber::from(100u32);
     let bid_price = BalanceOf::<T>::from(1_000_000_000u32);
 
-    <T as crate::Config>::Currency::make_free_balance_be(
-        &caller,
-        bid_price
-    );
+    <T as crate::Config>::Currency::make_free_balance_be(&caller, bid_price);
 
-    assert_ok!(
-        ComingId::Pallet::<T>::register(
-            RawOrigin::Signed(caller.clone()).into(),
-            cid,
-            T::Lookup::unlookup(caller.clone()),
-        )
-    );
+    assert_ok!(ComingId::Pallet::<T>::register(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        T::Lookup::unlookup(caller.clone()),
+    ));
 
-    assert_ok!(
-        ComingAuction::<T>::create(
-            RawOrigin::Signed(caller.clone()).into(),
-            cid,
-            start_price,
-            end_price,
-            duration
-        )
-    );
+    assert_ok!(ComingAuction::<T>::create(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        start_price,
+        end_price,
+        duration
+    ));
 
     Ok(())
 }
@@ -55,58 +46,44 @@ fn create_auction_after_remint<T: Config>() -> DispatchResult {
     let caller = whitelisted_caller();
     let cid: Cid = 1_000_000;
     let start_price = BalanceOf::<T>::from(1_000_000_000u32);
-    let end_price  = BalanceOf::<T>::from(100_000_000u32);
+    let end_price = BalanceOf::<T>::from(100_000_000u32);
     let duration = T::BlockNumber::from(100u32);
     let bid_price = BalanceOf::<T>::from(1_000_000_000u32);
 
-    <T as crate::Config>::Currency::make_free_balance_be(
-        &caller,
-        bid_price
-    );
+    <T as crate::Config>::Currency::make_free_balance_be(&caller, bid_price);
 
-    assert_ok!(
-        ComingId::Pallet::<T>::register(
-            RawOrigin::Signed(caller.clone()).into(),
-            cid,
-            T::Lookup::unlookup(caller.clone()),
-        )
-    );
+    assert_ok!(ComingId::Pallet::<T>::register(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        T::Lookup::unlookup(caller.clone()),
+    ));
 
-    assert_ok!(
-        ComingAuction::<T>::remint(
-            RawOrigin::Signed(caller.clone()).into(),
-            cid,
-            vec![],
-            100u8
-        )
-    );
+    assert_ok!(ComingAuction::<T>::remint(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        vec![],
+        100u8
+    ));
 
-    assert_ok!(
-        ComingAuction::<T>::create(
-            RawOrigin::Signed(caller.clone()).into(),
-            cid,
-            start_price,
-            end_price,
-            duration
-        )
-    );
+    assert_ok!(ComingAuction::<T>::create(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        start_price,
+        end_price,
+        duration
+    ));
 
     Ok(())
 }
 
 fn prepare_remint<T: Config>(caller: &T::AccountId, cid: Cid) -> DispatchResult {
-    <T as Config>::Currency::make_free_balance_be(
-        &caller,
-        u128::MAX.unique_saturated_into(),
-    );
+    <T as Config>::Currency::make_free_balance_be(&caller, u128::MAX.unique_saturated_into());
 
-    assert_ok!(
-        ComingId::Pallet::<T>::register(
-            RawOrigin::Signed(caller.clone()).into(),
-            cid,
-            T::Lookup::unlookup(caller.clone()),
-        )
-    );
+    assert_ok!(ComingId::Pallet::<T>::register(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        T::Lookup::unlookup(caller.clone()),
+    ));
 
     Ok(())
 }

@@ -1,8 +1,5 @@
 use super::Event as ComingIdEvent;
-use crate::{
-    mock::*, BondData, CidDetails, Error,
-    Distributed, AccountIdCids, AdminType
-};
+use crate::{mock::*, AccountIdCids, AdminType, BondData, CidDetails, Distributed, Error};
 use frame_support::{assert_noop, assert_ok};
 
 const ADMIN: u64 = 1;
@@ -308,22 +305,30 @@ fn clear_cids(cids: &[u64]) {
 fn register_more_tests() {
     let (high, medium, medium2, medium3, low) = (1u64, 2u64, 3u64, 4u64, 5u64);
     let admins = [high, medium, medium2, medium3, low];
-    let (
-        reserve,
-        community,
-        common7,
-        common8,
-        common9,
-        invalid
-    ) = (1u64, 100_000u64, 1_000_000u64, 10_000_000u64, 100_000_000u64, 1_000_000_000_000u64);
+    let (reserve, community, common7, common8, common9, invalid) = (
+        1u64,
+        100_000u64,
+        1_000_000u64,
+        10_000_000u64,
+        100_000_000u64,
+        1_000_000_000_000u64,
+    );
 
     new_test_ext2(admins, high).execute_with(|| {
         // 1. all admins test
         assert_ok!(ComingId::register(Origin::signed(high), reserve, high));
         expect_event(ComingIdEvent::Registered(high, reserve));
-        assert_ok!(ComingId::register(Origin::signed(medium3), community, medium3));
+        assert_ok!(ComingId::register(
+            Origin::signed(medium3),
+            community,
+            medium3
+        ));
         expect_event(ComingIdEvent::Registered(medium3, community));
-        assert_ok!(ComingId::register(Origin::signed(medium2), common7, medium2));
+        assert_ok!(ComingId::register(
+            Origin::signed(medium2),
+            common7,
+            medium2
+        ));
         expect_event(ComingIdEvent::Registered(medium2, common7));
         assert_ok!(ComingId::register(Origin::signed(medium), common8, medium));
         expect_event(ComingIdEvent::Registered(medium, common8));
@@ -368,7 +373,11 @@ fn register_more_tests() {
             ComingId::register(Origin::signed(medium3), reserve, high),
             Error::<Test>::RequireHighAuthority
         );
-        assert_ok!(ComingId::register(Origin::signed(medium3), community, medium3));
+        assert_ok!(ComingId::register(
+            Origin::signed(medium3),
+            community,
+            medium3
+        ));
         assert_noop!(
             ComingId::register(Origin::signed(medium3), common7, medium2),
             Error::<Test>::RequireMediumAuthority2
@@ -395,7 +404,11 @@ fn register_more_tests() {
             ComingId::register(Origin::signed(medium2), community, medium3),
             Error::<Test>::RequireMediumAuthority3
         );
-        assert_ok!(ComingId::register(Origin::signed(medium2), common7, medium2));
+        assert_ok!(ComingId::register(
+            Origin::signed(medium2),
+            common7,
+            medium2
+        ));
         assert_noop!(
             ComingId::register(Origin::signed(medium2), common8, medium),
             Error::<Test>::RequireMediumAuthority
@@ -404,7 +417,6 @@ fn register_more_tests() {
         assert_ok!(ComingId::check_admin(&medium2, common7));
 
         clear_cids(&[reserve, community, common7, common8, common9]);
-
 
         // 4. medium admin test
         assert_noop!(
@@ -467,8 +479,16 @@ fn set_admin() {
 
         assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::High));
         assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::Medium));
-        assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::Medium2));
-        assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::Medium3));
+        assert_ok!(ComingId::set_admin(
+            Origin::root(),
+            sudo,
+            AdminType::Medium2
+        ));
+        assert_ok!(ComingId::set_admin(
+            Origin::root(),
+            sudo,
+            AdminType::Medium3
+        ));
         assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::Low));
 
         assert_eq!(sudo, ComingId::high_admin_key());

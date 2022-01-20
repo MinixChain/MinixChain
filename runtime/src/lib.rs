@@ -12,13 +12,12 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, Bytes, OpaqueMetadata};
 use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify,
-    Convert,
+    AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, IdentifyAccount, NumberFor, Verify,
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature, Perquintill, FixedU128, FixedPointNumber
+    ApplyExtrinsicResult, FixedPointNumber, FixedU128, MultiSignature, Perquintill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -31,8 +30,8 @@ pub use frame_support::{
     traits::{KeyOwnerProofSystem, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-        WeightToFeePolynomial, Weight, WeightToFeeCoefficients, WeightToFeeCoefficient,
-        RuntimeDbWeight
+        RuntimeDbWeight, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+        WeightToFeePolynomial,
     },
     StorageValue,
 };
@@ -42,14 +41,12 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-use pallet_coming_id::{Cid, CardMeta, CidDetails};
-use pallet_transaction_payment::{
-    CurrencyAdapter, Multiplier, MultiplierUpdate
-};
+use pallet_coming_auction::PalletAuctionId;
+use pallet_coming_id::{CardMeta, Cid, CidDetails};
 pub use pallet_threshold_signature::primitive::{
     Message, OpCode, Pubkey, ScriptHash, Signature as TSignature,
 };
-use pallet_coming_auction::PalletAuctionId;
+use pallet_transaction_payment::{CurrencyAdapter, Multiplier, MultiplierUpdate};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -286,8 +283,7 @@ impl MultiplierUpdate for FixedFeeMultiplierUpdate {
     }
 }
 
-impl Convert<Multiplier, Multiplier> for FixedFeeMultiplierUpdate
-{
+impl Convert<Multiplier, Multiplier> for FixedFeeMultiplierUpdate {
     fn convert(_previous: Multiplier) -> Multiplier {
         FixedU128::saturating_from_rational(1u64, 10u64)
     }
@@ -295,8 +291,7 @@ impl Convert<Multiplier, Multiplier> for FixedFeeMultiplierUpdate
 
 /// Implementor of `WeightToFeePolynomial` that maps one unit of weight to one unit of fee.
 pub struct IdentityFee;
-impl WeightToFeePolynomial for IdentityFee
-{
+impl WeightToFeePolynomial for IdentityFee {
     type Balance = Balance;
 
     fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
@@ -423,7 +418,7 @@ pub type Executive = frame_executive::Executive<
     frame_system::ChainContext<Runtime>,
     Runtime,
     AllPallets,
-    RemoveCidStats
+    RemoveCidStats,
 >;
 
 // todo: remove me after upgrade minix mainnet from 113

@@ -55,7 +55,9 @@ pub fn new_partial(
     ServiceError,
 > {
     if config.keystore_remote.is_some() {
-        return Err(ServiceError::Other(format!("Remote Keystores are not supported.")))
+        return Err(ServiceError::Other(format!(
+            "Remote Keystores are not supported."
+        )));
     }
 
     let telemetry = config
@@ -167,15 +169,19 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
     if let Some(url) = &config.keystore_remote {
         match remote_keystore(url) {
             Ok(k) => keystore_container.set_remote_keystore(k),
-            Err(e) =>
+            Err(e) => {
                 return Err(ServiceError::Other(format!(
                     "Error hooking up remote keystore for {}: {}",
                     url, e
-                ))),
+                )))
+            }
         };
     }
 
-    config.network.extra_sets.push(sc_finality_grandpa::grandpa_peers_set_config());
+    config
+        .network
+        .extra_sets
+        .push(sc_finality_grandpa::grandpa_peers_set_config());
     let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
         backend.clone(),
         grandpa_link.shared_authority_set().clone(),
@@ -193,7 +199,6 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
             warp_sync: Some(warp_sync),
         })?;
 
-
     let role = config.role.clone();
     let force_authoring = config.force_authoring;
     let backoff_authoring_blocks: Option<()> = None;
@@ -206,8 +211,11 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         let pool = transaction_pool.clone();
 
         Box::new(move |deny_unsafe, _| {
-            let deps =
-                crate::rpc::FullDeps { client: client.clone(), pool: pool.clone(), deny_unsafe };
+            let deps = crate::rpc::FullDeps {
+                client: client.clone(),
+                pool: pool.clone(),
+                deny_unsafe,
+            };
 
             Ok(crate::rpc::create_full(deps))
         })
@@ -275,13 +283,18 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 
         // the AURA authoring task is considered essential, i.e. if it
         // fails we take down the service with it.
-        task_manager.spawn_essential_handle().spawn_blocking("aura", aura);
+        task_manager
+            .spawn_essential_handle()
+            .spawn_blocking("aura", aura);
     }
 
     // if the node isn't actively participating in consensus then it doesn't
     // need a keystore, regardless of which protocol we use below.
-    let keystore =
-        if role.is_authority() { Some(keystore_container.sync_keystore()) } else { None };
+    let keystore = if role.is_authority() {
+        Some(keystore_container.sync_keystore())
+    } else {
+        None
+    };
 
     let grandpa_config = sc_finality_grandpa::Config {
         // FIXME #1578 make this available through chainspec
@@ -354,7 +367,10 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
         telemetry
     });
 
-    config.network.extra_sets.push(sc_finality_grandpa::grandpa_peers_set_config());
+    config
+        .network
+        .extra_sets
+        .push(sc_finality_grandpa::grandpa_peers_set_config());
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
 

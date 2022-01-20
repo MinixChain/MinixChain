@@ -21,21 +21,19 @@
 #![allow(clippy::all)]
 
 use codec::Codec;
-use sp_std::prelude::Vec;
 use sp_core::Bytes;
+use sp_std::prelude::Vec;
 
-pub use pallet_coming_id::{
-    Cid, CardMeta, CidDetails, BondData, BondType
-};
+pub use pallet_coming_id::{BondData, BondType, CardMeta, Cid, CidDetails};
 
 sp_api::decl_runtime_apis! {
-	pub trait ComingIdApi<AccountId> where
-	    AccountId: Codec
-	{
-		fn get_account_id(cid: Cid) -> Option<AccountId>;
-		fn get_cids(account: AccountId) -> Vec<Cid>;
-		fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>>;
-		fn get_card(cid: Cid) -> Option<Bytes>;
-		fn get_card_meta(cid: Cid) -> Option<CardMeta<AccountId>>;
-	}
+    pub trait ComingIdApi<AccountId> where
+        AccountId: Codec
+    {
+        fn get_account_id(cid: Cid) -> Option<AccountId>;
+        fn get_cids(account: AccountId) -> Vec<Cid>;
+        fn get_bond_data(cid: Cid) -> Option<CidDetails<AccountId>>;
+        fn get_card(cid: Cid) -> Option<Bytes>;
+        fn get_card_meta(cid: Cid) -> Option<CardMeta<AccountId>>;
+    }
 }

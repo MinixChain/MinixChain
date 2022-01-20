@@ -17,10 +17,7 @@ pub trait ComingNFT<AccountId> {
 
     fn card_of_meta(cid: Cid) -> Option<CardMeta<AccountId>>;
 
-    fn can_transfer_from(
-        operator: &AccountId,
-        cid: Cid
-    ) -> bool;
+    fn can_transfer_from(operator: &AccountId, cid: Cid) -> bool;
 
     fn transfer_from(
         operator: &AccountId,
@@ -31,7 +28,11 @@ pub trait ComingNFT<AccountId> {
 
     fn approve(who: &AccountId, approved: &AccountId, cid: Cid) -> DispatchResult;
 
-    fn set_approval_for_all(owner: &AccountId, operator: &AccountId, approved: bool) -> DispatchResult;
+    fn set_approval_for_all(
+        owner: &AccountId,
+        operator: &AccountId,
+        approved: bool,
+    ) -> DispatchResult;
 
     fn get_approved(cid: Cid) -> Option<AccountId>;
 

@@ -14,11 +14,11 @@ mod weights;
 pub use pallet::*;
 pub use weights::WeightInfo;
 
-use sp_std::vec::Vec;
 use frame_support::pallet_prelude::*;
 use pallet_coming_id::{Cid, ComingNFT};
 use sp_core::Bytes;
 use sp_runtime::traits::StaticLookup;
+use sp_std::vec::Vec;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -107,7 +107,6 @@ pub mod pallet {
 
             T::ComingNFT::set_approval_for_all(&who, &operator, approved)
         }
-
     }
 }
 

@@ -6,7 +6,7 @@ use super::*;
 
 #[allow(unused)]
 use crate::Pallet as ComingNFT;
-use frame_benchmarking::{whitelisted_caller, account, benchmarks};
+use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
 use pallet_coming_id as ComingId;
 use sp_std::vec;

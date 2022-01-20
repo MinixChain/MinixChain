@@ -36,17 +36,19 @@
 // --template=./.frame-weight-template.hbs
 // --output-analysis=max
 
-
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 #![allow(clippy::unnecessary_cast)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{
+    traits::Get,
+    weights::{constants::RocksDbWeight, Weight},
+};
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_coming_nft.
 pub trait WeightInfo {
-    fn mint(b: u32, ) -> Weight;
+    fn mint(b: u32) -> Weight;
     fn burn() -> Weight;
     fn transfer() -> Weight;
     fn transfer_from() -> Weight;
@@ -57,7 +59,7 @@ pub trait WeightInfo {
 /// Weights for pallet_coming_nft using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-    fn mint(b: u32, ) -> Weight {
+    fn mint(b: u32) -> Weight {
         (0 as Weight)
             // Standard Error: 3_000
             .saturating_add((6_381_000 as Weight).saturating_mul(b as Weight))
@@ -85,14 +87,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
             .saturating_add(T::DbWeight::get().writes(1 as Weight))
     }
     fn set_approval_for_all() -> Weight {
-        (15_982_000 as Weight)
-            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+        (15_982_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
     }
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-    fn mint(b: u32, ) -> Weight {
+    fn mint(b: u32) -> Weight {
         (0 as Weight)
             // Standard Error: 3_000
             .saturating_add((6_381_000 as Weight).saturating_mul(b as Weight))
@@ -120,7 +121,6 @@ impl WeightInfo for () {
             .saturating_add(RocksDbWeight::get().writes(1 as Weight))
     }
     fn set_approval_for_all() -> Weight {
-        (15_982_000 as Weight)
-            .saturating_add(RocksDbWeight::get().writes(1 as Weight))
+        (15_982_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
     }
 }

@@ -36,18 +36,20 @@
 // --template=./.frame-weight-template.hbs
 // --output-analysis=max
 
-
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 #![allow(clippy::unnecessary_cast)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{
+    traits::Get,
+    weights::{constants::RocksDbWeight, Weight},
+};
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_coming_id.
 pub trait WeightInfo {
     fn register() -> Weight;
-    fn bond(b: u32, ) -> Weight;
+    fn bond(b: u32) -> Weight;
     fn unbond() -> Weight;
 }
 
@@ -59,7 +61,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
             .saturating_add(T::DbWeight::get().reads(3 as Weight))
             .saturating_add(T::DbWeight::get().writes(2 as Weight))
     }
-    fn bond(b: u32, ) -> Weight {
+    fn bond(b: u32) -> Weight {
         (11_313_000 as Weight)
             // Standard Error: 72_000
             .saturating_add((3_961_000 as Weight).saturating_mul(b as Weight))
@@ -80,7 +82,7 @@ impl WeightInfo for () {
             .saturating_add(RocksDbWeight::get().reads(3 as Weight))
             .saturating_add(RocksDbWeight::get().writes(2 as Weight))
     }
-    fn bond(b: u32, ) -> Weight {
+    fn bond(b: u32) -> Weight {
         (11_313_000 as Weight)
             // Standard Error: 72_000
             .saturating_add((3_961_000 as Weight).saturating_mul(b as Weight))

@@ -1,15 +1,14 @@
 pub use minix_runtime::{
-    AccountId, AuraConfig, BalancesConfig, ComingIdConfig, ComingAuctionConfig,
-    GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
-    SS58Prefix
+    AccountId, AuraConfig, BalancesConfig, ComingAuctionConfig, ComingIdConfig, GenesisConfig,
+    GrandpaConfig, SS58Prefix, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
+use sc_chain_spec::ChainSpecExtension;
 use sc_service::{ChainType, Properties};
+use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use serde::{Deserialize, Serialize};
-use sc_chain_spec::ChainSpecExtension;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -26,7 +25,6 @@ pub struct Extensions {
     /// This value will be set by the `sync-state rpc` implementation.
     pub light_sync_state: sc_sync_state_rpc::LightSyncStateExtension,
 }
-
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
@@ -74,10 +72,10 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
                 vec![
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    caller.clone()
+                    caller.clone(),
                 ],
                 (caller.clone(), caller.clone(), caller.clone()),
-                Some(caller)
+                Some(caller),
             )
         },
         // Bootnodes
@@ -120,9 +118,9 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 (
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice")
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
                 ),
-                None
+                None,
             )
         },
         // Bootnodes
@@ -178,7 +176,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                 ),
-                None
+                None,
             )
         },
         // Bootnodes
@@ -208,21 +206,17 @@ pub fn dev_evm_config() -> Result<ChainSpec, String> {
         move || {
             minix_genesis(
                 // Initial PoA authorities
-                vec![
-                    authority_keys_from_seed("Alice"),
-                ],
+                vec![authority_keys_from_seed("Alice")],
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 // Pre-funded accounts
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                ],
+                vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
                 (
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                 ),
-                None
+                None,
             )
         },
         // Bootnodes
@@ -291,7 +285,7 @@ pub fn minix_genesis(
             low_admin_key: coming_keys.2,
         },
         coming_auction: ComingAuctionConfig {
-            admin_key: auction_admin
+            admin_key: auction_admin,
         },
     }
 }

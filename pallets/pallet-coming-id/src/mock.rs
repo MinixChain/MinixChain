@@ -80,8 +80,8 @@ pub fn new_test_ext(
         medium_admin_key3: admin_key,
         low_admin_key: admin_key,
     }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    .assimilate_storage(&mut t)
+    .unwrap();
     let mut ext = sp_io::TestExternalities::new(t);
     ext.execute_with(|| System::set_block_number(1));
     ext
@@ -112,10 +112,9 @@ pub(crate) fn expect_events(e: Vec<Event>) {
     assert_eq!(last_events(e.len()), e);
 }
 
-
 // Build test environment by setting the admin `key` for the Genesis.
 pub fn new_test_ext2(
-    admin_keys: [<Test as frame_system::Config>::AccountId;5],
+    admin_keys: [<Test as frame_system::Config>::AccountId; 5],
     root_key: <Test as frame_system::Config>::AccountId,
 ) -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default()
@@ -128,8 +127,8 @@ pub fn new_test_ext2(
         medium_admin_key3: admin_keys[3],
         low_admin_key: admin_keys[4],
     }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    .assimilate_storage(&mut t)
+    .unwrap();
 
     pallet_sudo::GenesisConfig::<Test> { key: root_key }
         .assimilate_storage(&mut t)

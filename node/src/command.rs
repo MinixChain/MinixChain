@@ -53,17 +53,17 @@ impl SubstrateCli for Cli {
             "dev" => Box::new(chain_spec::development_config()?),
             "benchmarks" => {
                 #[cfg(feature = "runtime-benchmarks")]
-                    {
-                        Box::new(chain_spec::benchmarks_config()?)
-                    }
+                {
+                    Box::new(chain_spec::benchmarks_config()?)
+                }
                 #[cfg(not(feature = "runtime-benchmarks"))]
-                    {
-                        return Err(
-                            "benchmarks chain-config should compile with feature `runtime-benchmarks`"
-                                .into(),
-                        );
-                    }
-            },
+                {
+                    return Err(
+                        "benchmarks chain-config should compile with feature `runtime-benchmarks`"
+                            .into(),
+                    );
+                }
+            }
             "testnet" => {
                 set_default_ss58_version(Ss58AddressFormat::ChainXAccount);
 

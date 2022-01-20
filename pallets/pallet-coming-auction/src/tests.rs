@@ -4,6 +4,7 @@ use frame_support::{assert_noop, assert_ok};
 const ALICE: u128 = 1;
 const BOB: u128 = 2;
 const CHARLIE: u128 = 3;
+const DAVE: u128 = 4;
 const RESERVE: Cid = 0;
 const COMMUNITY: Cid = 100_000;
 const COMMON: Cid = 1_000_000;
@@ -239,12 +240,12 @@ fn remint_bid_auction_should_work() {
 
 
         assert_eq!(ComingAuction::get_current_price(COMMON), 5_500_000_000);
-        assert_eq!(ComingAuction::balance_of(&CHARLIE), 10_000_000_000);
+        assert_eq!(ComingAuction::balance_of(&DAVE), 10_000_000_000);
 
         // (3) bid an auction
         assert_ok!(
             ComingAuction::bid(
-                Origin::signed(CHARLIE),
+                Origin::signed(DAVE),
                 COMMON,
                 5_500_000_000,
             )
@@ -253,7 +254,7 @@ fn remint_bid_auction_should_work() {
         expect_event(
             AuctionEvent::AuctionSuccessful(
                 COMMON,
-                CHARLIE,
+                DAVE,
                 5_500_000_000,
                 DURATION / 2 + 1
             )
@@ -262,7 +263,7 @@ fn remint_bid_auction_should_work() {
         let tax_fee = ComingAuction::calculate_fee(5_500_000_000,200);
         assert_eq!(ComingAuction::balance_of(&ALICE), 10_000_000_000 + tax_fee);
         assert_eq!(ComingAuction::balance_of(&BOB), 10_000_000_000 + 5_500_000_000 - tax_fee);
-        assert_eq!(Some(CHARLIE), <Test as Config >::ComingNFT::owner_of_cid(COMMON));
+        assert_eq!(Some(DAVE), <Test as Config >::ComingNFT::owner_of_cid(COMMON));
         assert_eq!(ComingAuction::get_stats(), (1, 1, 0));
     });
 }

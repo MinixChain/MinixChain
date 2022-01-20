@@ -25,7 +25,7 @@ fn mint_should_work() {
         expect_event(ComingIdEvent::MintCard(1, card.clone()));
 
         assert_noop!(
-            ComingNFT::mint(Origin::signed(ADMIN), 1, card.clone()),
+            ComingNFT::mint(Origin::signed(ADMIN), 1, card),
             Error::<Test>::BanMint
         );
     });
@@ -132,9 +132,9 @@ fn transfer_should_work() {
             ComingNFT::mint(
                 Origin::signed(ADMIN),
                 1_000_000,
-                vec![1; 1048576 + 1 as usize]
+                vec![1; 1048576 + 1_usize]
             ),
-            Error::<Test>::TooBigCardSize,
+            Error::<Test>::TooBigDataSize,
         );
 
         // (5) mint card success
@@ -184,7 +184,7 @@ fn transfer_to_self_should_do_nothing() {
         // (3) bond
         let bond = BondData {
             bond_type: 1u16,
-            data: b"testbond".to_vec().into(),
+            data: b"testbond".to_vec(),
         };
 
         assert_ok!(ComingId::bond(
@@ -210,7 +210,7 @@ fn transfer_to_self_should_do_nothing() {
             Some(CidDetails {
                 owner: RESERVE2,
                 bonds: vec![bond],
-                card: card.into(),
+                card,
                 card_meta: None,
             }),
             ComingId::get_bond_data(1_000_000)

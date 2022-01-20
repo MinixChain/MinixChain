@@ -40,7 +40,7 @@ impl Mast {
         let leaf_nodes = self
             .pubkeys
             .iter()
-            .map(|s| tagged_leaf(s))
+            .map(tagged_leaf)
             .collect::<Result<Vec<_>>>()?;
 
         let mut matches = vec![true];
@@ -72,7 +72,7 @@ impl Mast {
             let leaf_nodes = self
                 .pubkeys
                 .iter()
-                .map(|s| tagged_leaf(s))
+                .map(tagged_leaf)
                 .collect::<Result<Vec<_>>>()?;
             let filter_proof = MerkleNode::from_inner(leaf_nodes[index].into_inner());
             Ok(PartialMerkleTree::from_leaf_nodes(&leaf_nodes, &matches)?

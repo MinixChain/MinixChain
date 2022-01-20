@@ -27,7 +27,7 @@ fn remint_should_work() {
         assert_ok!(ComingAuction::remint(
             Origin::signed(ALICE),
             COMMON,
-            card.clone(),
+            card,
             2
         ));
     });

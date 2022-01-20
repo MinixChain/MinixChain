@@ -122,7 +122,7 @@ fn exec_script_no_dump_signature() {
         let message = 666666u32.to_be_bytes().to_vec();
         let script_hash = Pallet::<Test>::compute_script_hash(who, OpCode::Transfer, 10, (0, 10_000_000));
         assert_ok!(Pallet::<Test>::pass_script(Origin::signed(who), addr, signature_ab.clone(), ab.clone(), control_block.clone(), message.clone(), script_hash.clone()));
-        assert_noop!(Pallet::<Test>::pass_script(Origin::signed(who), addr, signature_ab.clone(), ab.clone(), control_block.clone(), message.clone(), script_hash.clone()), Error::<Test>::ExistedSignature);
+        assert_noop!(Pallet::<Test>::pass_script(Origin::signed(who), addr, signature_ab, ab, control_block, message, script_hash), Error::<Test>::ExistedSignature);
         // frame_system::Pallet::<Test>::set_block_number(666667);
         assert_ok!(Pallet::<Test>::exec_script(Origin::signed(who), who, OpCode::Transfer, 10, (0, 10_000_000)));
         // assert_noop!(Pallet::<Test>::pass_script(Origin::signed(who), addr, signature_ab.clone(), ab.clone(), control_block.clone(), message.clone(), script_hash.clone()), Error::<Test>::ExpiredSignature);

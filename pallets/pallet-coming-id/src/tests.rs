@@ -23,7 +23,7 @@ fn it_works_for_regular_value() {
             1_000_000,
             BondData {
                 bond_type: 1u16,
-                data: vec![].into()
+                data: vec![]
             }
         ));
         assert_ok!(ComingId::unbond(
@@ -103,7 +103,7 @@ fn bond_should_work() {
         expect_event(ComingIdEvent::Registered(COMMON_CHARLIE, 1_000_000));
         let bond = BondData {
             bond_type: 1u16,
-            data: b"test".to_vec().into(),
+            data: b"test".to_vec(),
         };
 
         assert_noop!(
@@ -136,7 +136,7 @@ fn bond_should_work() {
 
         let new_bond1 = BondData {
             bond_type: 1u16,
-            data: b"new-test".to_vec().into(),
+            data: b"new-test".to_vec(),
         };
         assert_ok!(ComingId::bond(
             Origin::signed(RESERVE2),
@@ -148,7 +148,7 @@ fn bond_should_work() {
             Some(CidDetails {
                 owner: RESERVE2,
                 bonds: vec![new_bond1],
-                card: vec![].into(),
+                card: vec![],
                 card_meta: None,
             }),
             ComingId::get_bond_data(1)
@@ -156,7 +156,7 @@ fn bond_should_work() {
 
         let new_bond2 = BondData {
             bond_type: 2u16,
-            data: b"new-test".to_vec().into(),
+            data: b"new-test".to_vec(),
         };
         assert_ok!(ComingId::bond(
             Origin::signed(COMMUNITY_ALICE),
@@ -167,7 +167,7 @@ fn bond_should_work() {
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![bond.clone(), new_bond2],
-                card: vec![].into(),
+                card: vec![],
                 card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
@@ -175,7 +175,7 @@ fn bond_should_work() {
 
         let new_bond3 = BondData {
             bond_type: 3u16,
-            data: b"new-test".to_vec().into(),
+            data: b"new-test".to_vec(),
         };
         assert_ok!(ComingId::bond(
             Origin::signed(COMMON_CHARLIE),
@@ -187,7 +187,7 @@ fn bond_should_work() {
             Some(CidDetails {
                 owner: COMMON_CHARLIE,
                 bonds: vec![bond, new_bond3],
-                card: vec![].into(),
+                card: vec![],
                 card_meta: None,
             }),
             ComingId::get_bond_data(1_000_000)
@@ -212,7 +212,7 @@ fn unbond_should_work() {
         expect_event(ComingIdEvent::Registered(COMMON_CHARLIE, 1_000_000));
         let bond = BondData {
             bond_type: 1u16,
-            data: b"test".to_vec().into(),
+            data: b"test".to_vec(),
         };
 
         assert_ok!(ComingId::bond(Origin::signed(RESERVE2), 1, bond.clone()));
@@ -248,7 +248,7 @@ fn unbond_should_work() {
 
         let new_bond2 = BondData {
             bond_type: 2u16,
-            data: b"new-test".to_vec().into(),
+            data: b"new-test".to_vec(),
         };
         assert_ok!(ComingId::bond(
             Origin::signed(COMMUNITY_ALICE),
@@ -258,8 +258,8 @@ fn unbond_should_work() {
         assert_eq!(
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
-                bonds: vec![bond.clone(), new_bond2.clone()],
-                card: vec![].into(),
+                bonds: vec![bond, new_bond2.clone()],
+                card: vec![],
                 card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
@@ -273,7 +273,7 @@ fn unbond_should_work() {
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![new_bond2],
-                card: vec![].into(),
+                card: vec![],
                 card_meta: None,
             }),
             ComingId::get_bond_data(100_000)

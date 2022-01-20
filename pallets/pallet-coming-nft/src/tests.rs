@@ -129,11 +129,7 @@ fn transfer_should_work() {
         );
 
         assert_noop!(
-            ComingNFT::mint(
-                Origin::signed(ADMIN),
-                1_000_000,
-                vec![1; 1048576 + 1_usize]
-            ),
+            ComingNFT::mint(Origin::signed(ADMIN), 1_000_000, vec![1; 1048576 + 1_usize]),
             Error::<Test>::TooBigDataSize,
         );
 

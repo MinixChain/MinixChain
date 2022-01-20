@@ -10,6 +10,24 @@ const COMMON: Cid = 1_000_000;
 const DURATION: u64 = MIN_DURATION as u64;
 
 #[test]
+fn remint_should_work() {
+    new_test_ext(ALICE).execute_with(|| {
+        // (1) register cid
+        assert_ok!(ComingId::register(Origin::signed(ALICE), COMMON, ALICE));
+
+        // (2) remint card failed
+        assert_noop!(
+            ComingAuction::remint(Origin::signed(BOB), COMMON, vec![],2),
+            ComingIdError::<Test>::RequireOwner,
+        );
+
+        // (3) remint card success
+        let card = br#"{"name": "testCard1"}"#.to_vec();
+        assert_ok!(ComingAuction::remint(Origin::signed(ALICE), COMMON, card.clone(),2));
+    });
+}
+
+#[test]
 fn create_auction_should_work() {
     new_test_ext(ALICE).execute_with(|| {
         // (1) register cid
@@ -190,6 +208,61 @@ fn bid_auction_should_work() {
         assert_eq!(ComingAuction::balance_of(&BOB), 10_000_000_000 - 5_500_000_000);
         assert_eq!(Some(BOB), <Test as Config >::ComingNFT::owner_of_cid(COMMON));
 
+        assert_eq!(ComingAuction::get_stats(), (1, 1, 0));
+    });
+}
+#[test]
+fn remint_bid_auction_should_work() {
+    new_test_ext(ALICE).execute_with(|| {
+        // (1) register cid
+        assert_ok!(ComingId::register(Origin::signed(ALICE), COMMON, ALICE));
+        assert_ok!(ComingAuction::remint(Origin::signed(ALICE), COMMON,vec![],200));
+        assert_ok!(ComingId::transfer(&ALICE, COMMON, &BOB));
+        assert_eq!(Some(BOB), <Test as Config >::ComingNFT::owner_of_cid(COMMON));
+
+        // (2) create an auction
+        assert_ok!(
+            ComingAuction::create(
+                Origin::signed(BOB),
+                COMMON,
+                10_000_000_000,
+                1_000_000_000,
+                DURATION
+            )
+        );
+        let auction_account = ComingAuction::auction_account_id(COMMON);
+        assert_eq!(Some(auction_account), <Test as Config >::ComingNFT::owner_of_cid(COMMON));
+
+        assert_eq!(ComingAuction::get_stats(), (1, 0, 0));
+
+        run_to_block(DURATION / 2 + 1);
+
+
+        assert_eq!(ComingAuction::get_current_price(COMMON), 5_500_000_000);
+        assert_eq!(ComingAuction::balance_of(&CHARLIE), 10_000_000_000);
+
+        // (3) bid an auction
+        assert_ok!(
+            ComingAuction::bid(
+                Origin::signed(CHARLIE),
+                COMMON,
+                5_500_000_000,
+            )
+        );
+
+        expect_event(
+            AuctionEvent::AuctionSuccessful(
+                COMMON,
+                CHARLIE,
+                5_500_000_000,
+                DURATION / 2 + 1
+            )
+        );
+
+        let tax_fee = ComingAuction::calculate_fee(5_500_000_000,200);
+        assert_eq!(ComingAuction::balance_of(&ALICE), 10_000_000_000 + tax_fee);
+        assert_eq!(ComingAuction::balance_of(&BOB), 10_000_000_000 + 5_500_000_000 - tax_fee);
+        assert_eq!(Some(CHARLIE), <Test as Config >::ComingNFT::owner_of_cid(COMMON));
         assert_eq!(ComingAuction::get_stats(), (1, 1, 0));
     });
 }

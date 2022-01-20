@@ -115,7 +115,7 @@ pub fn new_test_ext(
         balances: vec![
             (1, 10_000_000_000),
             (2, 10_000_000_000),
-            (3, 1_000_000_000),
+            (3, 10_000_000_000),
         ],
     }
         .assimilate_storage(&mut t)

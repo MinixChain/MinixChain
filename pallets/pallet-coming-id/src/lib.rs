@@ -62,7 +62,6 @@ pub struct CidDetails<AccountId> {
     pub owner: AccountId,
     pub bonds: Vec<BondData>,
     pub card: Vec<u8>,
-    pub card_meta: Option<CardMeta<AccountId>>,
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
@@ -142,6 +141,10 @@ pub mod pallet {
     #[pallet::getter(fn low_admin_key)]
     pub(super) type LowKey<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
+    #[pallet::storage]
+    #[pallet::getter(fn cardmetas)]
+    pub type CardMetas<T: Config> = StorageMap<_, Blake2_128Concat, Cid, CardMeta<T::AccountId>>;
+
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
         /// The `AccountId` of the admin key.
@@ -197,7 +200,6 @@ pub mod pallet {
                         owner,
                         bonds,
                         card,
-                        card_meta: None,
                     })
                 });
 
@@ -305,7 +307,6 @@ pub mod pallet {
                     owner: recipient.clone(),
                     bonds: Vec::new(),
                     card: Vec::new(),
-                    card_meta: None,
                 });
 
                 Self::account_cids_add(recipient.clone(), cid);
@@ -530,23 +531,14 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn get_remint(cid: Cid) -> u8 {
-        match Self::distributed(cid) {
-            Some(cid_details) => {
-                if let Some(meta) = cid_details.card_meta {
-                    meta.remint
-                } else {
-                    0
-                }
-            }
+        match Self::cardmetas(cid) {
+            Some(meta) => meta.remint,
             _ => 0,
         }
     }
 
     pub fn get_card_meta(cid: Cid) -> Option<CardMeta<T::AccountId>> {
-        match Self::distributed(cid) {
-            Some(cid_details) => cid_details.card_meta,
-            _ => None,
-        }
+        Self::cardmetas(cid)
     }
 }
 
@@ -593,7 +585,8 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
             });
 
             detail.card = card.clone();
-            detail.card_meta = card_meta;
+
+            CardMetas::<T>::mutate(cid, |meta| *meta = card_meta);
 
             Self::deposit_event(Event::RemintCard(cid, who.clone()));
 

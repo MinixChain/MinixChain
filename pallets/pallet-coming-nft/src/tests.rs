@@ -207,7 +207,6 @@ fn transfer_to_self_should_do_nothing() {
                 owner: RESERVE2,
                 bonds: vec![bond],
                 card,
-                card_meta: None,
             }),
             ComingId::get_bond_data(1_000_000)
         );

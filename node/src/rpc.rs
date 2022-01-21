@@ -25,37 +25,49 @@ pub struct FullDeps<C, P> {
 }
 
 /// Instantiate all full RPC extensions.
-pub fn create_full<C, P>(
-    deps: FullDeps<C, P>
-) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
-    where
-        C: ProvideRuntimeApi<Block>,
-        C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
-        C: Send + Sync + 'static,
-        C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
-        C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-        C::Api: BlockBuilder<Block>,
-        C::Api: pallet_coming_id_rpc::ComingIdRuntimeApi<Block, AccountId>,
-        P: TransactionPool + 'static,
-        C::Api: pallet_threshold_signature_rpc::ThresholdSignatureRuntimeApi<Block>,
-        C::Api: pallet_coming_auction_rpc::ComingAuctionRuntimeApi<Block, Balance>,
+pub fn create_full<C, P>(deps: FullDeps<C, P>) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
+where
+    C: ProvideRuntimeApi<Block>,
+    C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
+    C: Send + Sync + 'static,
+    C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
+    C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+    C::Api: BlockBuilder<Block>,
+    C::Api: pallet_coming_id_rpc::ComingIdRuntimeApi<Block, AccountId>,
+    P: TransactionPool + 'static,
+    C::Api: pallet_threshold_signature_rpc::ThresholdSignatureRuntimeApi<Block>,
+    C::Api: pallet_coming_auction_rpc::ComingAuctionRuntimeApi<Block, Balance>,
 {
-    use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-    use substrate_frame_rpc_system::{FullSystem, SystemApi};
+    use pallet_coming_auction_rpc::{ComingAuction, ComingAuctionApi};
     use pallet_coming_id_rpc::{ComingId, ComingIdApi};
     use pallet_threshold_signature_rpc::{ThresholdSignature, ThresholdSignatureApi};
-    use pallet_coming_auction_rpc::{ComingAuction, ComingAuctionApi};
+    use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
+    use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
     let mut io = jsonrpc_core::IoHandler::default();
-    let FullDeps { client, pool, deny_unsafe } = deps;
+    let FullDeps {
+        client,
+        pool,
+        deny_unsafe,
+    } = deps;
 
-    io.extend_with(SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe)));
+    io.extend_with(SystemApi::to_delegate(FullSystem::new(
+        client.clone(),
+        pool,
+        deny_unsafe,
+    )));
 
-    io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
+    io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
+        client.clone(),
+    )));
 
-    io.extend_with(ThresholdSignatureApi::to_delegate(ThresholdSignature::new(client.clone())));
+    io.extend_with(ThresholdSignatureApi::to_delegate(ThresholdSignature::new(
+        client.clone(),
+    )));
 
-    io.extend_with(ComingAuctionApi::to_delegate(ComingAuction::new(client.clone())));
+    io.extend_with(ComingAuctionApi::to_delegate(ComingAuction::new(
+        client.clone(),
+    )));
 
     io.extend_with(ComingIdApi::to_delegate(ComingId::new(client)));
 

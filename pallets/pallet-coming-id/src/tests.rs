@@ -1,8 +1,5 @@
 use super::Event as ComingIdEvent;
-use crate::{
-    mock::*, BondData, CidDetails, Error,
-    Distributed, AccountIdCids, AdminType
-};
+use crate::{mock::*, AccountIdCids, AdminType, BondData, CidDetails, Distributed, Error};
 use frame_support::{assert_noop, assert_ok};
 
 const ADMIN: u64 = 1;
@@ -26,7 +23,7 @@ fn it_works_for_regular_value() {
             1_000_000,
             BondData {
                 bond_type: 1u16,
-                data: vec![].into()
+                data: vec![]
             }
         ));
         assert_ok!(ComingId::unbond(
@@ -106,7 +103,7 @@ fn bond_should_work() {
         expect_event(ComingIdEvent::Registered(COMMON_CHARLIE, 1_000_000));
         let bond = BondData {
             bond_type: 1u16,
-            data: b"test".to_vec().into(),
+            data: b"test".to_vec(),
         };
 
         assert_noop!(
@@ -139,7 +136,7 @@ fn bond_should_work() {
 
         let new_bond1 = BondData {
             bond_type: 1u16,
-            data: b"new-test".to_vec().into(),
+            data: b"new-test".to_vec(),
         };
         assert_ok!(ComingId::bond(
             Origin::signed(RESERVE2),
@@ -151,14 +148,15 @@ fn bond_should_work() {
             Some(CidDetails {
                 owner: RESERVE2,
                 bonds: vec![new_bond1],
-                card: vec![].into()
+                card: vec![],
+                card_meta: None,
             }),
             ComingId::get_bond_data(1)
         );
 
         let new_bond2 = BondData {
             bond_type: 2u16,
-            data: b"new-test".to_vec().into(),
+            data: b"new-test".to_vec(),
         };
         assert_ok!(ComingId::bond(
             Origin::signed(COMMUNITY_ALICE),
@@ -169,14 +167,15 @@ fn bond_should_work() {
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![bond.clone(), new_bond2],
-                card: vec![].into()
+                card: vec![],
+                card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
         );
 
         let new_bond3 = BondData {
             bond_type: 3u16,
-            data: b"new-test".to_vec().into(),
+            data: b"new-test".to_vec(),
         };
         assert_ok!(ComingId::bond(
             Origin::signed(COMMON_CHARLIE),
@@ -188,7 +187,8 @@ fn bond_should_work() {
             Some(CidDetails {
                 owner: COMMON_CHARLIE,
                 bonds: vec![bond, new_bond3],
-                card: vec![].into()
+                card: vec![],
+                card_meta: None,
             }),
             ComingId::get_bond_data(1_000_000)
         );
@@ -212,7 +212,7 @@ fn unbond_should_work() {
         expect_event(ComingIdEvent::Registered(COMMON_CHARLIE, 1_000_000));
         let bond = BondData {
             bond_type: 1u16,
-            data: b"test".to_vec().into(),
+            data: b"test".to_vec(),
         };
 
         assert_ok!(ComingId::bond(Origin::signed(RESERVE2), 1, bond.clone()));
@@ -248,7 +248,7 @@ fn unbond_should_work() {
 
         let new_bond2 = BondData {
             bond_type: 2u16,
-            data: b"new-test".to_vec().into(),
+            data: b"new-test".to_vec(),
         };
         assert_ok!(ComingId::bond(
             Origin::signed(COMMUNITY_ALICE),
@@ -258,8 +258,9 @@ fn unbond_should_work() {
         assert_eq!(
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
-                bonds: vec![bond.clone(), new_bond2.clone()],
-                card: vec![].into()
+                bonds: vec![bond, new_bond2.clone()],
+                card: vec![],
+                card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
         );
@@ -272,7 +273,8 @@ fn unbond_should_work() {
             Some(CidDetails {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![new_bond2],
-                card: vec![].into()
+                card: vec![],
+                card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
         );
@@ -303,22 +305,30 @@ fn clear_cids(cids: &[u64]) {
 fn register_more_tests() {
     let (high, medium, medium2, medium3, low) = (1u64, 2u64, 3u64, 4u64, 5u64);
     let admins = [high, medium, medium2, medium3, low];
-    let (
-        reserve,
-        community,
-        common7,
-        common8,
-        common9,
-        invalid
-    ) = (1u64, 100_000u64, 1_000_000u64, 10_000_000u64, 100_000_000u64, 1_000_000_000_000u64);
+    let (reserve, community, common7, common8, common9, invalid) = (
+        1u64,
+        100_000u64,
+        1_000_000u64,
+        10_000_000u64,
+        100_000_000u64,
+        1_000_000_000_000u64,
+    );
 
     new_test_ext2(admins, high).execute_with(|| {
         // 1. all admins test
         assert_ok!(ComingId::register(Origin::signed(high), reserve, high));
         expect_event(ComingIdEvent::Registered(high, reserve));
-        assert_ok!(ComingId::register(Origin::signed(medium3), community, medium3));
+        assert_ok!(ComingId::register(
+            Origin::signed(medium3),
+            community,
+            medium3
+        ));
         expect_event(ComingIdEvent::Registered(medium3, community));
-        assert_ok!(ComingId::register(Origin::signed(medium2), common7, medium2));
+        assert_ok!(ComingId::register(
+            Origin::signed(medium2),
+            common7,
+            medium2
+        ));
         expect_event(ComingIdEvent::Registered(medium2, common7));
         assert_ok!(ComingId::register(Origin::signed(medium), common8, medium));
         expect_event(ComingIdEvent::Registered(medium, common8));
@@ -363,7 +373,11 @@ fn register_more_tests() {
             ComingId::register(Origin::signed(medium3), reserve, high),
             Error::<Test>::RequireHighAuthority
         );
-        assert_ok!(ComingId::register(Origin::signed(medium3), community, medium3));
+        assert_ok!(ComingId::register(
+            Origin::signed(medium3),
+            community,
+            medium3
+        ));
         assert_noop!(
             ComingId::register(Origin::signed(medium3), common7, medium2),
             Error::<Test>::RequireMediumAuthority2
@@ -390,7 +404,11 @@ fn register_more_tests() {
             ComingId::register(Origin::signed(medium2), community, medium3),
             Error::<Test>::RequireMediumAuthority3
         );
-        assert_ok!(ComingId::register(Origin::signed(medium2), common7, medium2));
+        assert_ok!(ComingId::register(
+            Origin::signed(medium2),
+            common7,
+            medium2
+        ));
         assert_noop!(
             ComingId::register(Origin::signed(medium2), common8, medium),
             Error::<Test>::RequireMediumAuthority
@@ -399,7 +417,6 @@ fn register_more_tests() {
         assert_ok!(ComingId::check_admin(&medium2, common7));
 
         clear_cids(&[reserve, community, common7, common8, common9]);
-
 
         // 4. medium admin test
         assert_noop!(
@@ -462,8 +479,16 @@ fn set_admin() {
 
         assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::High));
         assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::Medium));
-        assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::Medium2));
-        assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::Medium3));
+        assert_ok!(ComingId::set_admin(
+            Origin::root(),
+            sudo,
+            AdminType::Medium2
+        ));
+        assert_ok!(ComingId::set_admin(
+            Origin::root(),
+            sudo,
+            AdminType::Medium3
+        ));
         assert_ok!(ComingId::set_admin(Origin::root(), sudo, AdminType::Low));
 
         assert_eq!(sudo, ComingId::high_admin_key());

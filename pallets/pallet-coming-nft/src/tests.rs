@@ -25,7 +25,7 @@ fn mint_should_work() {
         expect_event(ComingIdEvent::MintCard(1, card.clone()));
 
         assert_noop!(
-            ComingNFT::mint(Origin::signed(ADMIN), 1, card.clone()),
+            ComingNFT::mint(Origin::signed(ADMIN), 1, card),
             Error::<Test>::BanMint
         );
     });
@@ -129,12 +129,8 @@ fn transfer_should_work() {
         );
 
         assert_noop!(
-            ComingNFT::mint(
-                Origin::signed(ADMIN),
-                1_000_000,
-                vec![1; 1048576 + 1 as usize]
-            ),
-            Error::<Test>::TooBigCardSize,
+            ComingNFT::mint(Origin::signed(ADMIN), 1_000_000, vec![1; 1048576 + 1_usize]),
+            Error::<Test>::TooBigDataSize,
         );
 
         // (5) mint card success
@@ -184,10 +180,14 @@ fn transfer_to_self_should_do_nothing() {
         // (3) bond
         let bond = BondData {
             bond_type: 1u16,
-            data: b"testbond".to_vec().into(),
+            data: b"testbond".to_vec(),
         };
 
-        assert_ok!(ComingId::bond(Origin::signed(RESERVE2), 1_000_000, bond.clone()));
+        assert_ok!(ComingId::bond(
+            Origin::signed(RESERVE2),
+            1_000_000,
+            bond.clone()
+        ));
         expect_event(ComingIdEvent::Bonded(RESERVE2, 1_000_000, 1u16));
 
         // (3) transfer to self
@@ -206,7 +206,8 @@ fn transfer_to_self_should_do_nothing() {
             Some(CidDetails {
                 owner: RESERVE2,
                 bonds: vec![bond],
-                card: card.into()
+                card,
+                card_meta: None,
             }),
             ComingId::get_bond_data(1_000_000)
         );
@@ -372,13 +373,11 @@ fn approve_after_set_approval_for_all_should_work() {
         ));
         assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE2));
 
-        assert_ok!(
-            ComingNFT::approve(
-                Origin::signed(RESERVE3),
-                RESERVE4,
-                1_000_000,
-            )
-        );
+        assert_ok!(ComingNFT::approve(
+            Origin::signed(RESERVE3),
+            RESERVE4,
+            1_000_000,
+        ));
 
         assert_eq!(ComingNFT::get_approved(1_000_000), Some(RESERVE4));
     });
@@ -390,11 +389,7 @@ fn approve_should_not_work() {
         // 1. account_id of cid is none
         assert_eq!(ComingNFT::owner_of_cid(1_000_000), None);
         assert_noop!(
-            ComingNFT::approve(
-                Origin::signed(RESERVE2),
-                RESERVE3,
-                1_000_000,
-            ),
+            ComingNFT::approve(Origin::signed(RESERVE2), RESERVE3, 1_000_000,),
             Error::<Test>::BanApprove
         );
 
@@ -407,11 +402,7 @@ fn approve_should_not_work() {
         expect_event(ComingIdEvent::Registered(RESERVE2, 1_000_000));
         assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE2));
         assert_noop!(
-            ComingNFT::approve(
-                Origin::signed(RESERVE2),
-                RESERVE2,
-                1_000_000,
-            ),
+            ComingNFT::approve(Origin::signed(RESERVE2), RESERVE2, 1_000_000,),
             Error::<Test>::BanApprove
         );
 
@@ -423,26 +414,14 @@ fn approve_should_not_work() {
         ));
         assert!(!ComingNFT::is_approved_for_all(&RESERVE2, &RESERVE3));
         assert_noop!(
-            ComingNFT::approve(
-                Origin::signed(RESERVE3),
-                RESERVE4,
-                1_000_000,
-            ),
+            ComingNFT::approve(Origin::signed(RESERVE3), RESERVE4, 1_000_000,),
             Error::<Test>::BanApprove
         );
 
         // 4. cid < 1_000_000
-        assert_ok!(ComingId::register(
-            Origin::signed(ADMIN),
-            1,
-            RESERVE4
-        ));
+        assert_ok!(ComingId::register(Origin::signed(ADMIN), 1, RESERVE4));
         assert_noop!(
-            ComingNFT::approve(
-                Origin::signed(RESERVE4),
-                RESERVE3,
-                1,
-            ),
+            ComingNFT::approve(Origin::signed(RESERVE4), RESERVE3, 1,),
             Error::<Test>::BanApprove
         );
     });
@@ -453,12 +432,7 @@ fn transfer_from_should_not_work() {
     new_test_ext(ADMIN).execute_with(|| {
         // 1. account_id of cid is none
         assert_noop!(
-            ComingNFT::transfer_from(
-                Origin::signed(RESERVE2),
-                RESERVE2,
-                RESERVE3,
-                1_000_000
-            ),
+            ComingNFT::transfer_from(Origin::signed(RESERVE2), RESERVE2, RESERVE3, 1_000_000),
             Error::<Test>::BanTransfer
         );
 
@@ -476,19 +450,14 @@ fn transfer_from_should_not_work() {
         ));
         assert!(!ComingNFT::is_approved_for_all(&RESERVE2, &RESERVE3));
         assert_noop!(
-            ComingNFT::transfer_from(
-                Origin::signed(RESERVE3),
-                RESERVE2,
-                RESERVE3,
-                1_000_000
-            ),
+            ComingNFT::transfer_from(Origin::signed(RESERVE3), RESERVE2, RESERVE3, 1_000_000),
             Error::<Test>::BanTransfer
         );
     });
 }
 
 #[test]
-fn transfer_from_should_work_after_set_approval_all(){
+fn transfer_from_should_work_after_set_approval_all() {
     new_test_ext(ADMIN).execute_with(|| {
         assert_ok!(ComingId::register(
             Origin::signed(ADMIN),
@@ -503,12 +472,7 @@ fn transfer_from_should_work_after_set_approval_all(){
         ));
         assert!(!ComingNFT::is_approved_for_all(&RESERVE2, &RESERVE3));
         assert_noop!(
-            ComingNFT::transfer_from(
-                Origin::signed(RESERVE3),
-                RESERVE2,
-                RESERVE3,
-                1_000_000
-            ),
+            ComingNFT::transfer_from(Origin::signed(RESERVE3), RESERVE2, RESERVE3, 1_000_000),
             Error::<Test>::BanTransfer
         );
 
@@ -520,26 +484,22 @@ fn transfer_from_should_work_after_set_approval_all(){
         ));
         expect_event(ComingIdEvent::ApprovalForAll(RESERVE2, RESERVE3, true));
 
-        assert_ok!(
-            ComingNFT::transfer_from(
-                Origin::signed(RESERVE3),
-                RESERVE2,
-                RESERVE3,
-                1_000_000
-            )
-        );
+        assert_ok!(ComingNFT::transfer_from(
+            Origin::signed(RESERVE3),
+            RESERVE2,
+            RESERVE3,
+            1_000_000
+        ));
 
         assert!(ComingNFT::is_approved_for_all(&RESERVE2, &RESERVE3));
 
         // transfer back to RESERVE2
-        assert_ok!(
-            ComingNFT::transfer_from(
-                Origin::signed(RESERVE3),
-                RESERVE3,
-                RESERVE2,
-                1_000_000
-            )
-        );
+        assert_ok!(ComingNFT::transfer_from(
+            Origin::signed(RESERVE3),
+            RESERVE3,
+            RESERVE2,
+            1_000_000
+        ));
         assert!(ComingNFT::is_approved_for_all(&RESERVE2, &RESERVE3));
         assert_ok!(ComingNFT::set_approval_for_all(
             Origin::signed(RESERVE2),
@@ -550,12 +510,7 @@ fn transfer_from_should_work_after_set_approval_all(){
         assert!(!ComingNFT::is_approved_for_all(&RESERVE2, &RESERVE3));
 
         assert_noop!(
-            ComingNFT::transfer_from(
-                Origin::signed(RESERVE3),
-                RESERVE2,
-                RESERVE3,
-                1_000_000
-            ),
+            ComingNFT::transfer_from(Origin::signed(RESERVE3), RESERVE2, RESERVE3, 1_000_000),
             Error::<Test>::BanTransfer
         );
 
@@ -564,7 +519,7 @@ fn transfer_from_should_work_after_set_approval_all(){
 }
 
 #[test]
-fn transfer_from_after_transfer_should_not_work(){
+fn transfer_from_after_transfer_should_not_work() {
     new_test_ext(ADMIN).execute_with(|| {
         assert_ok!(ComingId::register(
             Origin::signed(ADMIN),
@@ -573,24 +528,20 @@ fn transfer_from_after_transfer_should_not_work(){
         ));
         assert_eq!(ComingNFT::get_approved(1_000_000), None);
         assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE2));
-        assert_ok!(
-            ComingNFT::approve(
-                Origin::signed(RESERVE2),
-                RESERVE3,
-                1_000_000,
-            )
-        );
+        assert_ok!(ComingNFT::approve(
+            Origin::signed(RESERVE2),
+            RESERVE3,
+            1_000_000,
+        ));
         expect_event(ComingIdEvent::Approval(RESERVE2, RESERVE3, 1_000_000));
         assert_eq!(ComingNFT::get_approved(1_000_000), Some(RESERVE3));
         assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE2));
 
-        assert_ok!(
-            ComingNFT::transfer(
-                Origin::signed(RESERVE2),
-                1_000_000,
-                RESERVE3,
-            )
-        );
+        assert_ok!(ComingNFT::transfer(
+            Origin::signed(RESERVE2),
+            1_000_000,
+            RESERVE3,
+        ));
 
         assert_eq!(ComingNFT::get_approved(1_000_000), None);
         assert_eq!(ComingNFT::owner_of_cid(1_000_000), Some(RESERVE3));

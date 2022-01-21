@@ -59,11 +59,23 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
     管理员权限, 紧急状态下让管理员取消指定cid的拍卖.
     
 - set_fee_point(new_point):
-    管理员权限, 设置新的协议费率, [0, 255]分别对应0到万分之二百五十五.
+    管理员权限, 设置新的服务费率, [0, 255]分别对应0到万分之二百五十五.
     
 - set_admin(new_admin):
     sudo权限, 设置新的管理员.
     
+- remint:
+    普通权限, NFT二次创作. `remint fee`随remint次数2倍增加.
+- set_remint_point:
+    管理员权限, 设置`remint`费用调节因子, 调节范围[0%, 255%].
+
+## fee
+
+- `transaction_payment`: 交易手续费, 转给系统销毁
+- `service_fee`: 拍卖服务费, 转给NFT拍卖平台admin
+- `tax_fee`: NFT拍卖版税, 转给NFT创作者issuer
+- `remint_fee`: NFT二次创作费, 转给NFT拍卖平台admin
+
 ## rpc 
 - get_price: 获取指定cid的当前拍卖价格
 ```rust
@@ -88,6 +100,33 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
 {
   "jsonrpc": "2.0",
   "result": "0x594ff81df000",
+  "id": 1
+}
+```
+
+- get_remint_fee: 获取指定cid的当前`remint fee`
+```rust
+#[rpc(name = "get_remint_fee")]
+    fn get_remint_fee(
+        &self,
+        cid: Cid,
+        at: Option<BlockHash>
+    ) -> Result<NumberOrHex>;
+```
+输入：
+```json
+{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"get_remint_fee",
+  "params": [1000000]
+}
+```
+输出：
+```json
+{
+  "jsonrpc": "2.0",
+  "result": "0x2faf080",
   "id": 1
 }
 ```

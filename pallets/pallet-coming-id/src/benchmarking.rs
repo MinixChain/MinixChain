@@ -4,25 +4,39 @@
 
 use super::*;
 
-use frame_benchmarking::{whitelisted_caller, benchmarks};
+use frame_benchmarking::{benchmarks, whitelisted_caller};
+use frame_support::assert_ok;
 use frame_system::RawOrigin;
 use sp_std::vec;
 
-fn bond_data(t: u16, b: u32) -> BondData {
-    BondData{
-        bond_type: t,
-        data: vec![1; b as usize].into(),
-    }
+use crate as ComingId;
+
+fn prepare_bond<T: Config>(caller: &T::AccountId, cid: Cid) -> DispatchResult {
+    assert_ok!(ComingId::Pallet::<T>::register(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        T::Lookup::unlookup(caller.clone()),
+    ));
+
+    Ok(())
 }
 
-fn update_bond<T: Config>(cid: Cid, t: u16, b: u32) -> Result<(), &'static str> {
-    for i in 0..b {
-        Distributed::<T>::mutate_exists(cid, |details|{
-            if let Some(detail) = details {
-                detail.bonds.push(bond_data(t, i));
-            }
-        })
-    }
+fn prepare_unbond<T: Config>(
+    caller: &T::AccountId,
+    cid: Cid,
+    bond_data: BondData,
+) -> DispatchResult {
+    assert_ok!(ComingId::Pallet::<T>::register(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        T::Lookup::unlookup(caller.clone()),
+    ));
+
+    assert_ok!(ComingId::Pallet::<T>::bond(
+        RawOrigin::Signed(caller.clone()).into(),
+        cid,
+        bond_data,
+    ));
 
     Ok(())
 }
@@ -41,21 +55,16 @@ benchmarks! {
         let common_user: T::AccountId = whitelisted_caller();
         let claim_cid: Cid = 1000000;
 
-        let _ = Distributed::<T>::try_mutate_exists::<_,_,Error<T>,_>(claim_cid, |details|{
-            *details = Some(CidDetails{
-                owner: common_user.clone(),
-                bonds: Vec::new(),
-                card: Bytes::from(Vec::new())
-            });
+        let b in 0..(T::MaxDataSize::get() / 1024);
 
-            Ok(())
-        })?;
-
-        let b in 0 .. (T::MaxCardSize::get() / 1024) => {
-            update_bond::<T>(claim_cid, 1u16, b)?;
+        let bond_data = BondData{
+            bond_type: b as u16,
+            data: vec![0u8; (1024 * b) as usize],
         };
 
-    }: bond(RawOrigin::Signed(common_user.clone()), claim_cid, bond_data(1u16, b))
+        prepare_bond::<T>(&common_user, claim_cid)?;
+
+    }: bond(RawOrigin::Signed(common_user.clone()), claim_cid, bond_data)
     verify {
         let option = Distributed::<T>::get(claim_cid);
         assert!(option.is_some());
@@ -67,23 +76,12 @@ benchmarks! {
     unbond {
         let common_user: T::AccountId = whitelisted_caller();
         let claim_cid: Cid = 1000000;
-        let bond_data = BondData{
+        let bond_data = BondData {
             bond_type: 1u16,
-            data: Bytes::from(b"benchmark".to_vec()),
+            data: b"benchmark".to_vec(),
         };
 
-        let mut bonds: Vec<BondData> = Vec::new();
-        bonds.push(bond_data);
-
-        let _ = Distributed::<T>::try_mutate_exists::<_,_,Error<T>,_>(claim_cid, |details|{
-            *details = Some(CidDetails{
-                owner: common_user.clone(),
-                bonds: bonds,
-                card: Bytes::from(Vec::new())
-            });
-
-            Ok(())
-        })?;
+        prepare_unbond::<T>(&common_user, claim_cid, bond_data)?;
 
     }: unbond(RawOrigin::Signed(common_user.clone()), claim_cid, 1u16)
     verify {

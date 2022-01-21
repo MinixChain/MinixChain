@@ -1,9 +1,7 @@
 use crate as pallet_coming_auction;
 use frame_support::{
     parameter_types,
-    traits::{
-        GenesisBuild, OnInitialize, OnFinalize
-    }
+    traits::{GenesisBuild, OnFinalize, OnInitialize},
 };
 use frame_system as system;
 use sp_core::H256;
@@ -12,11 +10,11 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
 };
 
+pub use pallet_balances::Error as BalancesError;
 pub use pallet_coming_auction::{
-    MIN_DURATION, PalletAuctionId, Cid, Error, Event as AuctionEvent, Auction,
-    ComingNFT, Config, ComingIdError
+    Auction, Cid, ComingIdError, ComingNFT, Config, Error, Event as AuctionEvent, PalletAuctionId,
+    MIN_DURATION,
 };
-pub use pallet_balances::{Error as BalancesError};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -38,7 +36,7 @@ frame_support::construct_runtime!(
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub const SS58Prefix: u8 = 42;
-    pub const MaxCardSize: u32 = 1024 * 1024;
+    pub const MaxDataSize: u32 = 1024 * 1024;
 }
 
 impl system::Config for Test {
@@ -69,10 +67,10 @@ impl system::Config for Test {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
-	pub const MaxLocks: u32 = 50;
-	pub const MaxReserves: u32 = 50;
-	pub const AuctionId: PalletAuctionId = PalletAuctionId(*b"/auc");
+    pub const ExistentialDeposit: u128 = 500;
+    pub const MaxLocks: u32 = 50;
+    pub const MaxReserves: u32 = 50;
+    pub const AuctionId: PalletAuctionId = PalletAuctionId(*b"/auc");
 }
 
 impl pallet_balances::Config for Test {
@@ -92,7 +90,7 @@ impl pallet_balances::Config for Test {
 impl pallet_coming_id::Config for Test {
     type Event = Event;
     type WeightInfo = ();
-    type MaxCardSize = MaxCardSize;
+    type MaxDataSize = MaxDataSize;
 }
 
 impl pallet_coming_auction::Config for Test {
@@ -116,10 +114,11 @@ pub fn new_test_ext(
             (1, 10_000_000_000),
             (2, 10_000_000_000),
             (3, 1_000_000_000),
+            (4, 10_000_000_000),
         ],
     }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    .assimilate_storage(&mut t)
+    .unwrap();
 
     pallet_coming_id::GenesisConfig::<Test> {
         high_admin_key: admin_key,
@@ -128,14 +127,14 @@ pub fn new_test_ext(
         medium_admin_key3: admin_key,
         low_admin_key: admin_key,
     }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    .assimilate_storage(&mut t)
+    .unwrap();
 
     pallet_coming_auction::GenesisConfig::<Test> {
         admin_key: Some(admin_key),
     }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    .assimilate_storage(&mut t)
+    .unwrap();
 
     let mut ext = sp_io::TestExternalities::new(t);
     ext.execute_with(|| System::set_block_number(1));

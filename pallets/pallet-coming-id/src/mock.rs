@@ -26,7 +26,7 @@ frame_support::construct_runtime!(
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub const SS58Prefix: u8 = 42;
-    pub const MaxCardSize: u32 = 1024*1024; // 1 MB
+    pub const MaxDataSize: u32 = 1024*1024; // 1 MB
 }
 
 impl system::Config for Test {
@@ -58,7 +58,7 @@ impl system::Config for Test {
 impl pallet_coming_id::Config for Test {
     type Event = Event;
     type WeightInfo = ();
-    type MaxCardSize = MaxCardSize;
+    type MaxDataSize = MaxDataSize;
 }
 
 impl pallet_sudo::Config for Test {
@@ -80,8 +80,8 @@ pub fn new_test_ext(
         medium_admin_key3: admin_key,
         low_admin_key: admin_key,
     }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    .assimilate_storage(&mut t)
+    .unwrap();
     let mut ext = sp_io::TestExternalities::new(t);
     ext.execute_with(|| System::set_block_number(1));
     ext
@@ -112,10 +112,9 @@ pub(crate) fn expect_events(e: Vec<Event>) {
     assert_eq!(last_events(e.len()), e);
 }
 
-
 // Build test environment by setting the admin `key` for the Genesis.
 pub fn new_test_ext2(
-    admin_keys: [<Test as frame_system::Config>::AccountId;5],
+    admin_keys: [<Test as frame_system::Config>::AccountId; 5],
     root_key: <Test as frame_system::Config>::AccountId,
 ) -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default()
@@ -128,8 +127,8 @@ pub fn new_test_ext2(
         medium_admin_key3: admin_keys[3],
         low_admin_key: admin_keys[4],
     }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    .assimilate_storage(&mut t)
+    .unwrap();
 
     pallet_sudo::GenesisConfig::<Test> { key: root_key }
         .assimilate_storage(&mut t)

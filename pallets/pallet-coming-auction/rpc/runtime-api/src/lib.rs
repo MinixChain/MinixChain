@@ -7,7 +7,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// 	http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,13 +21,14 @@
 #![allow(clippy::all)]
 
 use codec::Codec;
-use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeDisplay};
 pub use pallet_coming_auction::Cid;
+use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeDisplay};
 
 sp_api::decl_runtime_apis! {
-	pub trait ComingAuctionApi<Balance> where
-	    Balance: Codec + AtLeast32BitUnsigned + MaybeDisplay,
-	{
-		fn get_price(cid: Cid) -> Balance;
-	}
+    pub trait ComingAuctionApi<Balance> where
+        Balance: Codec + AtLeast32BitUnsigned + MaybeDisplay,
+    {
+        fn get_price(cid: Cid) -> Balance;
+        fn get_remint_fee(cid: Cid) -> Balance;
+    }
 }

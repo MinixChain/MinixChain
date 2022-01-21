@@ -12,13 +12,12 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, Bytes, OpaqueMetadata};
 use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify,
-    Convert,
+    AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, IdentifyAccount, NumberFor, Verify,
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature, Perquintill, FixedU128, FixedPointNumber
+    ApplyExtrinsicResult, FixedPointNumber, FixedU128, MultiSignature, Perquintill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -31,8 +30,8 @@ pub use frame_support::{
     traits::{KeyOwnerProofSystem, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-        WeightToFeePolynomial, Weight, WeightToFeeCoefficients, WeightToFeeCoefficient,
-        RuntimeDbWeight
+        RuntimeDbWeight, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+        WeightToFeePolynomial,
     },
     StorageValue,
 };
@@ -42,14 +41,12 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-use pallet_coming_id::{Cid, CidDetails};
-use pallet_transaction_payment::{
-    CurrencyAdapter, Multiplier, MultiplierUpdate
-};
+use pallet_coming_auction::PalletAuctionId;
+use pallet_coming_id::{CardMeta, Cid, CidDetails};
 pub use pallet_threshold_signature::primitive::{
     Message, OpCode, Pubkey, ScriptHash, Signature as TSignature,
 };
-use pallet_coming_auction::PalletAuctionId;
+use pallet_transaction_payment::{CurrencyAdapter, Multiplier, MultiplierUpdate};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -112,7 +109,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     //   `spec_version`, and `authoring_version` are the same between Wasm and native.
     // This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
     //   the compatible custom types.
-    spec_version: 115,
+    spec_version: 116,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -286,8 +283,7 @@ impl MultiplierUpdate for FixedFeeMultiplierUpdate {
     }
 }
 
-impl Convert<Multiplier, Multiplier> for FixedFeeMultiplierUpdate
-{
+impl Convert<Multiplier, Multiplier> for FixedFeeMultiplierUpdate {
     fn convert(_previous: Multiplier) -> Multiplier {
         FixedU128::saturating_from_rational(1u64, 10u64)
     }
@@ -295,8 +291,7 @@ impl Convert<Multiplier, Multiplier> for FixedFeeMultiplierUpdate
 
 /// Implementor of `WeightToFeePolynomial` that maps one unit of weight to one unit of fee.
 pub struct IdentityFee;
-impl WeightToFeePolynomial for IdentityFee
-{
+impl WeightToFeePolynomial for IdentityFee {
     type Balance = Balance;
 
     fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
@@ -325,7 +320,7 @@ impl pallet_sudo::Config for Runtime {
 parameter_types! {
     pub const ClaimValidatePeriod: BlockNumber = 600;
     pub const CidsLimit: u32 = 500;
-    pub const MaxCardSize: u32 = 1024 * 1024;
+    pub const MaxDataSize: u32 = 1024 * 1024;
     pub const AuctionId: PalletAuctionId = PalletAuctionId(*b"/auc");
 }
 
@@ -333,7 +328,7 @@ parameter_types! {
 impl pallet_coming_id::Config for Runtime {
     type Event = Event;
     type WeightInfo = pallet_coming_id::weights::SubstrateWeight<Runtime>;
-    type MaxCardSize = MaxCardSize;
+    type MaxDataSize = MaxDataSize;
 }
 
 impl pallet_utility::Config for Runtime {
@@ -423,7 +418,7 @@ pub type Executive = frame_executive::Executive<
     frame_system::ChainContext<Runtime>,
     Runtime,
     AllPallets,
-    RemoveCidStats
+    RemoveCidStats,
 >;
 
 // todo: remove me after upgrade minix mainnet from 113
@@ -584,6 +579,10 @@ impl_runtime_apis! {
         fn get_card(cid: Cid) -> Option<Bytes> {
             ComingId::get_card(cid)
         }
+
+        fn get_card_meta(cid: Cid) -> Option<CardMeta<AccountId>> {
+            ComingId::get_card_meta(cid)
+        }
     }
 
     impl pallet_threshold_signature_rpc_runtime_api::ThresholdSignatureApi<Block> for Runtime {
@@ -601,16 +600,38 @@ impl_runtime_apis! {
         fn get_price(cid: Cid) -> Balance {
             ComingAuction::get_current_price(cid)
         }
+
+        fn get_remint_fee(cid: Cid) -> Balance {
+            ComingAuction::get_current_remint_fee(cid)
+        }
     }
 
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
+        fn benchmark_metadata(extra: bool) -> (
+            Vec<frame_benchmarking::BenchmarkList>,
+            Vec<frame_support::traits::StorageInfo>,
+        ) {
+            use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+            use frame_support::traits::StorageInfoTrait;
+
+            let mut list = Vec::<BenchmarkList>::new();
+
+            list_benchmark!(list, extra, pallet_coming_id, ComingId);
+            list_benchmark!(list, extra, pallet_coming_nft, ComingNFT);
+            list_benchmark!(list, extra, pallet_threshold_signature, ThresholdSignature);
+            list_benchmark!(list, extra, pallet_coming_auction, ComingAuction);
+
+            let storage_info = AllPalletsWithSystem::storage_info();
+
+            return (list, storage_info)
+        }
+
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
             use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
-            use frame_system_benchmarking::Pallet as SystemBench;
             impl frame_system_benchmarking::Config for Runtime {}
 
             let whitelist: Vec<TrackedStorageKey> = vec![
@@ -629,9 +650,6 @@ impl_runtime_apis! {
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);
 
-            add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-            add_benchmark!(params, batches, pallet_balances, Balances);
-            add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, pallet_coming_id, ComingId);
             add_benchmark!(params, batches, pallet_coming_nft, ComingNFT);
             add_benchmark!(params, batches, pallet_threshold_signature, ThresholdSignature);

@@ -2,29 +2,32 @@
 #![allow(clippy::unused_unit)]
 
 pub use pallet::*;
-pub use pallet_coming_id::{Cid, ComingNFT, Error as ComingIdError};
+pub use pallet_coming_id::{CardMeta, Cid, ComingNFT, Error as ComingIdError, MAX_REMINT};
 pub use weights::WeightInfo;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
 pub mod weights;
 
 use frame_support::{
     pallet_prelude::*,
     traits::{Currency, ExistenceRequirement},
-};
-use sp_runtime::{
-    traits::{AccountIdConversion, UniqueSaturatedInto, StaticLookup},
-    TypeId
+    transactional,
 };
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
+use sp_runtime::{
+    traits::{AccountIdConversion, StaticLookup, UniqueSaturatedInto},
+    TypeId,
+};
+use sp_std::vec::Vec;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use sp_arithmetic::traits::Saturating;
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -48,7 +51,15 @@ impl TypeId for PalletAuctionId {
 pub const MIN_DURATION: u32 = 100;
 
 pub type BalanceOf<T> =
-<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+    <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+/// Use percentile. [0%, 255%]
+pub struct DefaultRemintPoint;
+impl Get<u8> for DefaultRemintPoint {
+    fn get() -> u8 {
+        25u8
+    }
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -83,7 +94,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn auctions)]
     pub type Auctions<T: Config> =
-    StorageMap<_, Twox64Concat, Cid, Auction<T::AccountId, BalanceOf<T>, T::BlockNumber>>;
+        StorageMap<_, Twox64Concat, Cid, Auction<T::AccountId, BalanceOf<T>, T::BlockNumber>>;
 
     /// The auction stats.
     /// (total_auctions, success_auctions, cancel_auctions)
@@ -97,9 +108,16 @@ pub mod pallet {
     pub(super) type Admin<T: Config> = StorageValue<_, T::AccountId>;
 
     /// The protocol fee point.
+    /// [0‱, 255‱] or [0%, 2.55%]
     #[pallet::storage]
     #[pallet::getter(fn point)]
     pub(super) type Point<T: Config> = StorageValue<_, u8, ValueQuery>;
+
+    /// The remint fee point.
+    /// [0%, 255%]
+    #[pallet::storage]
+    #[pallet::getter(fn remint_point)]
+    pub(super) type RemintPoint<T: Config> = StorageValue<_, u8, ValueQuery, DefaultRemintPoint>;
 
     /// The emergency stop.
     #[pallet::storage]
@@ -134,7 +152,14 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         // cid, seller, start_price, end_price, duration, start_at
-        AuctionCreated(Cid, T::AccountId, BalanceOf<T>, BalanceOf<T>, T::BlockNumber, T::BlockNumber),
+        AuctionCreated(
+            Cid,
+            T::AccountId,
+            BalanceOf<T>,
+            BalanceOf<T>,
+            T::BlockNumber,
+            T::BlockNumber,
+        ),
         // cid, buyer, price, buy_at
         AuctionSuccessful(Cid, T::AccountId, BalanceOf<T>, T::BlockNumber),
         // cid, cancel_at
@@ -155,7 +180,7 @@ pub mod pallet {
         NotMatchSeller,
         RequireAdmin,
         LowBidValue,
-        LessThanMinBalance
+        LessThanMinBalance,
     }
 
     #[pallet::call]
@@ -166,115 +191,166 @@ pub mod pallet {
             cid: Cid,
             start_price: BalanceOf<T>,
             end_price: BalanceOf<T>,
-            duration: T::BlockNumber
+            duration: T::BlockNumber,
         ) -> DispatchResult {
             ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
             ensure!(!Self::is_on_auction(cid), Error::<T>::OnAuction);
-            ensure!(Self::is_more_min_balance(start_price, end_price), Error::<T>::LessThanMinBalance);
-            ensure!(duration >= T::BlockNumber::from(MIN_DURATION), Error::<T>::TooLittleDuration);
+            ensure!(
+                Self::is_more_min_balance(start_price, end_price),
+                Error::<T>::LessThanMinBalance
+            );
+            ensure!(
+                duration >= T::BlockNumber::from(MIN_DURATION),
+                Error::<T>::TooLittleDuration
+            );
 
             let seller = ensure_signed(origin)?;
             let auction_account = Self::auction_account_id(cid);
             let start = Self::now();
 
             // temporarily escrow
-            T::ComingNFT::transfer(
-                &seller,
-                cid,
-                &auction_account,
-            )?;
+            T::ComingNFT::transfer(&seller, cid, &auction_account)?;
 
-            Auctions::<T>::insert(cid, Auction{
-                seller: seller.clone(),
+            Auctions::<T>::insert(
+                cid,
+                Auction {
+                    seller: seller.clone(),
+                    start_price,
+                    end_price,
+                    duration,
+                    start,
+                },
+            );
+
+            // update total_auctions
+            Self::stats_mutate(|total_auctions, _success_auctions, _cancel_auctions| {
+                *total_auctions = total_auctions.saturating_add(1);
+            });
+
+            Self::deposit_event(Event::AuctionCreated(
+                cid,
+                seller,
                 start_price,
                 end_price,
                 duration,
                 start,
-            });
-
-            // update total_auctions
-            Self::stats_mutate(|total_auctions, _success_auctions, _cancel_auctions, |{
-                *total_auctions = total_auctions.saturating_add(1);
-            });
-
-            Self::deposit_event(Event::AuctionCreated(cid, seller, start_price, end_price, duration, start));
+            ));
 
             Ok(())
         }
 
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bid())]
+        #[transactional]
         pub fn bid(
             origin: OriginFor<T>,
             cid: Cid,
             value: BalanceOf<T>,
-        ) -> DispatchResult {
+        ) -> DispatchResultWithPostInfo {
             ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
             ensure!(Self::is_on_auction(cid), Error::<T>::NotOnAuction);
 
             let buyer = ensure_signed(origin)?;
             let auction_account = Self::auction_account_id(cid);
 
-            Auctions::<T>::mutate_exists(cid, |auction|{
+            Auctions::<T>::mutate_exists(cid, |auction| {
                 if let Some(inner_auction) = auction {
-                    let current_price =  Self::get_current_price(cid);
+                    let current_price = Self::get_current_price(cid);
 
                     ensure!(value >= current_price, Error::<T>::LowBidValue);
 
-                    if let Some(admin) = Admin::<T>::get() {
-                        let fee = Self::calculate_fee(value);
+                    let service_fee = match Admin::<T>::get() {
+                        Some(admin) => {
+                            let fee_point = Point::<T>::get();
+                            let service_fee = Self::calculate_fee(value, fee_point);
 
-                        // transfer `fee` to admin
-                        T::Currency::transfer(
-                            &buyer,
-                            &admin,
-                            fee,
-                            ExistenceRequirement::KeepAlive
-                        )?;
+                            // transfer `service_fee` to admin
+                            T::Currency::transfer(
+                                &buyer,
+                                &admin,
+                                service_fee,
+                                ExistenceRequirement::KeepAlive,
+                            )?;
 
-                        // tranfer `value - fee` to seller
-                        T::Currency::transfer(
-                            &buyer,
-                            &inner_auction.seller,
-                            value - fee,
-                            ExistenceRequirement::KeepAlive
-                        )?;
-                    } else {
-                        // only tranfer `value` to seller
-                        T::Currency::transfer(
-                            &buyer,
-                            &inner_auction.seller,
-                            value,
-                            ExistenceRequirement::KeepAlive
-                        )?;
-                    }
+                            service_fee
+                        }
+                        None => BalanceOf::<T>::default(),
+                    };
+
+                    let tax_fee = match T::ComingNFT::card_of_meta(cid) {
+                        Some(meta) => {
+                            let tax_fee = Self::calculate_fee(value, meta.tax_point);
+
+                            // transfer `tax_fee` to issuer
+                            T::Currency::transfer(
+                                &buyer,
+                                &meta.issuer,
+                                tax_fee,
+                                ExistenceRequirement::KeepAlive,
+                            )?;
+
+                            tax_fee
+                        }
+                        None => BalanceOf::<T>::default(),
+                    };
+
+                    let to_seller = value.saturating_sub(service_fee).saturating_sub(tax_fee);
+
+                    T::Currency::transfer(
+                        &buyer,
+                        &inner_auction.seller,
+                        to_seller,
+                        ExistenceRequirement::KeepAlive,
+                    )?;
 
                     // transfer cid to buyer
-                    T::ComingNFT::transfer(
-                        &auction_account,
-                        cid,
-                        &buyer,
-                    )?;
+                    T::ComingNFT::transfer(&auction_account, cid, &buyer)?;
 
                     // remove this auction
                     *auction = None;
 
                     // update success_auctions
-                    Self::stats_mutate(|_total_auctions, success_auctions, _cancel_auctions, |{
+                    Self::stats_mutate(|_total_auctions, success_auctions, _cancel_auctions| {
                         *success_auctions = success_auctions.saturating_add(1);
                     });
 
                     Self::deposit_event(Event::AuctionSuccessful(cid, buyer, value, Self::now()));
                 }
 
-                Ok(())
+                Ok(Pays::No.into())
             })
         }
 
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::cancel())]
-        pub fn cancel(
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::remint(((card.len() as u32) / 1024).max(1)))]
+        #[transactional]
+        pub fn remint(
             origin: OriginFor<T>,
             cid: Cid,
+            card: Vec<u8>,
+            tax_point: u8,
         ) -> DispatchResult {
+            ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
+            let who = ensure_signed(origin)?;
+
+            // 1. remint fee
+            let remint = match T::ComingNFT::card_of_meta(cid) {
+                Some(meta) => meta.remint,
+                None => 0,
+            };
+            let remint_fee = Self::calculate_remint_fee(remint);
+
+            if let Some(admin) = Admin::<T>::get() {
+                // transfer `remint fee` to admin
+                T::Currency::transfer(&who, &admin, remint_fee, ExistenceRequirement::KeepAlive)?;
+            }
+
+            // 2. remint
+            T::ComingNFT::remint(&who, cid, card, tax_point)?;
+
+            Ok(())
+        }
+
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::cancel())]
+        pub fn cancel(origin: OriginFor<T>, cid: Cid) -> DispatchResult {
             ensure!(Self::is_on_auction(cid), Error::<T>::NotOnAuction);
 
             let seller = ensure_signed(origin)?;
@@ -285,17 +361,13 @@ pub mod pallet {
                     ensure!(inner_auction.seller == seller, Error::<T>::NotMatchSeller);
 
                     // transfer back to seller
-                    T::ComingNFT::transfer(
-                        &auction_account,
-                        cid,
-                        &seller,
-                    )?;
+                    T::ComingNFT::transfer(&auction_account, cid, &seller)?;
 
                     // remove this auction
                     *auction = None;
 
                     // update cancel_auctions
-                    Self::stats_mutate(|_total_auctions, _success_auctions, cancel_auctions, |{
+                    Self::stats_mutate(|_total_auctions, _success_auctions, cancel_auctions| {
                         *cancel_auctions = cancel_auctions.saturating_add(1);
                     });
 
@@ -339,10 +411,7 @@ pub mod pallet {
         }
 
         #[pallet::weight(<T as pallet::Config>::WeightInfo::cancel_when_pause())]
-        pub fn cancel_when_pause(
-            origin: OriginFor<T>,
-            cid: Cid
-        ) -> DispatchResult {
+        pub fn cancel_when_pause(origin: OriginFor<T>, cid: Cid) -> DispatchResult {
             ensure!(Self::is_in_emergency(), Error::<T>::OnlyInEmergency);
 
             let who = ensure_signed(origin)?;
@@ -353,17 +422,13 @@ pub mod pallet {
             Auctions::<T>::mutate_exists(cid, |auction| {
                 if let Some(inner_auction) = auction {
                     // transfer back to seller
-                    T::ComingNFT::transfer(
-                        &auction_account,
-                        cid,
-                        &inner_auction.seller,
-                    )?;
+                    T::ComingNFT::transfer(&auction_account, cid, &inner_auction.seller)?;
 
                     // remove this auction
                     *auction = None;
 
                     // update cancel_auctions
-                    Self::stats_mutate(|_total_auctions, _success_auctions, cancel_auctions, |{
+                    Self::stats_mutate(|_total_auctions, _success_auctions, cancel_auctions| {
                         *cancel_auctions = cancel_auctions.saturating_add(1);
                     });
 
@@ -375,15 +440,23 @@ pub mod pallet {
         }
 
         #[pallet::weight(<T as pallet::Config>::WeightInfo::set_fee_point())]
-        pub fn set_fee_point(
-            origin: OriginFor<T>,
-            new_point: u8
-        ) -> DispatchResult {
+        pub fn set_fee_point(origin: OriginFor<T>, new_point: u8) -> DispatchResult {
             ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
             let who = ensure_signed(origin)?;
             ensure!(Self::is_admin(who), Error::<T>::RequireAdmin);
 
             Point::<T>::mutate(|point| *point = new_point);
+
+            Ok(())
+        }
+
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::set_remint_point())]
+        pub fn set_remint_point(origin: OriginFor<T>, new_point: u8) -> DispatchResult {
+            ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
+            let who = ensure_signed(origin)?;
+            ensure!(Self::is_admin(who), Error::<T>::RequireAdmin);
+
+            RemintPoint::<T>::mutate(|point| *point = new_point);
 
             Ok(())
         }
@@ -396,9 +469,7 @@ pub mod pallet {
             ensure_root(origin)?;
             let new_admin = T::Lookup::lookup(new_admin)?;
 
-            Admin::<T>::mutate(|admin|{
-                *admin = Some(new_admin)
-            });
+            Admin::<T>::mutate(|admin| *admin = Some(new_admin));
 
             Ok(())
         }
@@ -429,9 +500,7 @@ impl<T: Config> Pallet<T> {
     }
 
     fn stats_mutate<F: FnMut(&mut u64, &mut u64, &mut u64)>(mut f: F) {
-        <Stats<T>>::mutate(|stats|{
-            f(&mut stats.0, &mut stats.1, &mut stats.2)
-        })
+        <Stats<T>>::mutate(|stats| f(&mut stats.0, &mut stats.1, &mut stats.2))
     }
 
     /// The account ID of an auction account
@@ -463,11 +532,24 @@ impl<T: Config> Pallet<T> {
 
     pub fn get_current_price(cid: Cid) -> BalanceOf<T> {
         match Self::auctions(cid) {
-            Some(Auction{start_price, end_price, start, duration, .. }) => {
-                Self::calculate_price(start_price, end_price, duration, Self::now() - start)
-            },
-            None => Default::default()
+            Some(Auction {
+                start_price,
+                end_price,
+                start,
+                duration,
+                ..
+            }) => Self::calculate_price(start_price, end_price, duration, Self::now() - start),
+            None => Default::default(),
         }
+    }
+
+    pub fn get_current_remint_fee(cid: Cid) -> BalanceOf<T> {
+        let remint = match T::ComingNFT::card_of_meta(cid) {
+            Some(meta) => meta.remint,
+            None => 0,
+        };
+
+        Self::calculate_remint_fee(remint)
     }
 
     pub fn calculate_price(
@@ -477,7 +559,7 @@ impl<T: Config> Pallet<T> {
         passed: T::BlockNumber,
     ) -> BalanceOf<T> {
         if passed >= duration {
-            return end
+            return end;
         }
 
         let start_u128: u128 = start.unique_saturated_into();
@@ -495,25 +577,38 @@ impl<T: Config> Pallet<T> {
             Ok(current_price_change_u128) => {
                 use sp_std::convert::TryFrom;
                 match BalanceOf::<T>::try_from(current_price_change_u128) {
-                    Ok(current_price_change) =>  {
+                    Ok(current_price_change) => {
                         if start_u128 > end_u128 {
                             start - current_price_change
                         } else {
                             start + current_price_change
                         }
-                    },
-                    Err(_) => start
+                    }
+                    Err(_) => start,
                 }
             }
-            Err(_) => start
+            Err(_) => start,
         }
     }
 
-    pub fn calculate_fee(value: BalanceOf<T>) -> BalanceOf<T> {
-        let point = BalanceOf::<T>::from(Point::<T>::get());
+    pub fn calculate_fee(value: BalanceOf<T>, fee_point: u8) -> BalanceOf<T> {
+        let point = BalanceOf::<T>::from(fee_point);
+        let base_point = BalanceOf::<T>::from(10000u16);
 
         // Impossible to overflow
-        value / BalanceOf::<T>::from(10000u16) * point
+        value / base_point * point
+    }
+
+    pub fn calculate_remint_fee(remint: u8) -> BalanceOf<T> {
+        let remint_point = BalanceOf::<T>::from(RemintPoint::<T>::get());
+        let base_point = BalanceOf::<T>::from(100u16);
+
+        let fee_ladder = BalanceOf::<T>::from(100000000u32).saturating_mul(BalanceOf::<T>::from(
+            2u32.checked_pow(remint as u32).unwrap_or(4294967295u32),
+        ));
+
+        // Impossible to overflow
+        fee_ladder / base_point * remint_point
     }
 
     pub fn balance_of(account: &T::AccountId) -> BalanceOf<T> {

@@ -7,11 +7,10 @@ pub use pallet::*;
 pub use weights::WeightInfo;
 
 use codec::{Decode, Encode};
-use frame_support::inherent::Vec;
 use frame_support::pallet_prelude::*;
 use sp_core::Bytes;
 use sp_runtime::traits::StaticLookup;
-use sp_std::vec;
+use sp_std::{vec, vec::Vec};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -31,6 +30,8 @@ pub mod weights;
 pub type Cid = u64;
 pub type BondType = u16;
 
+pub const MAX_REMINT: u8 = 32u8;
+
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
@@ -48,10 +49,20 @@ impl BondData {
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub struct CardMeta<AccountId> {
+    pub remint: u8,
+    pub issuer: AccountId,
+    pub tax_point: u8,
+}
+
+#[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct CidDetails<AccountId> {
     pub owner: AccountId,
     pub bonds: Vec<BondData>,
     pub card: Vec<u8>,
+    pub card_meta: Option<CardMeta<AccountId>>,
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
@@ -62,7 +73,7 @@ pub enum AdminType {
     Medium,
     Medium2,
     Medium3,
-    Low
+    Low,
 }
 
 #[frame_support::pallet]
@@ -78,9 +89,9 @@ pub mod pallet {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
-        /// Max size of c-card
+        /// Max size of c-card or bond-data
         #[pallet::constant]
-        type MaxCardSize: Get<u32>;
+        type MaxDataSize: Get<u32>;
     }
 
     #[pallet::pallet]
@@ -99,13 +110,12 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn cid_to_approval)]
-    pub type CidToApproval<T: Config> =
-    StorageMap<_, Identity, Cid, T::AccountId>;
+    pub type CidToApproval<T: Config> = StorageMap<_, Identity, Cid, T::AccountId>;
 
     #[pallet::storage]
     #[pallet::getter(fn cid_to_approval_all)]
     pub type OwnerToApprovalAll<T: Config> =
-    StorageMap<_, Identity, (T::AccountId, T::AccountId), bool, ValueQuery>;
+        StorageMap<_, Identity, (T::AccountId, T::AccountId), bool, ValueQuery>;
 
     /// The `AccountId` of the sudo key. Register 1~12 digital cid.
     #[pallet::storage]
@@ -181,12 +191,14 @@ pub mod pallet {
         UnBonded(T::AccountId, Cid, BondType),
         // cid, card
         MintCard(Cid, Vec<u8>),
+        // cid, issuer
+        RemintCard(Cid, T::AccountId),
         // cid
         Burned(Cid),
         // owner, operator, cid
         Approval(T::AccountId, T::AccountId, Cid),
         // owner, operator, approved
-        ApprovalForAll(T::AccountId, T::AccountId, bool)
+        ApprovalForAll(T::AccountId, T::AccountId, bool),
     }
 
     #[pallet::error]
@@ -206,7 +218,8 @@ pub mod pallet {
         UndistributedCid,
         InvalidCidEnd,
         NotFoundBondType,
-        TooBigCardSize,
+        TooBigDataSize,
+        RemintMax,
     }
 
     #[pallet::call]
@@ -252,6 +265,7 @@ pub mod pallet {
                     owner: recipient.clone(),
                     bonds: Vec::new(),
                     card: Vec::new(),
+                    card_meta: None,
                 });
 
                 Self::account_cids_add(recipient.clone(), cid);
@@ -265,6 +279,10 @@ pub mod pallet {
         pub fn bond(origin: OriginFor<T>, cid: Cid, bond_data: BondData) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_valid(cid), Error::<T>::InvalidCid);
+            ensure!(
+                bond_data.length() < T::MaxDataSize::get(),
+                Error::<T>::TooBigDataSize
+            );
 
             Distributed::<T>::try_mutate_exists(cid, |details| {
                 let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
@@ -323,11 +341,11 @@ pub mod pallet {
             let new_admin = T::Lookup::lookup(admin)?;
 
             match admin_type {
-                AdminType::High =>  <HighKey<T>>::put(&new_admin),
+                AdminType::High => <HighKey<T>>::put(&new_admin),
                 AdminType::Medium => <MediumKey<T>>::put(&new_admin),
                 AdminType::Medium2 => <MediumKey2<T>>::put(&new_admin),
                 AdminType::Medium3 => <MediumKey3<T>>::put(&new_admin),
-                AdminType::Low => <LowKey<T>>::put(&new_admin)
+                AdminType::Low => <LowKey<T>>::put(&new_admin),
             }
 
             Ok(())
@@ -383,7 +401,7 @@ impl<T: Config> Pallet<T> {
         match Self::get_account_id(cid) {
             Some(owner) if owner == operator.clone() => true,
             Some(owner) => Self::cid_to_approval_all((owner, operator.clone())),
-            None => false
+            None => false,
         }
     }
 
@@ -399,18 +417,14 @@ impl<T: Config> Pallet<T> {
 
     fn can_approve(operator: &T::AccountId, approved: &T::AccountId, cid: Cid) -> bool {
         match cid {
-            100_000..1_000_000_000_000 => {},
-            _ => return false
+            100_000..1_000_000_000_000 => {}
+            _ => return false,
         }
 
         match Self::get_account_id(cid) {
-            Some(owner) if owner == operator.clone() => {
-                owner != approved.clone()
-            },
-            Some(owner) => {
-                Self::cid_to_approval_all((owner, operator.clone()))
-            },
-            None => false
+            Some(owner) if owner == operator.clone() => owner != approved.clone(),
+            Some(owner) => Self::cid_to_approval_all((owner, operator.clone())),
+            None => false,
         }
     }
 
@@ -436,7 +450,7 @@ impl<T: Config> Pallet<T> {
 
             Ok(())
         })
-            .unwrap_or_default();
+        .unwrap_or_default();
     }
 
     fn account_cids_remove(account: T::AccountId, cid: Cid) {
@@ -447,7 +461,7 @@ impl<T: Config> Pallet<T> {
 
             Ok(())
         })
-            .unwrap_or_default();
+        .unwrap_or_default();
     }
 
     pub fn get_account_id(cid: Cid) -> Option<T::AccountId> {
@@ -468,7 +482,29 @@ impl<T: Config> Pallet<T> {
 
     pub fn get_card(cid: Cid) -> Option<Bytes> {
         match Self::distributed(cid) {
-            Some(cid_details) if !cid_details.card.is_empty() => Some(Bytes::from(cid_details.card)),
+            Some(cid_details) if !cid_details.card.is_empty() => {
+                Some(Bytes::from(cid_details.card))
+            }
+            _ => None,
+        }
+    }
+
+    pub fn get_remint(cid: Cid) -> u8 {
+        match Self::distributed(cid) {
+            Some(cid_details) => {
+                if let Some(meta) = cid_details.card_meta {
+                    meta.remint
+                } else {
+                    0
+                }
+            }
+            _ => 0,
+        }
+    }
+
+    pub fn get_card_meta(cid: Cid) -> Option<CardMeta<T::AccountId>> {
+        match Self::distributed(cid) {
+            Some(cid_details) => cid_details.card_meta,
             _ => None,
         }
     }
@@ -478,8 +514,8 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
     fn mint(who: &T::AccountId, cid: Cid, card: Vec<u8>) -> DispatchResult {
         Self::check_admin(who, cid)?;
         ensure!(
-            card.len() <= T::MaxCardSize::get() as usize,
-            Error::<T>::TooBigCardSize
+            card.len() <= T::MaxDataSize::get() as usize,
+            Error::<T>::TooBigDataSize
         );
 
         Distributed::<T>::try_mutate_exists(cid, |details| {
@@ -490,6 +526,36 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
             detail.card = card.clone();
 
             Self::deposit_event(Event::MintCard(cid, card));
+
+            Ok(())
+        })
+    }
+
+    fn remint(who: &T::AccountId, cid: Cid, card: Vec<u8>, tax_point: u8) -> DispatchResult {
+        ensure!(
+            card.len() <= T::MaxDataSize::get() as usize,
+            Error::<T>::TooBigDataSize
+        );
+
+        ensure!(Self::get_remint(cid) < MAX_REMINT, Error::<T>::RemintMax,);
+
+        Distributed::<T>::try_mutate_exists(cid, |details| {
+            let detail = details.as_mut().ok_or(Error::<T>::UndistributedCid)?;
+
+            ensure!(detail.owner == *who, Error::<T>::RequireOwner);
+
+            let remint = Self::get_remint(cid);
+
+            let card_meta = Some(CardMeta {
+                remint: remint + 1,
+                issuer: who.clone(),
+                tax_point,
+            });
+
+            detail.card = card.clone();
+            detail.card_meta = card_meta;
+
+            Self::deposit_event(Event::RemintCard(cid, who.clone()));
 
             Ok(())
         })
@@ -555,10 +621,11 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         Self::get_card(cid)
     }
 
-    fn can_transfer_from(
-        operator: &T::AccountId,
-        cid: Cid
-    ) -> bool {
+    fn card_of_meta(cid: Cid) -> Option<CardMeta<T::AccountId>> {
+        Self::get_card_meta(cid)
+    }
+
+    fn can_transfer_from(operator: &T::AccountId, cid: Cid) -> bool {
         Self::can_transfer(cid).is_ok() && Self::can_transfer_from(operator, cid)
     }
 
@@ -568,7 +635,10 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         to: &T::AccountId,
         cid: Cid,
     ) -> DispatchResult {
-        ensure!(Self::can_transfer_from(operator, cid), Error::<T>::BanTransfer);
+        ensure!(
+            Self::can_transfer_from(operator, cid),
+            Error::<T>::BanTransfer
+        );
 
         Self::transfer(from, cid, to)?;
 
@@ -576,9 +646,11 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
     }
 
     fn approve(who: &T::AccountId, approved: &T::AccountId, cid: Cid) -> DispatchResult {
-        ensure!(Self::can_approve(who, approved, cid), Error::<T>::BanApprove);
-        let owner = Self::get_account_id(cid)
-            .expect("cid owner is exists; qed");
+        ensure!(
+            Self::can_approve(who, approved, cid),
+            Error::<T>::BanApprove
+        );
+        let owner = Self::get_account_id(cid).expect("cid owner is exists; qed");
 
         CidToApproval::<T>::insert(cid, approved.clone());
 
@@ -587,10 +659,18 @@ impl<T: Config> ComingNFT<T::AccountId> for Pallet<T> {
         Ok(())
     }
 
-    fn set_approval_for_all(owner: &T::AccountId, operator: &T::AccountId, approved: bool) -> DispatchResult {
+    fn set_approval_for_all(
+        owner: &T::AccountId,
+        operator: &T::AccountId,
+        approved: bool,
+    ) -> DispatchResult {
         OwnerToApprovalAll::<T>::insert((owner.clone(), operator.clone()), approved);
 
-        Self::deposit_event(Event::ApprovalForAll(owner.clone(), operator.clone(), approved));
+        Self::deposit_event(Event::ApprovalForAll(
+            owner.clone(),
+            operator.clone(),
+            approved,
+        ));
 
         Ok(())
     }

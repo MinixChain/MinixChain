@@ -229,8 +229,13 @@ impl<T: Config> Pallet<T> {
             cb.push(keys.to_vec());
         }
 
-        let executable =
-            Self::apply_verify_threshold_signature(addr.clone(), signature.clone(), pubkey, cb, message)?;
+        let executable = Self::apply_verify_threshold_signature(
+            addr.clone(),
+            signature.clone(),
+            pubkey,
+            cb,
+            message,
+        )?;
 
         if executable {
             // TODO What if the same script corresponds to different threshold signature addresses？

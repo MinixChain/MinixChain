@@ -25,10 +25,16 @@ Of course as an open alliance chain, we do hope to attract more alliance-chain c
     "bond_type": "BondType",
     "data": "Bytes"
   },
+  "CardMeta": {
+    "remint": "u8",
+    "issuer": "AccountId",
+    "tax_point": "u8"
+  },
   "CidDetails": {
     "owner": "AccountId",
     "bonds": "Vec<BondData>",
-    "card":  "Bytes"
+    "card":  "Bytes",
+    "card_meta": "Option<CardMeta>"
   },
   "PalletAuctionId": "[u8;4]",
   "Auction": {
@@ -109,11 +115,41 @@ Of course as an open alliance chain, we do hope to attract more alliance-chain c
         }
       ],
       "type": "Option<Bytes>"
+    },
+    "getCardMeta": {
+      "description": "comingId getCardMeta",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "Option<CardMeta>"
     }
   },
   "comingAuction": {
     "getPrice": {
       "description": "comingAuction getPrice",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "string"
+    },
+    "getRemintFee": {
+      "description": "comingAuction getRemintFee",
       "params": [
         {
           "name": "cid",

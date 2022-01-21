@@ -166,6 +166,21 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
         }
       ],
       "type": "string"
+    },
+    "getRemintFee": {
+      "description": "comingAuction getRemintFee",
+      "params": [
+        {
+          "name": "cid",
+          "type": "Cid"
+        },
+        {
+          "name": "at",
+          "type": "Hash",
+          "isOptional": true
+        }
+      ],
+      "type": "string"
     }
   }
 }

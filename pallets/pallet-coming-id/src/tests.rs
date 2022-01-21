@@ -149,7 +149,6 @@ fn bond_should_work() {
                 owner: RESERVE2,
                 bonds: vec![new_bond1],
                 card: vec![],
-                card_meta: None,
             }),
             ComingId::get_bond_data(1)
         );
@@ -168,7 +167,6 @@ fn bond_should_work() {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![bond.clone(), new_bond2],
                 card: vec![],
-                card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
         );
@@ -188,7 +186,6 @@ fn bond_should_work() {
                 owner: COMMON_CHARLIE,
                 bonds: vec![bond, new_bond3],
                 card: vec![],
-                card_meta: None,
             }),
             ComingId::get_bond_data(1_000_000)
         );
@@ -260,7 +257,6 @@ fn unbond_should_work() {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![bond, new_bond2.clone()],
                 card: vec![],
-                card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
         );
@@ -274,7 +270,6 @@ fn unbond_should_work() {
                 owner: COMMUNITY_ALICE,
                 bonds: vec![new_bond2],
                 card: vec![],
-                card_meta: None,
             }),
             ComingId::get_bond_data(100_000)
         );

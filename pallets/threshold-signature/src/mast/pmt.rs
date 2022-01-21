@@ -12,7 +12,6 @@ use hashes::Hash;
 use alloc::{
     borrow::ToOwned,
     fmt, format,
-    prelude::v1::Box,
     string::{String, ToString},
     vec,
     vec::Vec,

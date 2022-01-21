@@ -3,7 +3,7 @@ resolver = "2"
 
 members = [
     "node",
-    "runtime",
+    "runtime/minix",
 
     "pallets/pallet-coming-id",
     "pallets/pallet-coming-nft",

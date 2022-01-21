@@ -176,6 +176,46 @@ pub mod pallet {
         }
     }
 
+    #[pallet::hooks]
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+        fn on_runtime_upgrade() -> Weight {
+            use frame_support::traits::StorageVersion;
+
+            #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
+            pub struct OldCidDetails<AccountId> {
+                pub owner: AccountId,
+                pub bonds: Vec<BondData>,
+                pub card: Vec<u8>,
+            }
+
+            let version = StorageVersion::get::<Pallet<T>>();
+            let mut weight: Weight = 0;
+
+            if version == 0 {
+                <Distributed<T>>::translate_values(|OldCidDetails { owner, bonds, card }| {
+                    Some(CidDetails {
+                        owner,
+                        bonds,
+                        card,
+                        card_meta: None,
+                    })
+                });
+
+                StorageVersion::new(1).put::<Pallet<T>>();
+
+                log::info!(
+                    target: "runtime::pallet-coming-auction",
+                    "migrated {} cid details.",
+                    <Distributed<T>>::iter().count(),
+                );
+
+                weight = <T as frame_system::Config>::BlockWeights::get().max_block;
+            }
+
+            weight
+        }
+    }
+
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {

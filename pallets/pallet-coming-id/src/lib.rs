@@ -189,32 +189,24 @@ pub mod pallet {
                 pub owner: AccountId,
                 pub bonds: Vec<BondData>,
                 pub card: Vec<u8>,
+                pub card_meta: Option<CardMeta<AccountId>>,
             }
 
-            let version = StorageVersion::get::<Pallet<T>>();
-            let mut weight: Weight = 0;
+            <Distributed<T>>::translate_values(
+                |OldCidDetails {
+                     owner, bonds, card, ..
+                 }| { Some(CidDetails { owner, bonds, card }) },
+            );
 
-            if version == 0 {
-                <Distributed<T>>::translate_values(|OldCidDetails { owner, bonds, card }| {
-                    Some(CidDetails {
-                        owner,
-                        bonds,
-                        card,
-                    })
-                });
+            StorageVersion::new(1).put::<Pallet<T>>();
 
-                StorageVersion::new(1).put::<Pallet<T>>();
+            log::info!(
+                target: "runtime::pallet-coming-auction",
+                "migrated {} cid details.",
+                <Distributed<T>>::iter().count(),
+            );
 
-                log::info!(
-                    target: "runtime::pallet-coming-auction",
-                    "migrated {} cid details.",
-                    <Distributed<T>>::iter().count(),
-                );
-
-                weight = <T as frame_system::Config>::BlockWeights::get().max_block;
-            }
-
-            weight
+            <T as frame_system::Config>::BlockWeights::get().max_block
         }
     }
 

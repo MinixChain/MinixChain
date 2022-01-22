@@ -65,7 +65,10 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
     sudo权限, 设置新的管理员.
     
 - remint:
-    普通权限, NFT二次创作. `remint fee`随remint次数2倍增加.
+    普通权限, NFT二次创作. `remint fee`随remint次数2倍增加. 
+    当card size <= 1024 bytes时, 链上存储费率为`B0`;
+    当card size > 1024 bytes时, 链上存储费率为`1024 * B0`;
+    card size 最大值 `1024 * 1024` bytes.
 - set_remint_point:
     管理员权限, 设置`remint`费用调节因子, 调节范围[0%, 255%].
 

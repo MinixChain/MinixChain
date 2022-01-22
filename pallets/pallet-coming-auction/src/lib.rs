@@ -320,7 +320,13 @@ pub mod pallet {
             })
         }
 
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::remint(((card.len() as u32) / 1024).max(1)))]
+        #[pallet::weight(
+            if card.len() <= 1024 {
+                <T as pallet::Config>::WeightInfo::remint((card.len() as u32) / 1024).max(1)
+            } else {
+                <T as pallet::Config>::WeightInfo::remint(card.len() as u32)
+            }
+        )]
         #[transactional]
         pub fn remint(
             origin: OriginFor<T>,

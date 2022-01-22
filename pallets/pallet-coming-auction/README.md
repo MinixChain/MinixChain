@@ -66,6 +66,10 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
     
 - remint:
     普通权限, NFT二次创作. `remint fee`随remint次数2倍增加.
+    每字节weight为`W0`,
+    当 `card_size` <= 1024 bytes时, `card_weights` = `W0`;
+    当 `card_size` > 1024 bytes时, `card_weights` = `card_size * W0`;
+    card_size 最大值 `1024 * 1024` bytes.
 - set_remint_point:
     管理员权限, 设置`remint`费用调节因子, 调节范围[0%, 255%].
 

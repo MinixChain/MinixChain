@@ -322,7 +322,7 @@ pub mod pallet {
 
         #[pallet::weight(
             if card.len() <= 1024 {
-                <T as pallet::Config>::WeightInfo::remint((card.len() as u32) / 1024).max(1)
+                <T as pallet::Config>::WeightInfo::remint(1)
             } else {
                 <T as pallet::Config>::WeightInfo::remint(card.len() as u32)
             }

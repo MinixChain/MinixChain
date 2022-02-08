@@ -1,6 +1,6 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingAuctionConfig, ComingIdConfig, GenesisConfig,
-    GrandpaConfig, SS58Prefix, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    GrandpaConfig, SS58Prefix, Signature, SudoConfig, SystemConfig, WASM_BINARY, CidGradeConfig
 };
 use sc_chain_spec::ChainSpecExtension;
 use sc_service::{ChainType, Properties};
@@ -75,6 +75,7 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
                     caller.clone(),
                 ],
                 (caller.clone(), caller.clone(), caller.clone()),
+                Some(caller.clone()),
                 Some(caller),
             )
         },
@@ -120,6 +121,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                 ),
+                None,
                 None,
             )
         },
@@ -177,6 +179,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                 ),
                 None,
+                None,
             )
         },
         // Bootnodes
@@ -217,6 +220,7 @@ pub fn dev_evm_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                 ),
                 None,
+                None,
             )
         },
         // Bootnodes
@@ -247,6 +251,7 @@ pub fn minix_genesis(
     endowed_accounts: Vec<AccountId>,
     coming_keys: (AccountId, AccountId, AccountId),
     auction_admin: Option<AccountId>,
+    grade_admin: Option<AccountId>,
 ) -> GenesisConfig {
     let wasm_binary = WASM_BINARY.unwrap();
     GenesisConfig {
@@ -286,6 +291,9 @@ pub fn minix_genesis(
         },
         coming_auction: ComingAuctionConfig {
             admin_key: auction_admin,
+        },
+        cid_grade: CidGradeConfig {
+            admin_key: grade_admin,
         },
     }
 }

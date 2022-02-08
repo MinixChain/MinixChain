@@ -356,6 +356,10 @@ impl pallet_coming_auction::Config for Runtime {
     type WeightInfo = ();
 }
 
+impl pallet_cid_grade::Config for Runtime {
+    type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -384,6 +388,7 @@ construct_runtime!(
         ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>} = 40,
         ComingNFT: pallet_coming_nft::{Pallet, Call} = 41,
         ComingAuction: pallet_coming_auction::{Pallet, Call, Config<T>, Storage, Event<T>} = 42,
+        CidGrade: pallet_cid_grade::{Pallet, Call, Config<T>, Storage, Event<T>} = 43,
     }
 );
 

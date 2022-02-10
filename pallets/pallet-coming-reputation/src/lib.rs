@@ -155,10 +155,6 @@ impl<T: Config> Pallet<T> {
         matches!(Admin::<T>::get(), Some(admin) if admin == who)
     }
     fn check_cid_grade(cid: Cid, grade: u32) -> DispatchResult {
-        match cid {
-            0..1_000_000_000_000 => {},
-            _ => ensure!(false, Error::<T>::InvalidCid),
-        };
         ensure!(Distributed::<T>::contains_key(cid),Error::<T>::UndistributedCid);
         let old_grade = CidReputationGrade::<T>::get(cid);
         ensure!(

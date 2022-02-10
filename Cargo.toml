@@ -8,7 +8,7 @@ members = [
     "pallets/pallet-coming-id",
     "pallets/pallet-coming-nft",
     "pallets/pallet-coming-auction",
-    "pallets/pallet-cid-grade",
+    "pallets/pallet-coming-reputation",
     "pallets/threshold-signature",
     "pallets/ethereum-chain-id",
 ]

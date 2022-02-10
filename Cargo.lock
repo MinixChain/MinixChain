@@ -3379,12 +3379,12 @@ dependencies = [
  "hex-literal",
  "pallet-aura",
  "pallet-balances",
- "pallet-cid-grade",
  "pallet-coming-auction",
  "pallet-coming-auction-rpc-runtime-api",
  "pallet-coming-id",
  "pallet-coming-id-rpc-runtime-api",
  "pallet-coming-nft",
+ "pallet-coming-reputation",
  "pallet-grandpa",
  "pallet-sudo",
  "pallet-threshold-signature",
@@ -3839,27 +3839,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-cid-grade"
-version = "1.4.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal",
- "log",
- "pallet-coming-id",
- "pallet-sudo",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-storage",
-]
-
-[[package]]
 name = "pallet-coming-auction"
 version = "1.4.0"
 dependencies = [
@@ -3968,6 +3947,27 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-coming-reputation"
+version = "1.4.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "pallet-coming-id",
+ "pallet-sudo",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-storage",
 ]
 
 [[package]]

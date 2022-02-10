@@ -1,7 +1,7 @@
 [package]
 authors = ['Minix Chain Developer']
 edition = '2018'
-name = 'pallet-cid-grade'
+name = 'pallet-coming-reputation'
 version = "1.4.0"
 license = "Unlicense"
 

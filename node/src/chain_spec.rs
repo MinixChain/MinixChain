@@ -1,6 +1,6 @@
 pub use minix_runtime::{
     AccountId, AuraConfig, BalancesConfig, ComingAuctionConfig, ComingIdConfig, GenesisConfig,
-    GrandpaConfig, SS58Prefix, Signature, SudoConfig, SystemConfig, WASM_BINARY, CidGradeConfig
+    GrandpaConfig, SS58Prefix, Signature, SudoConfig, SystemConfig, WASM_BINARY, ComingReputationConfig
 };
 use sc_chain_spec::ChainSpecExtension;
 use sc_service::{ChainType, Properties};
@@ -251,7 +251,7 @@ pub fn minix_genesis(
     endowed_accounts: Vec<AccountId>,
     coming_keys: (AccountId, AccountId, AccountId),
     auction_admin: Option<AccountId>,
-    grade_admin: Option<AccountId>,
+    reputation_admin: Option<AccountId>,
 ) -> GenesisConfig {
     let wasm_binary = WASM_BINARY.unwrap();
     GenesisConfig {
@@ -292,8 +292,8 @@ pub fn minix_genesis(
         coming_auction: ComingAuctionConfig {
             admin_key: auction_admin,
         },
-        cid_grade: CidGradeConfig {
-            admin_key: grade_admin,
+        coming_reputation: ComingReputationConfig {
+            admin_key: reputation_admin,
         },
     }
 }

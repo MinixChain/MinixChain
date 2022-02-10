@@ -27,7 +27,7 @@ mod benchmarking;
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-pub struct Grade {
+pub struct ReputationGrade {
     pub key1: u32,
     pub key2: u32,
     pub key3: u32,
@@ -52,8 +52,8 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::type_value]
-    pub fn DefaultGrade() -> Grade {
-        Grade {
+    pub fn DefaultReputationGrade() -> ReputationGrade {
+        ReputationGrade {
             key1:Default::default(),
             key2:Default::default(),
             key3:Default::default(),
@@ -62,8 +62,8 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn cid_grade)]
-    pub type CidGrade<T: Config> =
-        StorageMap<_, Blake2_128Concat, Cid, Grade,ValueQuery,DefaultGrade>;
+    pub type CidReputationGrade<T: Config> =
+        StorageMap<_, Blake2_128Concat, Cid, ReputationGrade,ValueQuery,DefaultReputationGrade>;
 
     /// The pallet admin key.
     #[pallet::storage]
@@ -98,7 +98,7 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         // recipient, cid
-        UpGrade(Cid,Grade),
+        UpReputationGrade(Cid,ReputationGrade),
     }
 
     #[pallet::error]
@@ -115,13 +115,13 @@ pub mod pallet {
         pub fn up_grade(
             origin: OriginFor<T>,
             cid: Cid,
-            grade: Grade
+            grade: ReputationGrade
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_admin(who), Error::<T>::RequireAdmin);
             Self::check_cid_grade(cid,grade.clone())?;
-            CidGrade::<T>::mutate(cid,|old_grade| *old_grade = grade.clone());
-            Self::deposit_event(Event::UpGrade(
+            CidReputationGrade::<T>::mutate(cid,|old_grade| *old_grade = grade.clone());
+            Self::deposit_event(Event::UpReputationGrade(
                 cid,
                 grade
             ));
@@ -143,19 +143,19 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-    pub fn get_grade(cid:Cid)->Grade{
-        CidGrade::<T>::get(cid)
+    pub fn get_grade(cid:Cid)->ReputationGrade{
+        CidReputationGrade::<T>::get(cid)
     }
     fn is_admin(who: T::AccountId) -> bool {
         matches!(Admin::<T>::get(), Some(admin) if admin == who)
     }
-    fn check_cid_grade(cid: Cid, cid_grade: Grade) -> DispatchResult {
+    fn check_cid_grade(cid: Cid, cid_grade: ReputationGrade) -> DispatchResult {
         match cid {
             0..1_000_000_000_000 => {},
             _ => ensure!(false, Error::<T>::InvalidCid),
         };
         ensure!(Distributed::<T>::contains_key(cid),Error::<T>::UndistributedCid);
-        let old_grade = CidGrade::<T>::get(cid);
+        let old_grade = CidReputationGrade::<T>::get(cid);
         ensure!(
             old_grade.key1<=cid_grade.key1 && old_grade.key2<=cid_grade.key2 && old_grade.key3<=cid_grade.key3,
             Error::<T>::CannotDowngrade

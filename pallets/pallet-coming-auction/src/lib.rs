@@ -241,11 +241,7 @@ pub mod pallet {
 
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bid())]
         #[transactional]
-        pub fn bid(
-            origin: OriginFor<T>,
-            cid: Cid,
-            value: BalanceOf<T>,
-        ) -> DispatchResult {
+        pub fn bid(origin: OriginFor<T>, cid: Cid, value: BalanceOf<T>) -> DispatchResult {
             ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
             ensure!(Self::is_on_auction(cid), Error::<T>::NotOnAuction);
 

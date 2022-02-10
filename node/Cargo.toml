@@ -58,6 +58,7 @@ frame-benchmarking-cli = { git = 'https://github.com/paritytech/substrate', bran
 pallet-coming-id-rpc = { path = "../pallets/pallet-coming-id/rpc" }
 pallet-threshold-signature-rpc = { version = "3.0.0", path = "../pallets/threshold-signature/rpc"}
 pallet-coming-auction-rpc = { path = "../pallets/pallet-coming-auction/rpc" }
+pallet-coming-reputation-rpc = { path = "../pallets/pallet-coming-reputation/rpc" }
 
 minix-runtime = { version = "3.0.0", path = "../runtime/minix" }
 

@@ -37,8 +37,10 @@ where
     P: TransactionPool + 'static,
     C::Api: pallet_threshold_signature_rpc::ThresholdSignatureRuntimeApi<Block>,
     C::Api: pallet_coming_auction_rpc::ComingAuctionRuntimeApi<Block, Balance>,
+    C::Api: pallet_coming_reputation_rpc::ComingReputationRuntimeApi<Block, AccountId>,
 {
     use pallet_coming_auction_rpc::{ComingAuction, ComingAuctionApi};
+    use pallet_coming_reputation_rpc::{ComingReputation, ComingReputationApi};
     use pallet_coming_id_rpc::{ComingId, ComingIdApi};
     use pallet_threshold_signature_rpc::{ThresholdSignature, ThresholdSignatureApi};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
@@ -66,6 +68,10 @@ where
     )));
 
     io.extend_with(ComingAuctionApi::to_delegate(ComingAuction::new(
+        client.clone(),
+    )));
+
+    io.extend_with(ComingReputationApi::to_delegate(ComingReputation::new(
         client.clone(),
     )));
 

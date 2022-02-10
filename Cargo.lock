@@ -3332,6 +3332,7 @@ dependencies = [
  "minix-runtime",
  "pallet-coming-auction-rpc",
  "pallet-coming-id-rpc",
+ "pallet-coming-reputation-rpc",
  "pallet-threshold-signature-rpc",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
@@ -3385,6 +3386,7 @@ dependencies = [
  "pallet-coming-id-rpc-runtime-api",
  "pallet-coming-nft",
  "pallet-coming-reputation",
+ "pallet-coming-reputation-rpc-runtime-api",
  "pallet-grandpa",
  "pallet-sudo",
  "pallet-threshold-signature",
@@ -3968,6 +3970,33 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-storage",
+]
+
+[[package]]
+name = "pallet-coming-reputation-rpc"
+version = "1.4.0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-coming-reputation-rpc-runtime-api",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-coming-reputation-rpc-runtime-api"
+version = "1.4.0"
+dependencies = [
+ "pallet-coming-reputation",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-core",
+ "sp-std",
 ]
 
 [[package]]

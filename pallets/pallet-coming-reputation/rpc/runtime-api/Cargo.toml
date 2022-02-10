@@ -1,0 +1,26 @@
+[package]
+authors = ['Minix Chain Developer']
+edition = '2018'
+name = 'pallet-coming-reputation-rpc-runtime-api'
+version = "1.4.0"
+license = "Unlicense"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+sp-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+pallet-coming-reputation = { default-features = false, path = "../../../pallet-coming-reputation" }
+
+[features]
+default = ["std"]
+std = [
+    "sp-api/std",
+    "sp-std/std",
+    "sp-core/std",
+    "codec/std",
+    "pallet-coming-reputation/std",
+]

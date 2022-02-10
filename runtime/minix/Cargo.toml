@@ -52,6 +52,8 @@ pallet-threshold-signature-rpc-runtime-api = { version = "3.0.0", default-featur
 pallet-coming-auction = { default-features = false, path = "../../pallets/pallet-coming-auction" }
 pallet-coming-auction-rpc-runtime-api = { default-features = false, path = "../../pallets/pallet-coming-auction/rpc/runtime-api" }
 pallet-coming-reputation = { default-features = false, path = "../../pallets/pallet-coming-reputation" }
+pallet-coming-reputation-rpc-runtime-api = { default-features = false, path = "../../pallets/pallet-coming-reputation/rpc/runtime-api" }
+
 
 [build-dependencies]
 substrate-wasm-builder = { git = 'https://github.com/paritytech/substrate', branch = "polkadot-v0.9.11" }
@@ -95,6 +97,7 @@ std = [
     "pallet-coming-auction/std",
     "pallet-coming-auction-rpc-runtime-api/std",
     "pallet-coming-reputation/std",
+    "pallet-coming-reputation-rpc-runtime-api/std",
 ]
 runtime-benchmarks = [
     "hex-literal",

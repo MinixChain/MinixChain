@@ -148,8 +148,8 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-    pub fn get_grade(cid:Cid) -> ReputationGrade{
-        CidReputationGrade::<T>::get(cid)
+    pub fn get_grade(cid:Cid) -> Option<ReputationGrade>{
+        Some(CidReputationGrade::<T>::get(cid))
     }
     fn is_admin(who: T::AccountId) -> bool {
         matches!(Admin::<T>::get(), Some(admin) if admin == who)

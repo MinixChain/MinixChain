@@ -43,6 +43,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 use pallet_coming_auction::PalletAuctionId;
 use pallet_coming_id::{CardMeta, Cid, CidDetails};
+use pallet_coming_reputation::ReputationGrade;
 pub use pallet_threshold_signature::primitive::{
     Message, OpCode, Pubkey, ScriptHash, Signature as TSignature,
 };
@@ -597,6 +598,12 @@ impl_runtime_apis! {
 
         fn get_remint_fee(cid: Cid) -> Balance {
             ComingAuction::get_current_remint_fee(cid)
+        }
+    }
+
+    impl pallet_coming_reputation_rpc_runtime_api::ComingReputationApi<Block, AccountId> for Runtime {
+        fn get_reputation_grade(cid: Cid) -> Option<ReputationGrade> {
+            ComingReputation::get_grade(cid)
         }
     }
 

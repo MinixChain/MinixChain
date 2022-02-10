@@ -98,7 +98,7 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         // recipient, cid
-        UpReputationGrade(Cid,ReputationGrade),
+        UpReputationGrade(Cid,u32),
     }
 
     #[pallet::error]
@@ -115,12 +115,12 @@ pub mod pallet {
         pub fn up_grade(
             origin: OriginFor<T>,
             cid: Cid,
-            grade: ReputationGrade
+            grade: u32
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_admin(who), Error::<T>::RequireAdmin);
-            Self::check_cid_grade(cid,grade.clone())?;
-            CidReputationGrade::<T>::mutate(cid,|old_grade| *old_grade = grade.clone());
+            Self::check_cid_grade(cid,grade)?;
+            CidReputationGrade::<T>::mutate(cid,|old_grade| old_grade.key1 = grade);
             Self::deposit_event(Event::UpReputationGrade(
                 cid,
                 grade
@@ -149,7 +149,7 @@ impl<T: Config> Pallet<T> {
     fn is_admin(who: T::AccountId) -> bool {
         matches!(Admin::<T>::get(), Some(admin) if admin == who)
     }
-    fn check_cid_grade(cid: Cid, cid_grade: ReputationGrade) -> DispatchResult {
+    fn check_cid_grade(cid: Cid, grade: u32) -> DispatchResult {
         match cid {
             0..1_000_000_000_000 => {},
             _ => ensure!(false, Error::<T>::InvalidCid),
@@ -157,7 +157,7 @@ impl<T: Config> Pallet<T> {
         ensure!(Distributed::<T>::contains_key(cid),Error::<T>::UndistributedCid);
         let old_grade = CidReputationGrade::<T>::get(cid);
         ensure!(
-            old_grade.key1<=cid_grade.key1 && old_grade.key2<=cid_grade.key2 && old_grade.key3<=cid_grade.key3,
+            old_grade.key1 <= grade,
             Error::<T>::CannotDowngrade
         );
         Ok(())

@@ -1,4 +1,4 @@
-use crate as pallet_cid_grade;
+use crate as pallet_coming_reputation;
 use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 use sp_core::H256;
@@ -18,7 +18,8 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-        CidGrade: pallet_cid_grade::{Pallet, Call, Config<T>, Storage, Event<T>},
+        ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>},
+        ComingReputation: pallet_coming_reputation::{Pallet, Call, Config<T>, Storage, Event<T>},
         Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     }
 );
@@ -55,7 +56,13 @@ impl system::Config for Test {
     type OnSetCode = ();
 }
 
-impl pallet_cid_grade::Config for Test {
+impl pallet_coming_id::Config for Test {
+    type Event = Event;
+    type WeightInfo = ();
+    type MaxDataSize = MaxDataSize;
+}
+
+impl pallet_coming_reputation::Config for Test {
     type Event = Event;
 }
 
@@ -71,7 +78,18 @@ pub fn new_test_ext(
     let mut t = frame_system::GenesisConfig::default()
         .build_storage::<Test>()
         .unwrap();
-    pallet_cid_grade::GenesisConfig::<Test> {
+
+    pallet_coming_id::GenesisConfig::<Test> {
+        high_admin_key: admin_key,
+        medium_admin_key: admin_key,
+        medium_admin_key2: admin_key,
+        medium_admin_key3: admin_key,
+        low_admin_key: admin_key,
+    }
+        .assimilate_storage(&mut t)
+        .unwrap();
+
+    pallet_coming_reputation::GenesisConfig::<Test> {
         admin_key: Some(admin_key),
     }
     .assimilate_storage(&mut t)
@@ -90,41 +108,4 @@ pub(crate) fn last_event() -> Event {
 
 pub(crate) fn expect_event<E: Into<Event>>(e: E) {
     assert_eq!(last_event(), e.into());
-}
-
-pub(crate) fn last_events(n: usize) -> Vec<Event> {
-    system::Pallet::<Test>::events()
-        .into_iter()
-        .rev()
-        .take(n)
-        .rev()
-        .map(|e| e.event)
-        .collect()
-}
-
-pub(crate) fn expect_events(e: Vec<Event>) {
-    assert_eq!(last_events(e.len()), e);
-}
-
-// Build test environment by setting the admin `key` for the Genesis.
-pub fn new_test_ext2(
-    admin_keys: [<Test as frame_system::Config>::AccountId; 5],
-    root_key: <Test as frame_system::Config>::AccountId,
-) -> sp_io::TestExternalities {
-    let mut t = frame_system::GenesisConfig::default()
-        .build_storage::<Test>()
-        .unwrap();
-    pallet_cid_grade::GenesisConfig::<Test> {
-        admin_key: Some(admin_keys[4]),
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
-
-    pallet_sudo::GenesisConfig::<Test> { key: root_key }
-        .assimilate_storage(&mut t)
-        .unwrap();
-
-    let mut ext = sp_io::TestExternalities::new(t);
-    ext.execute_with(|| System::set_block_number(1));
-    ext
 }

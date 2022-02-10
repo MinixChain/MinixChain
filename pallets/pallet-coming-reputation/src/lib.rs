@@ -98,7 +98,7 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         // recipient, cid
-        UpReputationGrade(Cid,u32),
+        UpReputationGrade(Cid,ReputationGrade),
     }
 
     #[pallet::error]
@@ -120,10 +120,15 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_admin(who), Error::<T>::RequireAdmin);
             Self::check_cid_grade(cid,grade)?;
-            CidReputationGrade::<T>::mutate(cid,|old_grade| old_grade.key1 = grade);
+            let new_reputation_grade = ReputationGrade{
+                key1: grade,
+                key2: 0,
+                key3: 0
+            };
+            CidReputationGrade::<T>::mutate(cid,|old_grade| *old_grade = new_reputation_grade.clone());
             Self::deposit_event(Event::UpReputationGrade(
                 cid,
-                grade
+                new_reputation_grade
             ));
             Ok(())
         }
@@ -143,7 +148,7 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-    pub fn get_grade(cid:Cid)->ReputationGrade{
+    pub fn get_grade(cid:Cid) -> ReputationGrade{
         CidReputationGrade::<T>::get(cid)
     }
     fn is_admin(who: T::AccountId) -> bool {

@@ -40,8 +40,8 @@ where
     C::Api: pallet_coming_reputation_rpc::ComingReputationRuntimeApi<Block, AccountId>,
 {
     use pallet_coming_auction_rpc::{ComingAuction, ComingAuctionApi};
-    use pallet_coming_reputation_rpc::{ComingReputation, ComingReputationApi};
     use pallet_coming_id_rpc::{ComingId, ComingIdApi};
+    use pallet_coming_reputation_rpc::{ComingReputation, ComingReputationApi};
     use pallet_threshold_signature_rpc::{ThresholdSignature, ThresholdSignatureApi};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
     use substrate_frame_rpc_system::{FullSystem, SystemApi};

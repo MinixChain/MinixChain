@@ -6,8 +6,8 @@ pub use pallet::*;
 
 use codec::{Decode, Encode};
 use frame_support::pallet_prelude::*;
-use sp_runtime::traits::StaticLookup;
 pub use pallet_coming_id::{Cid, Distributed, Error as ComingIdError};
+use sp_runtime::traits::StaticLookup;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -33,16 +33,14 @@ pub struct ReputationGrade {
     pub key3: u32,
 }
 
-
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::dispatch::DispatchResult;
     use frame_system::pallet_prelude::*;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
-    pub trait Config: frame_system::Config+ pallet_coming_id::Config {
+    pub trait Config: frame_system::Config + pallet_coming_id::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
     }
@@ -54,16 +52,16 @@ pub mod pallet {
     #[pallet::type_value]
     pub fn DefaultReputationGrade() -> ReputationGrade {
         ReputationGrade {
-            key1:Default::default(),
-            key2:Default::default(),
-            key3:Default::default(),
+            key1: Default::default(),
+            key2: Default::default(),
+            key3: Default::default(),
         }
     }
 
     #[pallet::storage]
     #[pallet::getter(fn cid_grade)]
     pub type CidReputationGrade<T: Config> =
-        StorageMap<_, Blake2_128Concat, Cid, ReputationGrade,ValueQuery,DefaultReputationGrade>;
+        StorageMap<_, Blake2_128Concat, Cid, ReputationGrade, ValueQuery, DefaultReputationGrade>;
 
     /// The pallet admin key.
     #[pallet::storage]
@@ -98,7 +96,7 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         // recipient, cid
-        UpReputationGrade(Cid,ReputationGrade),
+        UpReputationGrade(Cid, ReputationGrade),
     }
 
     #[pallet::error]
@@ -112,56 +110,50 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::weight(0)]
-        pub fn up_grade(
-            origin: OriginFor<T>,
-            cid: Cid,
-            grade: u32
-        ) -> DispatchResult {
+        pub fn up_grade(origin: OriginFor<T>, cid: Cid, grade: u32) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_admin(who), Error::<T>::RequireAdmin);
-            Self::check_cid_grade(cid,grade)?;
-            let new_reputation_grade = ReputationGrade{
+            Self::check_cid_grade(cid, grade)?;
+            let new_reputation_grade = ReputationGrade {
                 key1: grade,
                 key2: 0,
-                key3: 0
+                key3: 0,
             };
-            CidReputationGrade::<T>::mutate(cid,|old_grade| *old_grade = new_reputation_grade.clone());
-            Self::deposit_event(Event::UpReputationGrade(
-                cid,
-                new_reputation_grade
-            ));
-            Ok(())
+            CidReputationGrade::<T>::mutate(cid, |old_grade| {
+                *old_grade = new_reputation_grade.clone()
+            });
+            Self::deposit_event(Event::UpReputationGrade(cid, new_reputation_grade));
+            Ok(Pays::No.into())
         }
         #[pallet::weight(0)]
         pub fn set_admin(
             origin: OriginFor<T>,
             new_admin: <T::Lookup as StaticLookup>::Source,
-        ) -> DispatchResult {
+        ) -> DispatchResultWithPostInfo {
             ensure_root(origin)?;
             let new_admin = T::Lookup::lookup(new_admin)?;
 
             Admin::<T>::mutate(|admin| *admin = Some(new_admin));
 
-            Ok(())
+            Ok(Pays::No.into())
         }
     }
 }
 
 impl<T: Config> Pallet<T> {
-    pub fn get_grade(cid:Cid) -> Option<ReputationGrade>{
+    pub fn get_grade(cid: Cid) -> Option<ReputationGrade> {
         Some(CidReputationGrade::<T>::get(cid))
     }
     fn is_admin(who: T::AccountId) -> bool {
         matches!(Admin::<T>::get(), Some(admin) if admin == who)
     }
     fn check_cid_grade(cid: Cid, grade: u32) -> DispatchResult {
-        ensure!(Distributed::<T>::contains_key(cid),Error::<T>::UndistributedCid);
-        let old_grade = CidReputationGrade::<T>::get(cid);
         ensure!(
-            old_grade.key1 <= grade,
-            Error::<T>::CannotDowngrade
+            Distributed::<T>::contains_key(cid),
+            Error::<T>::UndistributedCid
         );
+        let old_grade = CidReputationGrade::<T>::get(cid);
+        ensure!(old_grade.key1 <= grade, Error::<T>::CannotDowngrade);
         Ok(())
     }
-
 }

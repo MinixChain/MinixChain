@@ -1,6 +1,7 @@
 pub use minix_runtime::{
-    AccountId, AuraConfig, BalancesConfig, ComingAuctionConfig, ComingIdConfig, GenesisConfig,
-    GrandpaConfig, SS58Prefix, Signature, SudoConfig, SystemConfig, WASM_BINARY, ComingReputationConfig
+    AccountId, AuraConfig, BalancesConfig, ComingAuctionConfig, ComingIdConfig,
+    ComingReputationConfig, GenesisConfig, GrandpaConfig, SS58Prefix, Signature, SudoConfig,
+    SystemConfig, WASM_BINARY,
 };
 use sc_chain_spec::ChainSpecExtension;
 use sc_service::{ChainType, Properties};

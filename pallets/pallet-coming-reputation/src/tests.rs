@@ -8,18 +8,29 @@ const COMMUNITY_CID: u64 = 100_000;
 const INVALID_CID: u64 = 1_000_000_000_000;
 
 const TEST_GRADE: ReputationGrade = ReputationGrade {
-    key1:100,
-    key2:0,
-    key3:0,
+    key1: 100,
+    key2: 0,
+    key3: 0,
 };
 
 #[test]
 fn up_grade_should_work() {
     new_test_ext(ADMIN).execute_with(|| {
-        assert_ok!(ComingId::register(Origin::signed(ADMIN), COMMUNITY_CID, BOB));
-        assert_ok!(ComingReputation::up_grade(Origin::signed(ADMIN), COMMUNITY_CID, 100));
+        assert_ok!(ComingId::register(
+            Origin::signed(ADMIN),
+            COMMUNITY_CID,
+            BOB
+        ));
+        assert_ok!(ComingReputation::up_grade(
+            Origin::signed(ADMIN),
+            COMMUNITY_CID,
+            100
+        ));
         assert_eq!(100, ComingReputation::get_grade(COMMUNITY_CID).key1);
-        expect_event(ComingReputationEvent::UpReputationGrade(COMMUNITY_CID, TEST_GRADE));
+        expect_event(ComingReputationEvent::UpReputationGrade(
+            COMMUNITY_CID,
+            TEST_GRADE,
+        ));
     });
 }
 #[test]
@@ -30,8 +41,16 @@ fn up_grade_should_not_work() {
             Error::<Test>::UndistributedCid
         );
 
-        assert_ok!(ComingId::register(Origin::signed(ADMIN), COMMUNITY_CID, BOB));
-        assert_ok!(ComingReputation::up_grade(Origin::signed(ADMIN), COMMUNITY_CID, 100));
+        assert_ok!(ComingId::register(
+            Origin::signed(ADMIN),
+            COMMUNITY_CID,
+            BOB
+        ));
+        assert_ok!(ComingReputation::up_grade(
+            Origin::signed(ADMIN),
+            COMMUNITY_CID,
+            100
+        ));
 
         assert_noop!(
             ComingReputation::up_grade(Origin::signed(ADMIN), COMMUNITY_CID, 10),

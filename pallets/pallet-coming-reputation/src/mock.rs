@@ -86,8 +86,8 @@ pub fn new_test_ext(
         medium_admin_key3: admin_key,
         low_admin_key: admin_key,
     }
-        .assimilate_storage(&mut t)
-        .unwrap();
+    .assimilate_storage(&mut t)
+    .unwrap();
 
     pallet_coming_reputation::GenesisConfig::<Test> {
         admin_key: Some(admin_key),

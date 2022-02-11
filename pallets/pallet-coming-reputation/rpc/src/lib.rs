@@ -21,7 +21,7 @@ use codec::Codec;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
 pub use pallet_coming_reputation_rpc_runtime_api::ComingReputationApi as ComingReputationRuntimeApi;
-use pallet_coming_reputation_rpc_runtime_api::{ReputationGrade, Cid};
+use pallet_coming_reputation_rpc_runtime_api::{Cid, ReputationGrade};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
@@ -30,7 +30,11 @@ use std::sync::Arc;
 #[rpc]
 pub trait ComingReputationApi<BlockHash, AccountId> {
     #[rpc(name = "get_reputation_grade")]
-    fn get_reputation_grade(&self, cid: Cid, at: Option<BlockHash>) -> Result<Option<ReputationGrade>>;
+    fn get_reputation_grade(
+        &self,
+        cid: Cid,
+        at: Option<BlockHash>,
+    ) -> Result<Option<ReputationGrade>>;
 }
 
 /// A struct that implements the [`ComingIdApi`].
@@ -66,7 +70,8 @@ impl From<Error> for i64 {
     }
 }
 
-impl<C, Block, AccountId> ComingReputationApi<<Block as BlockT>::Hash, AccountId> for ComingReputation<C, Block>
+impl<C, Block, AccountId> ComingReputationApi<<Block as BlockT>::Hash, AccountId>
+    for ComingReputation<C, Block>
 where
     Block: BlockT,
     AccountId: Codec,

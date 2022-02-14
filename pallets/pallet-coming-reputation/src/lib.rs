@@ -152,8 +152,14 @@ impl<T: Config> Pallet<T> {
             Distributed::<T>::contains_key(cid),
             Error::<T>::UndistributedCid
         );
-        let old_grade = CidReputationGrade::<T>::get(cid);
-        ensure!(old_grade.key1 <= grade, Error::<T>::CannotDowngrade);
+        match cid {
+            0..100_000 => {}
+            100_000..1_000_000_000_000 => {
+                let old_grade = CidReputationGrade::<T>::get(cid);
+                ensure!(old_grade.key1 <= grade, Error::<T>::CannotDowngrade);
+            }
+            _ => ensure!(false, Error::<T>::InvalidCid),
+        }
         Ok(())
     }
 }

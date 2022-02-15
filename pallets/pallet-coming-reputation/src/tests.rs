@@ -5,7 +5,6 @@ use frame_support::{assert_noop, assert_ok};
 const ADMIN: u64 = 1;
 const BOB: u64 = 2;
 const COMMUNITY_CID: u64 = 100_000;
-const INVALID_CID: u64 = 1_000_000_000_000;
 
 const TEST_GRADE: ReputationGrade = ReputationGrade {
     key1: 100,
@@ -26,7 +25,10 @@ fn up_grade_should_work() {
             COMMUNITY_CID,
             100
         ));
-        assert_eq!(100, ComingReputation::get_grade(COMMUNITY_CID).key1);
+        match ComingReputation::get_grade(COMMUNITY_CID) {
+            Some(grade) => assert_eq!(100, grade.key1),
+            None => assert_eq!(true, false),
+        };
         expect_event(ComingReputationEvent::UpReputationGrade(
             COMMUNITY_CID,
             TEST_GRADE,

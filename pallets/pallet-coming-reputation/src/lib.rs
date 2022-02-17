@@ -109,23 +109,35 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        #[pallet::weight(0)]
-        pub fn up_grade(origin: OriginFor<T>, cid: Cid, grade: u32) -> DispatchResultWithPostInfo {
+        #[pallet::weight(10_000_000u64)]
+        pub fn up_grade(
+            origin: OriginFor<T>,
+            cid: Cid,
+            grade: ReputationGrade,
+        ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             ensure!(Self::is_admin(who), Error::<T>::RequireAdmin);
-            Self::check_cid_grade(cid, grade)?;
-            let new_reputation_grade = ReputationGrade {
-                key1: grade,
-                key2: 0,
-                key3: 0,
-            };
+            Self::check_cid_grade(cid, &grade)?;
+
             CidReputationGrade::<T>::mutate(cid, |old_grade| {
-                *old_grade = new_reputation_grade.clone()
-            });
-            Self::deposit_event(Event::UpReputationGrade(cid, new_reputation_grade));
-            Ok(Pays::No.into())
+                *old_grade = ReputationGrade {
+                    key1: grade.key1,
+                    key2: grade.key2,
+                    key3: grade.key3,
+                };
+
+                Self::deposit_event(Event::UpReputationGrade(
+                    cid,
+                    ReputationGrade {
+                        key1: grade.key1,
+                        key2: grade.key2,
+                        key3: grade.key3,
+                    },
+                ));
+                Ok(Pays::No.into())
+            })
         }
-        #[pallet::weight(0)]
+        #[pallet::weight(10_000_000u64)]
         pub fn set_admin(
             origin: OriginFor<T>,
             new_admin: <T::Lookup as StaticLookup>::Source,
@@ -147,7 +159,7 @@ impl<T: Config> Pallet<T> {
     fn is_admin(who: T::AccountId) -> bool {
         matches!(Admin::<T>::get(), Some(admin) if admin == who)
     }
-    fn check_cid_grade(cid: Cid, grade: u32) -> DispatchResult {
+    fn check_cid_grade(cid: Cid, grade: &ReputationGrade) -> DispatchResult {
         ensure!(
             Distributed::<T>::contains_key(cid),
             Error::<T>::UndistributedCid
@@ -156,7 +168,12 @@ impl<T: Config> Pallet<T> {
             0..100_000 => {}
             100_000..1_000_000_000_000 => {
                 let old_grade = CidReputationGrade::<T>::get(cid);
-                ensure!(old_grade.key1 <= grade, Error::<T>::CannotDowngrade);
+                ensure!(
+                    old_grade.key1 <= grade.key1
+                        && old_grade.key2 <= grade.key2
+                        && old_grade.key3 <= grade.key3,
+                    Error::<T>::CannotDowngrade
+                );
             }
             _ => ensure!(false, Error::<T>::InvalidCid),
         }

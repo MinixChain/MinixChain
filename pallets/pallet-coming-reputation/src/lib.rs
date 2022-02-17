@@ -120,20 +120,9 @@ pub mod pallet {
             Self::check_cid_grade(cid, &grade)?;
 
             CidReputationGrade::<T>::mutate(cid, |old_grade| {
-                *old_grade = ReputationGrade {
-                    key1: grade.key1,
-                    key2: grade.key2,
-                    key3: grade.key3,
-                };
+                *old_grade = grade.clone();
 
-                Self::deposit_event(Event::UpReputationGrade(
-                    cid,
-                    ReputationGrade {
-                        key1: grade.key1,
-                        key2: grade.key2,
-                        key3: grade.key3,
-                    },
-                ));
+                Self::deposit_event(Event::UpReputationGrade(cid, grade));
                 Ok(Pays::No.into())
             })
         }

@@ -260,10 +260,9 @@ pub mod pallet {
                         || ensure_signed(origin)? == Self::low_admin_key(),
                     Error::<T>::RequireLowAuthority
                 ),
-                1_000_000_000..1_000_000_000_000 => ensure!(
-                    ensure_signed(origin).is_ok(),
-                    Error::<T>::BadSignature
-                ),
+                1_000_000_000..1_000_000_000_000 => {
+                    ensure!(ensure_signed(origin).is_ok(), Error::<T>::BadSignature)
+                }
                 _ => ensure!(false, Error::<T>::InvalidCid),
             };
             ensure!(!Self::is_distributed(cid), Error::<T>::DistributedCid);

@@ -5,6 +5,7 @@ use frame_support::{assert_noop, assert_ok};
 const ADMIN: u64 = 1;
 const RESERVE2: u64 = 2;
 const RESERVE3: u64 = 3;
+const COMMON_ACCOUNT: u64 = 10;
 const COMMUNITY_ALICE: u64 = 100_000;
 const COMMUNITY_BOB: u64 = 999_999;
 const COMMON_CHARLIE: u64 = 1_000_000;
@@ -491,5 +492,24 @@ fn set_admin() {
         assert_eq!(sudo, ComingId::medium_admin_key2());
         assert_eq!(sudo, ComingId::medium_admin_key3());
         assert_eq!(sudo, ComingId::low_admin_key());
+    })
+}
+#[test]
+fn common_register_should_work() {
+    new_test_ext(ADMIN).execute_with(|| {
+        assert_ok!(ComingId::register(
+            Origin::signed(COMMON_ACCOUNT),
+            1_000_000_000,
+            COMMON_ACCOUNT
+        ));
+        expect_event(ComingIdEvent::Registered(COMMON_ACCOUNT, 1_000_000_000));
+        assert_noop!(
+            ComingId::register(
+                Origin::signed(COMMON_ACCOUNT),
+                1_000_000_000_000,
+                COMMON_ACCOUNT
+            ),
+            Error::<Test>::InvalidCid
+        );
     })
 }

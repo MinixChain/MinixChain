@@ -504,7 +504,11 @@ fn common_register_should_work() {
         ));
         expect_event(ComingIdEvent::Registered(COMMON_ACCOUNT, 1_000_000_000));
         assert_noop!(
-            ComingId::register(Origin::signed(COMMON_ACCOUNT), 1_000_000_000_000, COMMON_ACCOUNT),
+            ComingId::register(
+                Origin::signed(COMMON_ACCOUNT),
+                1_000_000_000_000,
+                COMMON_ACCOUNT
+            ),
             Error::<Test>::InvalidCid
         );
     })

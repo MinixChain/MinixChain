@@ -223,6 +223,7 @@ pub mod pallet {
         NotFoundBondType,
         TooBigDataSize,
         RemintMax,
+        BadSignature,
     }
 
     #[pallet::call]
@@ -253,10 +254,14 @@ pub mod pallet {
                         || ensure_signed(origin)? == Self::medium_admin_key(),
                     Error::<T>::RequireMediumAuthority
                 ),
-                100_000_000..1_000_000_000_000 => ensure!(
+                100_000_000..1_000_000_000 => ensure!(
                     ensure_signed(origin.clone())? == Self::high_admin_key()
                         || ensure_signed(origin)? == Self::low_admin_key(),
                     Error::<T>::RequireLowAuthority
+                ),
+                1_000_000_000..1_000_000_000_000 => ensure!(
+                    ensure_signed(origin.clone()).is_ok(),
+                    Error::<T>::BadSignature
                 ),
                 _ => ensure!(false, Error::<T>::InvalidCid),
             };

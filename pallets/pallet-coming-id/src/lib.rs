@@ -31,6 +31,7 @@ pub type Cid = u64;
 pub type BondType = u16;
 
 pub const MAX_REMINT: u8 = 32u8;
+pub const EXTRA_WEIGHT: u64 = 4_000_000_000;
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -228,7 +229,7 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        #[pallet::weight(T::WeightInfo::register())]
+        #[pallet::weight(T::WeightInfo::register() + EXTRA_WEIGHT)]
         pub fn register(
             origin: OriginFor<T>,
             cid: Cid,
@@ -260,7 +261,7 @@ pub mod pallet {
                     Error::<T>::RequireLowAuthority
                 ),
                 1_000_000_000..1_000_000_000_000 => ensure!(
-                    ensure_signed(origin.clone()).is_ok(),
+                    ensure_signed(origin).is_ok(),
                     Error::<T>::BadSignature
                 ),
                 _ => ensure!(false, Error::<T>::InvalidCid),

@@ -1,8 +1,8 @@
 # pallet-coming-nft
 
 ## Overview
-pallet-coming-nft 是从原pallet-coming-id中将相关的NFT业务剥离出来的,
-是以Cid为基础的NFT操作集合.
+pallet-coming-nft is a spin-off of the related NFT business from the original pallet-coming-id.
+It is a collection of NFT operations based on Cid.
 
 ```rust
 #[pallet::config]
@@ -14,50 +14,51 @@ pub trait Config: frame_system::Config + pallet_coming_id::Config {
 }
 ```
 
-继承`pallet_coming_id::Config`是为了`benchmarking`.
+Inherit `pallet_coming_id::Config` for `benchmarking`.
 
 ## Intro
-- mint(cid, card): 
+- mint(cid, card):
 
-    admin权限, 为该cid mint c-card.
-    
-    如果cid未分配,则报错.
-    
-    如果cid已mint card,则报错.
+    admin permission, for the cid mint c-card.
+
+    If the cid is not assigned, an error is reported.
+
+    If cid has mint card, an error will be reported.
     
 
 - transfer(cid, recipient): 
-    
-    user权限(owner), 只允许6-12位cid自由transfer.
+
+  user permission (owner), only 6-12 bit cid is allowed to transfer freely.
     
     transfer to self = do nothing.
     
     clear CidToApprove
 
 - burn(cid):
-    high admin权限, 只允许销毁1-5位cid.
+  High admin permission, only allow 1-5 cid to be destroyed.
+
+  If the cid is 6-12 bits, an error is reported
+
+  If the cid is invalid, an error is reported
     
-    如果cid是6-12位,则报错
-    
-    如果cid无效,则报错
-    
-    如果cid未register,则报错
+  If the cid is not registered, an error will be reported
 
 - approve(approved, cid):
-    user权限(owner), 只允许6-12位cid自由approve.
-    
-    在transfer或transfer_from之后, clear CidToApprove.
+
+  User permission (owner), only allows 6-12 bit cid to freely approve.
+
+  After transfer or transfer_from, clear CidToApprove.
     
 - set_approval_for_all(operator, flag):
-    user权限(owner),
-    
-    参考ERC721, 独立于Cid存在
-     
-    将owner所有NFT的所有权代理给operator或者取消operator的代理权限
+  user permission (owner),
+
+  Reference ERC721, exists independently of Cid
+
+  Delegate the ownership of all NFTs of the owner to the operator or cancel the operator's proxy authority
     
 - transfer_from(from, to, cid):
-    user权限(operator)
+  user permission (operator)
+
+  The operator transfers the cid of from to to
     
-    operator将from的cid转移给to
-    
-    clear CidToApprove
+  clear CidToApprove

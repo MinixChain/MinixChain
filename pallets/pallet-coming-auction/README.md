@@ -1,10 +1,10 @@
 # pallet-coming-auction
 
 ## Overview
-pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
-荷兰式拍卖(start_price > end_price). 
-如果设置了admin和fee rate([0, 2.55%], 最小可调fee point是万分之一),
-将对拍卖的买方收取相应的手续费.
+pallet-coming-auction is the realization of Coming NFT auction business, 
+mainly using Dutch auction(start_price > end_price).
+If admin and fee rate([0, 2.55%], The minimum adjustable fee point is one ten thousandth) are set,
+a corresponding handling fee will be charged to the buyer of the auction.
 
 ![image](https://user-images.githubusercontent.com/8869892/132611008-4b39b11c-51f7-4d21-9707-4b59ceb1a59a.png)
 
@@ -29,59 +29,59 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
         type WeightInfo: WeightInfo;
     }
 ```
-继承`pallet_coming_id::Config`是为了`benchmarking`.
+Inherit `pallet_coming_id::Config` for `benchmarking`.
 
 ## Intro
 - create(cid, start_price, end_price, duration):
-    普通权限, 用户创建一个auction,
-    cid: 要拍卖的cid
-    start_price: 至少大于最小balance
-    end_price: 至少大于最小balance
-    duration: 从start_price渐变到end_price的持续时间(以block数计算),最小值是100(10分钟)
+  Ordinary permissions, the user creates an auction,
+    cid: cid to auction
+    start_price: At least greater than the minimum balance
+    end_price: At least greater than the minimum balance
+    duration: The duration of the gradient from start_price to end_price (calculated in blocks), the minimum value is 100 (10 minutes)
     
 - bid(cid, value):
-    普通权限, 用户拍卖一个auction,
-    出价大于等于系统的报价即拍卖成功,该拍卖结束
-    cid: 要拍卖的cid
-    value: 此次拍卖出价
+  Ordinary permissions, the user creates an auction,
+  If the bid is greater than or equal to the system's bid, the auction is successful and the auction ends
+    cid: cid to auction
+    value: Bids in this auction
 
 - cancel(cid):
-    普通权限, 用户取消正在进行的auction(即使处于紧急状态也可以取消)
-    cid: 正在进行拍卖的cid
+  Ordinary permissions, the user can cancel the ongoing auction (even in an emergency state)
+    cid: cid to auction
     
 - pause():
-    管理员权限, 紧急按键, 暂停`auction`, `bid`, `set_fee_point`
+  admin rights, panic button, pause `auction`, `bid`, `set_fee_point`
     
 - unpause():
-    管理员权限, 撤销紧急按键. 恢复`auction`, `bid`, `set_fee_point`
+  Admin privileges, revoke panic button. Restore `auction`, `bid`, `set_fee_point`
     
 - cancel_when_pause(cid):
-    管理员权限, 紧急状态下让管理员取消指定cid的拍卖.
+  Administrator privilege, in emergency state, let the administrator cancel the auction of the specified cid.
     
 - set_fee_point(new_point):
-    管理员权限, 设置新的服务费率, [0, 255]分别对应0到万分之二百五十五.
+  Administrator rights, set a new service rate, [0, 255] corresponds to 0 to 255/10,000 respectively.
     
 - set_admin(new_admin):
-    sudo权限, 设置新的管理员.
+  sudo privileges, set up a new administrator.
     
 - remint:
-    普通权限, NFT二次创作. `remint fee`随remint次数2倍增加.
-    每字节weight为`W0`,
-    当 `card_size` <= 1024 bytes时, `card_weights` = `W0`;
-    当 `card_size` > 1024 bytes时, `card_weights` = `card_size * W0`;
-    card_size 最大值 `1024 * 1024` bytes.
+  Ordinary permissions, secondary creation of NFT. `remint fee` increases by 2 times with the number of remints.
+  The weight of each byte is `W0`,
+    When `card_size` <= 1024 bytes, `card_weights` = `W0`;
+    When `card_size` > 1024 bytes, `card_weights` = `card_size * W0`; 
+    card_size max `1024 * 1024` bytes.
 - set_remint_point:
-    管理员权限, 设置`remint`费用调节因子, 调节范围[0%, 255%].
+    Administrator rights, set `remint` cost adjustment factor, adjustment range [0%, 255%].
 
 ## fee
 
-- `transaction_payment`: 交易手续费, 转给系统销毁
-- `service_fee`: 拍卖服务费, 转给NFT拍卖平台admin
-- `tax_fee`: NFT拍卖版税, 转给NFT创作者issuer
-- `remint_fee`: NFT二次创作费, 转给NFT拍卖平台admin
+- `transaction_payment`: Transaction fee, transferred to the system for destruction
+- `service_fee`: Auction service fee, transfer to NFT auction platform admin
+- `tax_fee`: NFT auction royalties, transferred to NFT creator issuer
+- `remint_fee`: The NFT secondary creation fee will be transferred to the NFT auction platform admin
 
 ## rpc 
-- get_price: 获取指定cid的当前拍卖价格
+- get_price: Get the current auction price of the specified cid
 ```rust
 #[rpc(name = "get_price")]
     fn get_price(
@@ -90,7 +90,7 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
         at: Option<BlockHash>
     ) -> Result<NumberOrHex>;
 ```
-输入：
+enter：
 ```json
 {
   "jsonrpc":"2.0",
@@ -99,7 +99,7 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
   "params": [1000000]
 }
 ```
-输出：
+output：
 ```json
 {
   "jsonrpc": "2.0",
@@ -108,7 +108,7 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
 }
 ```
 
-- get_remint_fee: 获取指定cid的当前`remint fee`
+- get_remint_fee: Get the current `remint fee` for the specified cid
 ```rust
 #[rpc(name = "get_remint_fee")]
     fn get_remint_fee(
@@ -117,7 +117,7 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
         at: Option<BlockHash>
     ) -> Result<NumberOrHex>;
 ```
-输入：
+enter：
 ```json
 {
   "jsonrpc":"2.0",
@@ -126,7 +126,7 @@ pallet-coming-auction是Coming NFT拍卖业务的实现,主要采用
   "params": [1000000]
 }
 ```
-输出：
+output：
 ```json
 {
   "jsonrpc": "2.0",

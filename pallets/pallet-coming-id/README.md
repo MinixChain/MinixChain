@@ -1,47 +1,47 @@
 # pallet-coming-id
 
 ## Overview
-`pallet-coming-id` 是 `MinixChain` 上用来标识`Coming App`的用户身份的链上代理系统. 
+`pallet-coming-id` is an on-chain proxy system on `MinixChain` used to identify the user identity of `Coming App`. 
 
-每个`coming-id`可绑定指定类型的数据(如btc地址,eth地址,合约地址,传统互联网帐号等).
+Each `coming-id` can be bound to a specified type of data (such as btc address, eth address, contract address, traditional Internet account, etc.).
 
-每个`coming-id`同一时间有且只有一个属主(`Substrate公私钥体系`).
+Each `coming-id` has one and only one owner at the same time (`Substrate public-private key system`).
 
 ## Intro
-- `pallet-coming-id`(简称`cid`)由1-12位数字组成
+- `pallet-coming-id` (short for `cid`) consists of 1-12 digits
 
-   [1,100000)为`Coming`内部预留, 
-   
-   [100000,1000000) 为`Coming`社区预留, 
-   
-   [1000000,100000000000)所有用户均可申领.
+  [1,100000) is reserved internally for `Coming`,
 
-- `cid`的分配权和转移权:  
-  - 分配权: 
-  
-    `Coming`有所有cid的分配权;
+  [100000,1000000) reserved for the `Coming` community,
+
+  [1000000,100000000000) All users can apply.
+
+- Distribution rights and transfer rights of `cid`:  
+  - distribution rights: 
+
+    `Coming` has the right to assign all cids;
     
-  - 转移权: 
-  
-    `Coming`只拥有[1,100000)的转移权;
+  - transfer right: 
+
+    `Coming` only has the transfer right of [1,100000);
+
+    The transfer right of the remaining cid belongs to its owner.
     
-    其余cid的转移权归其属主拥有.
-    
-- 关键函数
+- key function
 
   - register(cid, recipient): 
 
-    highAdmin 权限, 分配 1-12位 cid.
+    highAdmin permissions, assign 1-12 digits of cid.
 
-    mediumAdmin3 权限, 分配 6位 cid.
-    mediumAdmin2 权限, 分配 7位 cid.
-    mediumAdmin 权限, 分配 8位 cid.
+    mediumAdmin3 permissions, assign a 6-digit cid.
+    mediumAdmin2 permissions, assign a 7-digit cid.
+    mediumAdmin permissions, assign 8-digit cid.
 
-    lowAdmin 权限, 分配 9-12位 cid.
+    lowAdmin permissions, assign 9-12 digits of cid.
   
   - bond(cid, bond_data)
-  
-      user权限(owner), 对指定cid, bond数据(类型字段和数据字段):
+
+    User permission (owner), for the specified cid, bond data (type field and data field):
   
       ```rust
       pub struct BondData {
@@ -51,12 +51,12 @@
       ```
   
   - unbond(cid, bond_type)
-   
-      user权限(owner), unbond 指定cid, bond类型字段
+
+    user permission (owner), unbond specifies cid, bond type fields
 
 ## rpc
 - get_account_id:
- 获取指定cid的account id
+  Get the account id of the specified cid
 
 ```
 #[rpc(name = "get_account_id")]
@@ -66,7 +66,7 @@ fn get_account_id(
    at: Option<BlockHash>
 ) -> Result<Option<AccountId>>;
 ```
-输入：
+enter：
 ```json
 {
   "jsonrpc":"2.0",
@@ -75,7 +75,7 @@ fn get_account_id(
   "params": [1000000]
 }
 ```
-输出1：
+output1：
 ```json
 {
   "jsonrpc": "2.0",
@@ -83,7 +83,7 @@ fn get_account_id(
   "id": 1
 }
 ```
-输出2：
+output2：
 ```json
 {
   "jsonrpc": "2.0",
@@ -92,7 +92,7 @@ fn get_account_id(
 }
 ```
 - get_cids:
- 获取指定account id的cids
+  Get the cids of the specified account id
 ```
 #[rpc(name = "get_cids")]
 fn get_cids(
@@ -101,7 +101,7 @@ fn get_cids(
    at: Option<BlockHash>
 ) -> Result<Vec<Cid>>;
 ```
-输入：
+enter：
 ```json
 {
   "jsonrpc":"2.0",
@@ -110,7 +110,7 @@ fn get_cids(
   "params": ["5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"]
 }
 ```
-输出：
+output：
 ```json
 {
   "jsonrpc": "2.0",
@@ -122,7 +122,7 @@ fn get_cids(
 }
 ```
 - get_bond_data:
- 获取指定cid的bond data
+  Get the bond data of the specified cid
 
 ```
 #[rpc(name = "get_bond_data")]
@@ -132,7 +132,7 @@ fn get_bond_data(
     at: Option<BlockHash>
 ) -> Result<Option<CidDetails<AccountId>>>;
 ```
-输入：
+enter：
 ```json
 {
   "jsonrpc":"2.0",
@@ -141,7 +141,7 @@ fn get_bond_data(
   "params": [99]
 }
 ```
-输出：
+output：
 ```json
 {
   "jsonrpc": "2.0",
@@ -160,7 +160,7 @@ fn get_bond_data(
 ```
 
 - get_card:
- 获取指定cid的c-card
+  Get the c-card of the specified cid
 
 ```
 #[rpc(name = "get_card")]
@@ -170,7 +170,7 @@ fn get_card(
     at: Option<BlockHash>
 ) -> Result<Option<CidDetails<AccountId>>>;
 ```
-输入：
+enter：
 ```json
 {
   "jsonrpc":"2.0",
@@ -179,7 +179,7 @@ fn get_card(
   "params": [99]
 }
 ```
-输出：
+output：
 ```json
 {
   "jsonrpc": "2.0",
@@ -189,8 +189,8 @@ fn get_card(
 ```
 
 - get_card_meta:
-  获取指定cid的c-card的元数据: remint次数, issuer, 税率.
-  税率范围[0, 2.55%]
+  Get the metadata of the c-card of the specified cid: remint times, issuer, tax rate.
+  tax rate range[0, 2.55%]
 
 ```
 #[rpc(name = "get_card_meta")]
@@ -200,7 +200,7 @@ fn get_card_meta(
     at: Option<BlockHash>
 ) -> Result<Option<CardMeta<AccountId>>>;
 ```
-输入：
+enter：
 ```json
 {
   "jsonrpc":"2.0",
@@ -209,7 +209,7 @@ fn get_card_meta(
   "params": [1000000]
 }
 ```
-输出：
+output：
 ```json
 {
   "jsonrpc": "2.0",

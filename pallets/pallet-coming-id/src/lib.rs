@@ -127,12 +127,12 @@ pub mod pallet {
     #[pallet::getter(fn medium_admin_key)]
     pub(super) type MediumKey<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-    /// The `AccountId` of the sudo key. Register 6 digital cid.
+    /// The `AccountId` of the sudo key. Register 7 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn medium_admin_key2)]
     pub(super) type MediumKey2<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-    /// The `AccountId` of the sudo key. Register 7 digital cid.
+    /// The `AccountId` of the sudo key. Register 6 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn medium_admin_key3)]
     pub(super) type MediumKey3<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;

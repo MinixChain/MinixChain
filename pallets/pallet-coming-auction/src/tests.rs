@@ -228,7 +228,7 @@ fn remint_bid_auction_should_work() {
             Origin::signed(ALICE),
             COMMON,
             vec![],
-            31
+            30
         ));
         assert_ok!(ComingId::transfer(&ALICE, COMMON, &BOB));
         assert_eq!(Some(BOB), <Test as Config>::ComingNFT::owner_of_cid(COMMON));
@@ -268,7 +268,7 @@ fn remint_bid_auction_should_work() {
             DURATION / 2 + 1,
         ));
 
-        let tax_fee = ComingAuction::calculate_fee(5_500_000_000, 31);
+        let tax_fee = ComingAuction::calculate_fee(5_500_000_000, 30);
         assert_eq!(5_500_000_000 / 100 * 30, tax_fee);
         assert_eq!(ComingAuction::balance_of(&ALICE), 10_000_000_000 + tax_fee);
         assert_eq!(

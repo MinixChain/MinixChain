@@ -31,6 +31,7 @@ pub type Cid = u64;
 pub type BondType = u16;
 
 pub const MAX_REMINT: u8 = 32u8;
+pub const MAX_TAX_POINT: u8 = 30;
 pub const EXTRA_WEIGHT: u64 = 4_000_000_000;
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
@@ -504,7 +505,19 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn get_card_meta(cid: Cid) -> Option<CardMeta<T::AccountId>> {
-        Self::cardmetas(cid)
+        match CardMetas::<T>::get(cid) {
+            Some(meta) => {
+                if meta.tax_point > MAX_TAX_POINT {
+                    CardMetas::<T>::mutate(cid, |meta| {
+                        if let Some(meta) = meta {
+                            meta.tax_point = MAX_TAX_POINT;
+                        }
+                    });
+                }
+                Some(meta)
+            },
+            None => None
+        }
     }
 }
 

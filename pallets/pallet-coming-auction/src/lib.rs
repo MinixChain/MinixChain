@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(exclusive_range_pattern)]
 #![allow(clippy::unused_unit)]
 
 pub use pallet::*;
@@ -594,10 +595,11 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn calculate_fee(value: BalanceOf<T>, fee_point: u8) -> BalanceOf<T> {
-        let point = BalanceOf::<T>::from(fee_point);
-        let base_point = BalanceOf::<T>::from(10000u16);
-
-        // Impossible to overflow
+        let base_point = BalanceOf::<T>::from(100u8);
+        let point = match fee_point {
+            0..30 => BalanceOf::<T>::from(fee_point),
+            _ => BalanceOf::<T>::from(30u8),
+        };
         value / base_point * point
     }
 

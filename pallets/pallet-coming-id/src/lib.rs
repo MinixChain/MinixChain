@@ -515,8 +515,8 @@ impl<T: Config> Pallet<T> {
                     });
                 }
                 Some(meta)
-            },
-            None => None
+            }
+            None => None,
         }
     }
 }

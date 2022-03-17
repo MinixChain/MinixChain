@@ -2,7 +2,9 @@
 #![allow(clippy::unused_unit)]
 
 pub use pallet::*;
-pub use pallet_coming_id::{CardMeta, Cid, ComingNFT, Error as ComingIdError, MAX_REMINT,MAX_TAX_POINT};
+pub use pallet_coming_id::{
+    CardMeta, Cid, ComingNFT, Error as ComingIdError, MAX_REMINT, MAX_TAX_POINT,
+};
 pub use weights::WeightInfo;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -332,7 +334,7 @@ pub mod pallet {
             tax_point: u8,
         ) -> DispatchResult {
             ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
-            ensure!(tax_point<=MAX_TAX_POINT, Error::<T>::MoreThanMaxTaxPoint);
+            ensure!(tax_point <= MAX_TAX_POINT, Error::<T>::MoreThanMaxTaxPoint);
             let who = ensure_signed(origin)?;
 
             // 1. remint fee

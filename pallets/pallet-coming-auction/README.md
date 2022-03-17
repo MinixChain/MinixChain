@@ -1,10 +1,9 @@
 # pallet-coming-auction
 
 ## Overview
-pallet-coming-auction is the realization of Coming NFT auction business, 
-mainly using Dutch auction(start_price > end_price).
-If admin and fee rate([0, 2.55%], The minimum adjustable fee point is one ten thousandth) are set,
-a corresponding handling fee will be charged to the buyer of the auction.
+pallet-coming-auction is the implement of Coming NFT auction business, 
+mainly using Dutch-Auction(start_price > end_price).
+If set admin and fee rate([0, 2.55%]), the service fee will be charged to the auction.
 
 ![image](https://user-images.githubusercontent.com/8869892/132611008-4b39b11c-51f7-4d21-9707-4b59ceb1a59a.png)
 
@@ -33,45 +32,51 @@ Inherit `pallet_coming_id::Config` for `benchmarking`.
 
 ## Intro
 - create(cid, start_price, end_price, duration):
-  Ordinary permissions, the user creates an auction,
-    cid: cid to auction
-    start_price: At least greater than the minimum balance
-    end_price: At least greater than the minimum balance
-    duration: The duration of the gradient from start_price to end_price (calculated in blocks), the minimum value is 100 (10 minutes)
+  **user** permission, the user creates an auction,
+    - `cid`: The cid of this auction
+    - `start_price`: At least greater than the minimum balance
+    - `end_price`: At least greater than the minimum balance
+    - `duration`: The duration of the gradient from start_price to end_price (calculated in blocks), the minimum value is 100 (10 minutes)
     
 - bid(cid, value):
-  Ordinary permissions, the user creates an auction,
-  If the bid is greater than or equal to the system's bid, the auction is successful and the auction ends
-    cid: cid to auction
-    value: Bids in this auction
+  **user** permission, the user bid an auction,
+  If the bid price is greater than or equal to the system's bid price, the auction is successful and the auction close.
+    - `cid`: the cid of this auction
+    - `value`: the bid price of this auction
 
 - cancel(cid):
-  Ordinary permissions, the user can cancel the ongoing auction (even in an emergency state)
-    cid: cid to auction
+  **user** permission, the user can cancel the ongoing auction (even in an emergency state)
+    - `cid`: the cid of the ongoing auction
     
 - pause():
-  admin rights, panic button, pause `auction`, `bid`, `set_fee_point`
+  **admin** permission, pause `auction`, `bid`, `set_fee_point`
     
 - unpause():
-  Admin privileges, revoke panic button. Restore `auction`, `bid`, `set_fee_point`
+  **admin** permission, unpause `auction`, `bid`, `set_fee_point`
     
 - cancel_when_pause(cid):
-  Administrator privilege, in emergency state, let the administrator cancel the auction of the specified cid.
+  **admin** permission, let the administrator cancel the auction of the specified cid in emergency(`pauase`).
     
 - set_fee_point(new_point):
-  Administrator rights, set a new service rate, [0, 255] corresponds to 0 to 255/10,000 respectively.
+  **admin** permission, set a new service fee rate, [0, 255] corresponds to 0 to 255/10,000 respectively.
     
 - set_admin(new_admin):
-  sudo privileges, set up a new administrator.
+  **sudo** permission, set up a new administrator.
     
-- remint:
-  Ordinary permissions, secondary creation of NFT. `remint fee` increases by 2 times with the number of remints.
-  The weight of each byte is `W0`,
+- remint(cid, card, tax_point):
+  **user** permission, remint the NFT. `remint fee` increases by 2 times with the number of remints.
+    - `cid`: the cid of the NFT.
+    - `card`: the new crad data of the NFT
+    - `tax_point`: the tax rate
+- ```
+    The weight of each byte is `W0`,
     When `card_size` <= 1024 bytes, `card_weights` = `W0`;
     When `card_size` > 1024 bytes, `card_weights` = `card_size * W0`; 
     card_size max `1024 * 1024` bytes.
-- set_remint_point:
-    Administrator rights, set `remint` cost adjustment factor, adjustment range [0%, 255%].
+  ```
+  
+- set_remint_point(new_point):
+  **admin** permission, set `remint` cost adjustment factor, adjustment range [0%, 255%].
 
 ## fee
 
@@ -90,7 +95,7 @@ Inherit `pallet_coming_id::Config` for `benchmarking`.
         at: Option<BlockHash>
     ) -> Result<NumberOrHex>;
 ```
-enter：
+Input：
 ```json
 {
   "jsonrpc":"2.0",
@@ -99,7 +104,7 @@ enter：
   "params": [1000000]
 }
 ```
-output：
+Output：
 ```json
 {
   "jsonrpc": "2.0",
@@ -117,7 +122,7 @@ output：
         at: Option<BlockHash>
     ) -> Result<NumberOrHex>;
 ```
-enter：
+Input：
 ```json
 {
   "jsonrpc":"2.0",
@@ -126,7 +131,7 @@ enter：
   "params": [1000000]
 }
 ```
-output：
+Output：
 ```json
 {
   "jsonrpc": "2.0",

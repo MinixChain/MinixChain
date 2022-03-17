@@ -16,32 +16,20 @@ Each `coming-id` has one and only one owner at the same time (`Substrate public-
 
   [1000000,100000000000) All users can apply.
 
-- Distribution rights and transfer rights of `cid`:  
-  - distribution rights: 
-
-    `Coming` has the right to assign all cids;
-    
-  - transfer right: 
-
-    `Coming` only has the transfer right of [1,100000);
-
-    The transfer right of the remaining cid belongs to its owner.
-    
-- key function
+## Key Function
 
   - register(cid, recipient): 
 
-    highAdmin permissions, assign 1-12 digits of cid.
-
-    mediumAdmin3 permissions, assign a 6-digit cid.
-    mediumAdmin2 permissions, assign a 7-digit cid.
-    mediumAdmin permissions, assign 8-digit cid.
-
-    lowAdmin permissions, assign 9-12 digits of cid.
+    - **highAdmin**    permission, assign a `1-8 digit` cid.
+    - **mediumAdmin3** permission, assign a `6-digit` cid.
+    - **mediumAdmin2** permission, assign a `7-digit` cid.
+    - **mediumAdmin**  permission, assign a `8-digit` cid.
+    - **lowAdmin**     permission, assign a `9 digit` cid.
+    - **user**         permission, anyone can register a `10-12 digit` cid.
   
   - bond(cid, bond_data)
 
-    User permission (owner), for the specified cid, bond data (type field and data field):
+    **user** permission(owner), for the specified cid, bond data (type field and data field):
   
       ```rust
       pub struct BondData {
@@ -52,7 +40,7 @@ Each `coming-id` has one and only one owner at the same time (`Substrate public-
   
   - unbond(cid, bond_type)
 
-    user permission (owner), unbond specifies cid, bond type fields
+    **user** permission(owner),, unbond specifies cid, bond type fields
 
 ## rpc
 - get_account_id:
@@ -66,7 +54,7 @@ fn get_account_id(
    at: Option<BlockHash>
 ) -> Result<Option<AccountId>>;
 ```
-enter：
+Input：
 ```json
 {
   "jsonrpc":"2.0",
@@ -75,7 +63,7 @@ enter：
   "params": [1000000]
 }
 ```
-output1：
+Output1：
 ```json
 {
   "jsonrpc": "2.0",
@@ -83,7 +71,7 @@ output1：
   "id": 1
 }
 ```
-output2：
+Output2：
 ```json
 {
   "jsonrpc": "2.0",
@@ -101,7 +89,7 @@ fn get_cids(
    at: Option<BlockHash>
 ) -> Result<Vec<Cid>>;
 ```
-enter：
+Input：
 ```json
 {
   "jsonrpc":"2.0",
@@ -110,7 +98,7 @@ enter：
   "params": ["5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"]
 }
 ```
-output：
+Output：
 ```json
 {
   "jsonrpc": "2.0",
@@ -132,7 +120,7 @@ fn get_bond_data(
     at: Option<BlockHash>
 ) -> Result<Option<CidDetails<AccountId>>>;
 ```
-enter：
+Input：
 ```json
 {
   "jsonrpc":"2.0",
@@ -141,7 +129,7 @@ enter：
   "params": [99]
 }
 ```
-output：
+Output：
 ```json
 {
   "jsonrpc": "2.0",
@@ -170,7 +158,7 @@ fn get_card(
     at: Option<BlockHash>
 ) -> Result<Option<CidDetails<AccountId>>>;
 ```
-enter：
+Input：
 ```json
 {
   "jsonrpc":"2.0",
@@ -179,7 +167,7 @@ enter：
   "params": [99]
 }
 ```
-output：
+Output：
 ```json
 {
   "jsonrpc": "2.0",
@@ -200,7 +188,7 @@ fn get_card_meta(
     at: Option<BlockHash>
 ) -> Result<Option<CardMeta<AccountId>>>;
 ```
-enter：
+Input：
 ```json
 {
   "jsonrpc":"2.0",
@@ -209,7 +197,7 @@ enter：
   "params": [1000000]
 }
 ```
-output：
+Output：
 ```json
 {
   "jsonrpc": "2.0",

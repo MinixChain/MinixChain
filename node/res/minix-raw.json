@@ -3,7 +3,12 @@
   "id": "MiniX",
   "chainType": "Live",
   "bootNodes": [],
-  "telemetryEndpoints": null,
+  "telemetryEndpoints": [
+    [
+      "/dns/telemetry.chainx.org/tcp/443/x-parity-wss/%2Fsubmit%2F",
+      0
+    ]
+  ],
   "protocolId": null,
   "properties": {
     "ss58Format": 44,

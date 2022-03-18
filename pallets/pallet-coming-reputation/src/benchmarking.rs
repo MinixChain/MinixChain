@@ -10,7 +10,7 @@ use frame_system::RawOrigin;
 use sp_std::vec;
 
 benchmarks! {
-    up_grade {
+    upgrade {
         let admin: T::AccountId = whitelisted_caller();
         let cid: Cid = 1000000;
         let grade: Grade = Grade {key1:1,key2:2,key3:3};

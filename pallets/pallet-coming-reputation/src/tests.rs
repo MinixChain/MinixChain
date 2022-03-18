@@ -25,7 +25,7 @@ fn up_grade_should_work() {
             COMMUNITY_CID,
             BOB
         ));
-        assert_ok!(ComingReputation::up_grade(
+        assert_ok!(ComingReputation::upgrade(
             Origin::signed(ADMIN),
             COMMUNITY_CID,
             TEST_GRADE1
@@ -53,7 +53,7 @@ fn up_grade_should_not_work() {
             COMMUNITY_CID,
             BOB
         ));
-        assert_ok!(ComingReputation::up_grade(
+        assert_ok!(ComingReputation::upgrade(
             Origin::signed(ADMIN),
             COMMUNITY_CID,
             TEST_GRADE1

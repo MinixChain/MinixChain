@@ -1,16 +1,16 @@
 # pallet-coming-reputation
 
 ## Overview
-pallet-coming-reputation是Coming 声誉系统业务的实现
+pallet-coming-reputation is the implementation of Coming's reputation system business.
 
 ## Intro
-- set_admin(new_admin): sudo权限, 设置新的管理员.
-- up_grade(cid,grade): 管理员权限, 信誉升级.
+- set_admin(new_admin): sudo permission,set up a new administrator.
+- upgrade(cid,grade): admin permission, reputation upgrade.
 
 ## rpc 
-- get_reputation_grade: 获取指定cid的信誉等级
+- get_reputation_grade: Get the credit rating of the specified cid
 
-输入：
+input：
 ```json
 {
   "jsonrpc":"2.0",
@@ -19,7 +19,7 @@ pallet-coming-reputation是Coming 声誉系统业务的实现
   "params": [1000000]
 }
 ```
-输出：
+output：
 ```json
 {
   "jsonrpc": "2.0",

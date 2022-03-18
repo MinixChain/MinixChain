@@ -110,7 +110,7 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::weight(10_000_000u64)]
-        pub fn up_grade(
+        pub fn upgrade(
             origin: OriginFor<T>,
             cid: Cid,
             grade: ReputationGrade,

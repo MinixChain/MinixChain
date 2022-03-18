@@ -43,6 +43,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 use pallet_coming_auction::PalletAuctionId;
 use pallet_coming_id::{CardMeta, Cid, CidDetails};
+use pallet_coming_reputation::ReputationGrade;
 pub use pallet_threshold_signature::primitive::{
     Message, OpCode, Pubkey, ScriptHash, Signature as TSignature,
 };
@@ -109,7 +110,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     //   `spec_version`, and `authoring_version` are the same between Wasm and native.
     // This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
     //   the compatible custom types.
-    spec_version: 122,
+    spec_version: 123,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 2,
@@ -356,6 +357,10 @@ impl pallet_coming_auction::Config for Runtime {
     type WeightInfo = ();
 }
 
+impl pallet_coming_reputation::Config for Runtime {
+    type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -384,6 +389,7 @@ construct_runtime!(
         ComingId: pallet_coming_id::{Pallet, Call, Config<T>, Storage, Event<T>} = 40,
         ComingNFT: pallet_coming_nft::{Pallet, Call} = 41,
         ComingAuction: pallet_coming_auction::{Pallet, Call, Config<T>, Storage, Event<T>} = 42,
+        ComingReputation: pallet_coming_reputation::{Pallet, Call, Config<T>, Storage, Event<T>} = 43,
     }
 );
 
@@ -592,6 +598,12 @@ impl_runtime_apis! {
 
         fn get_remint_fee(cid: Cid) -> Balance {
             ComingAuction::get_current_remint_fee(cid)
+        }
+    }
+
+    impl pallet_coming_reputation_rpc_runtime_api::ComingReputationApi<Block, AccountId> for Runtime {
+        fn get_reputation_grade(cid: Cid) -> Option<ReputationGrade> {
+            ComingReputation::get_grade(cid)
         }
     }
 

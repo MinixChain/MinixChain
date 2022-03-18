@@ -3323,7 +3323,7 @@ dependencies = [
 
 [[package]]
 name = "minix"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -3332,6 +3332,7 @@ dependencies = [
  "minix-runtime",
  "pallet-coming-auction-rpc",
  "pallet-coming-id-rpc",
+ "pallet-coming-reputation-rpc",
  "pallet-threshold-signature-rpc",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
@@ -3384,6 +3385,8 @@ dependencies = [
  "pallet-coming-id",
  "pallet-coming-id-rpc-runtime-api",
  "pallet-coming-nft",
+ "pallet-coming-reputation",
+ "pallet-coming-reputation-rpc-runtime-api",
  "pallet-grandpa",
  "pallet-sudo",
  "pallet-threshold-signature",
@@ -3839,7 +3842,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-auction"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3859,7 +3862,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-auction-rpc"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -3874,7 +3877,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-auction-rpc-runtime-api"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "pallet-coming-auction",
  "parity-scale-codec",
@@ -3885,7 +3888,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-id"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3905,7 +3908,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-id-rpc"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -3921,7 +3924,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-id-rpc-runtime-api"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "pallet-coming-id",
  "parity-scale-codec",
@@ -3932,7 +3935,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-coming-nft"
-version = "1.4.0"
+version = "1.5.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3945,6 +3948,54 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-coming-reputation"
+version = "1.5.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "pallet-coming-id",
+ "pallet-sudo",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-storage",
+]
+
+[[package]]
+name = "pallet-coming-reputation-rpc"
+version = "1.5.0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-coming-reputation-rpc-runtime-api",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-coming-reputation-rpc-runtime-api"
+version = "1.5.0"
+dependencies = [
+ "pallet-coming-reputation",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-core",
  "sp-std",
 ]
 

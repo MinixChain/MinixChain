@@ -1,6 +1,7 @@
 pub use minix_runtime::{
-    AccountId, AuraConfig, BalancesConfig, ComingAuctionConfig, ComingIdConfig, GenesisConfig,
-    GrandpaConfig, SS58Prefix, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+    AccountId, AuraConfig, BalancesConfig, ComingAuctionConfig, ComingIdConfig,
+    ComingReputationConfig, GenesisConfig, GrandpaConfig, SS58Prefix, Signature, SudoConfig,
+    SystemConfig, WASM_BINARY,
 };
 use sc_chain_spec::ChainSpecExtension;
 use sc_service::{ChainType, Properties};
@@ -75,7 +76,7 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
                     caller.clone(),
                 ],
                 (caller.clone(), caller.clone(), caller.clone()),
-                Some(caller),
+                Some(caller.clone()),
             )
         },
         // Bootnodes
@@ -287,5 +288,6 @@ pub fn minix_genesis(
         coming_auction: ComingAuctionConfig {
             admin_key: auction_admin,
         },
+        coming_reputation: ComingReputationConfig { admin_key: None },
     }
 }

@@ -31,6 +31,7 @@ pub type Cid = u64;
 pub type BondType = u16;
 
 pub const MAX_REMINT: u8 = 32u8;
+pub const EXTRA_WEIGHT: u64 = 4_000_000_000;
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -126,12 +127,12 @@ pub mod pallet {
     #[pallet::getter(fn medium_admin_key)]
     pub(super) type MediumKey<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-    /// The `AccountId` of the sudo key. Register 6 digital cid.
+    /// The `AccountId` of the sudo key. Register 7 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn medium_admin_key2)]
     pub(super) type MediumKey2<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-    /// The `AccountId` of the sudo key. Register 7 digital cid.
+    /// The `AccountId` of the sudo key. Register 6 digital cid.
     #[pallet::storage]
     #[pallet::getter(fn medium_admin_key3)]
     pub(super) type MediumKey3<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
@@ -223,11 +224,12 @@ pub mod pallet {
         NotFoundBondType,
         TooBigDataSize,
         RemintMax,
+        BadSignature,
     }
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        #[pallet::weight(T::WeightInfo::register())]
+        #[pallet::weight(T::WeightInfo::register() + EXTRA_WEIGHT)]
         pub fn register(
             origin: OriginFor<T>,
             cid: Cid,
@@ -253,11 +255,14 @@ pub mod pallet {
                         || ensure_signed(origin)? == Self::medium_admin_key(),
                     Error::<T>::RequireMediumAuthority
                 ),
-                100_000_000..1_000_000_000_000 => ensure!(
+                100_000_000..1_000_000_000 => ensure!(
                     ensure_signed(origin.clone())? == Self::high_admin_key()
                         || ensure_signed(origin)? == Self::low_admin_key(),
                     Error::<T>::RequireLowAuthority
                 ),
+                1_000_000_000..1_000_000_000_000 => {
+                    ensure!(ensure_signed(origin).is_ok(), Error::<T>::BadSignature)
+                }
                 _ => ensure!(false, Error::<T>::InvalidCid),
             };
             ensure!(!Self::is_distributed(cid), Error::<T>::DistributedCid);

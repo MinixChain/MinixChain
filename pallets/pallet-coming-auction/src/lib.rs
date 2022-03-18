@@ -2,7 +2,9 @@
 #![allow(clippy::unused_unit)]
 
 pub use pallet::*;
-pub use pallet_coming_id::{CardMeta, Cid, ComingNFT, Error as ComingIdError, MAX_REMINT};
+pub use pallet_coming_id::{
+    CardMeta, Cid, ComingNFT, Error as ComingIdError, MAX_REMINT, MAX_TAX_POINT,
+};
 pub use weights::WeightInfo;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -108,7 +110,7 @@ pub mod pallet {
     pub(super) type Admin<T: Config> = StorageValue<_, T::AccountId>;
 
     /// The protocol fee point.
-    /// [0‱, 255‱] or [0%, 2.55%]
+    /// [0%, 30%]
     #[pallet::storage]
     #[pallet::getter(fn point)]
     pub(super) type Point<T: Config> = StorageValue<_, u8, ValueQuery>;
@@ -181,6 +183,7 @@ pub mod pallet {
         RequireAdmin,
         LowBidValue,
         LessThanMinBalance,
+        MoreThanMaxTaxPoint,
     }
 
     #[pallet::call]
@@ -331,6 +334,7 @@ pub mod pallet {
             tax_point: u8,
         ) -> DispatchResult {
             ensure!(!Self::is_in_emergency(), Error::<T>::InEmergency);
+            ensure!(tax_point <= MAX_TAX_POINT, Error::<T>::MoreThanMaxTaxPoint);
             let who = ensure_signed(origin)?;
 
             // 1. remint fee
@@ -594,10 +598,8 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn calculate_fee(value: BalanceOf<T>, fee_point: u8) -> BalanceOf<T> {
-        let point = BalanceOf::<T>::from(fee_point);
-        let base_point = BalanceOf::<T>::from(10000u16);
-
-        // Impossible to overflow
+        let base_point = BalanceOf::<T>::from(100u8);
+        let point = BalanceOf::<T>::from(fee_point.min(MAX_TAX_POINT));
         value / base_point * point
     }
 

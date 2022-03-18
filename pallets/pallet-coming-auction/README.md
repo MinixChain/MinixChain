@@ -67,7 +67,7 @@ Inherit `pallet_coming_id::Config` for `benchmarking`.
   **user** permission, remint the NFT. `remint fee` increases by 2 times with the number of remints.
     - `cid`: the cid of the NFT.
     - `card`: the new crad data of the NFT
-    - `tax_point`: the tax rate
+    - `tax_point`: the tax rate, take 30 if it is greater than 30, [0, 30] means [0%, 30%]
 - ```
     The weight of each byte is `W0`,
     When `card_size` <= 1024 bytes, `card_weights` = `W0`;

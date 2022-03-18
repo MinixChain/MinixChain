@@ -44,7 +44,7 @@ fn up_grade_should_work() {
 fn up_grade_should_not_work() {
     new_test_ext(ADMIN).execute_with(|| {
         assert_noop!(
-            ComingReputation::up_grade(Origin::signed(ADMIN), COMMUNITY_CID, TEST_GRADE1),
+            ComingReputation::upgrade(Origin::signed(ADMIN), COMMUNITY_CID, TEST_GRADE1),
             Error::<Test>::UndistributedCid
         );
 
@@ -60,7 +60,7 @@ fn up_grade_should_not_work() {
         ));
 
         assert_noop!(
-            ComingReputation::up_grade(Origin::signed(ADMIN), COMMUNITY_CID, TEST_GRADE2),
+            ComingReputation::upgrade(Origin::signed(ADMIN), COMMUNITY_CID, TEST_GRADE2),
             Error::<Test>::CannotDowngrade
         );
     });

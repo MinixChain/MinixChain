@@ -1,6 +1,6 @@
 [package]
 name = "minix"
-version = "1.5.0"
+version = "1.5.1"
 authors = ["ChainNet"]
 edition = "2018"
 build = "build.rs"

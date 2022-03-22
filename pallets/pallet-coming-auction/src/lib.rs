@@ -110,7 +110,7 @@ pub mod pallet {
     pub(super) type Admin<T: Config> = StorageValue<_, T::AccountId>;
 
     /// The protocol fee point.
-    /// [0%, 30%]
+    /// [0‱, 255‱] or [0%, 2.55%]
     #[pallet::storage]
     #[pallet::getter(fn point)]
     pub(super) type Point<T: Config> = StorageValue<_, u8, ValueQuery>;
@@ -260,7 +260,7 @@ pub mod pallet {
                     let service_fee = match Admin::<T>::get() {
                         Some(admin) => {
                             let fee_point = Point::<T>::get();
-                            let service_fee = Self::calculate_fee(value, fee_point);
+                            let service_fee = Self::calculate_service_fee(value, fee_point);
 
                             // transfer `service_fee` to admin
                             T::Currency::transfer(
@@ -277,7 +277,7 @@ pub mod pallet {
 
                     let tax_fee = match T::ComingNFT::card_of_meta(cid) {
                         Some(meta) => {
-                            let tax_fee = Self::calculate_fee(value, meta.tax_point);
+                            let tax_fee = Self::calculate_tax_fee(value, meta.tax_point);
 
                             // transfer `tax_fee` to issuer
                             T::Currency::transfer(
@@ -597,9 +597,19 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    pub fn calculate_fee(value: BalanceOf<T>, fee_point: u8) -> BalanceOf<T> {
+    pub fn calculate_tax_fee(value: BalanceOf<T>, fee_point: u8) -> BalanceOf<T> {
         let base_point = BalanceOf::<T>::from(100u8);
         let point = BalanceOf::<T>::from(fee_point.min(MAX_TAX_POINT));
+
+        // Impossible to overflow
+        value / base_point * point
+    }
+
+    pub fn calculate_service_fee(value: BalanceOf<T>, fee_point: u8) -> BalanceOf<T> {
+        let point = BalanceOf::<T>::from(fee_point);
+        let base_point = BalanceOf::<T>::from(10000u16);
+
+        // Impossible to overflow
         value / base_point * point
     }
 

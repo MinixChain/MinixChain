@@ -234,6 +234,15 @@ fn remint_bid_auction_should_work() {
             vec![],
             30
         ));
+        let remint_fee = ComingAuction::calculate_remint_fee(0);
+        assert_eq!(
+            ComingAuction::balance_of(&ALICE),
+            10_000_000_000 + remint_fee
+        );
+        assert_eq!(
+            ComingAuction::balance_of(&CHARLIE),
+            1_000_000_000 - remint_fee
+        );
         //(3) CHARLIE transfer cid to BOB
         assert_ok!(ComingId::transfer(&CHARLIE, COMMON, &BOB));
         assert_eq!(Some(BOB), <Test as Config>::ComingNFT::owner_of_cid(COMMON));
@@ -273,7 +282,6 @@ fn remint_bid_auction_should_work() {
             DURATION / 2 + 1,
         ));
 
-        let remint_fee = ComingAuction::calculate_remint_fee(0);
         let tax_fee = ComingAuction::calculate_tax_fee(5_500_000_000, 30);
         let service_fee = ComingAuction::calculate_service_fee(5_500_000_000, 250);
         assert_eq!(5_500_000_000 / 100 * 30, tax_fee);
@@ -284,12 +292,9 @@ fn remint_bid_auction_should_work() {
         );
         assert_eq!(
             ComingAuction::balance_of(&ALICE),
-            10_000_000_000 + remint_fee + service_fee
+            10_025_000_000 + service_fee
         );
-        assert_eq!(
-            ComingAuction::balance_of(&CHARLIE),
-            1_000_000_000 - remint_fee + tax_fee
-        );
+        assert_eq!(ComingAuction::balance_of(&CHARLIE), 975_000_000 + tax_fee);
         assert_eq!(
             ComingAuction::balance_of(&BOB),
             10_000_000_000 + 5_500_000_000 - tax_fee - service_fee

@@ -222,18 +222,32 @@ fn bid_auction_should_work() {
 #[test]
 fn remint_bid_auction_should_work() {
     new_test_ext(ALICE).execute_with(|| {
-        // (1) register cid
-        assert_ok!(ComingId::register(Origin::signed(ALICE), COMMON, ALICE));
+        //(1) set_fee_point(250)
+        assert_ok!(ComingAuction::set_fee_point(Origin::signed(ALICE), 250u8));
+        assert_eq!(250u8, ComingAuction::get_fee_point());
+        //(2) CHARLIE register cid
+        assert_ok!(ComingId::register(Origin::signed(ALICE), COMMON, CHARLIE));
+        //(3) CHARLIE remint cid
         assert_ok!(ComingAuction::remint(
-            Origin::signed(ALICE),
+            Origin::signed(CHARLIE),
             COMMON,
             vec![],
             30
         ));
-        assert_ok!(ComingId::transfer(&ALICE, COMMON, &BOB));
+        let remint_fee = ComingAuction::calculate_remint_fee(0);
+        assert_eq!(
+            ComingAuction::balance_of(&ALICE),
+            10_000_000_000 + remint_fee
+        );
+        assert_eq!(
+            ComingAuction::balance_of(&CHARLIE),
+            1_000_000_000 - remint_fee
+        );
+        //(3) CHARLIE transfer cid to BOB
+        assert_ok!(ComingId::transfer(&CHARLIE, COMMON, &BOB));
         assert_eq!(Some(BOB), <Test as Config>::ComingNFT::owner_of_cid(COMMON));
 
-        // (2) create an auction
+        // (4) BOB create an auction
         assert_ok!(ComingAuction::create(
             Origin::signed(BOB),
             COMMON,
@@ -254,7 +268,7 @@ fn remint_bid_auction_should_work() {
         assert_eq!(ComingAuction::get_current_price(COMMON), 5_500_000_000);
         assert_eq!(ComingAuction::balance_of(&DAVE), 10_000_000_000);
 
-        // (3) bid an auction
+        // (5) DAVE bid an auction
         assert_ok!(ComingAuction::bid(
             Origin::signed(DAVE),
             COMMON,
@@ -268,12 +282,22 @@ fn remint_bid_auction_should_work() {
             DURATION / 2 + 1,
         ));
 
-        let tax_fee = ComingAuction::calculate_fee(5_500_000_000, 30);
+        let tax_fee = ComingAuction::calculate_tax_fee(5_500_000_000, 30);
+        let service_fee = ComingAuction::calculate_service_fee(5_500_000_000, 250);
         assert_eq!(5_500_000_000 / 100 * 30, tax_fee);
-        assert_eq!(ComingAuction::balance_of(&ALICE), 10_000_000_000 + tax_fee);
+        assert_eq!(5_500_000_000 / 10000 * 250, service_fee);
+        assert_eq!(
+            ComingAuction::balance_of(&DAVE),
+            10_000_000_000 - 5_500_000_000
+        );
+        assert_eq!(
+            ComingAuction::balance_of(&ALICE),
+            10_025_000_000 + service_fee
+        );
+        assert_eq!(ComingAuction::balance_of(&CHARLIE), 975_000_000 + tax_fee);
         assert_eq!(
             ComingAuction::balance_of(&BOB),
-            10_000_000_000 + 5_500_000_000 - tax_fee
+            10_000_000_000 + 5_500_000_000 - tax_fee - service_fee
         );
         assert_eq!(
             Some(DAVE),
